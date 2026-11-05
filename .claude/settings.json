@@ -1,0 +1,122 @@
+{
+  "worktree": {
+    "baseRef": "head"
+  },
+  "permissions": {
+    "defaultMode": "default",
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./evals/.env)",
+      "Read(./data/**)",
+      "Read(../my-job-processor/.env)",
+      "Read(../my-job-processor/evals/.env)",
+      "Read(../my-job-processor/data/**)",
+      "Read(../../my-job-processor/.env)",
+      "Read(../../my-job-processor/evals/.env)",
+      "Read(../../my-job-processor/data/**)",
+      "Read(../../jobingo/.env)",
+      "Read(../../jobingo/data/**)",
+      "Edit(./.env)",
+      "Edit(./.env.local)",
+      "Edit(./.env.*.local)",
+      "Edit(./evals/.env)",
+      "Edit(./data/**)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(nc *)",
+      "Bash(psql *)",
+      "Bash(docker exec *)",
+      "Bash(docker compose exec *)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": [
+        "./.env",
+        "./.env.local",
+        "./evals/.env",
+        "./data",
+        "../my-job-processor/.env",
+        "../my-job-processor/evals/.env",
+        "../my-job-processor/data",
+        "../../my-job-processor/.env",
+        "../../my-job-processor/evals/.env",
+        "../../my-job-processor/data",
+        "../../jobingo/.env",
+        "../../jobingo/data"
+      ],
+      "allowWrite": [
+        "~/.cache/uv",
+        "~/.cache/node/corepack",
+        "~/Library/Caches/ms-playwright",
+        "~/Library/pnpm"
+      ]
+    },
+    "network": {
+      "allowLocalBinding": true
+    }
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/remind-records.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/remind-decision.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-dotenv.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-edits.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-checks.sh",
+            "timeout": 180,
+            "statusMessage": "Running the backend and client checks"
+          }
+        ]
+      }
+    ]
+  }
+}

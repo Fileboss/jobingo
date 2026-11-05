@@ -1,0 +1,25 @@
+# Local development database. The credentials are not secrets: the port is only
+# reachable from this machine. The fixed name makes every worktree share this server.
+# The data lives in the named volume and survives restarts and `make db-down`.
+# Only `docker compose down -v` or removing the volume deletes it: never use them.
+name: jobingo
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: jobingo
+      POSTGRES_PASSWORD: jobingo
+      POSTGRES_DB: jobingo
+    ports:
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U jobingo']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  postgres-data:

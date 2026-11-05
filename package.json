@@ -1,0 +1,17 @@
+{
+  "name": "jobingo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @jobingo/web run dev",
+    "build": "pnpm --filter @jobingo/web run build",
+    "check": "pnpm --recursive run check",
+    "lint": "pnpm --recursive run lint",
+    "test": "pnpm --filter @jobingo/web run test:unit --run",
+    "format": "pnpm --recursive run format"
+  }
+}

@@ -1,0 +1,105 @@
+# Offline checks only: no API key is available here, so paid evals never run in CI.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: '1' # fail if uv.lock is out of date with the pyproject files
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: jobingo
+          POSTGRES_PASSWORD: jobingo
+          POSTGRES_DB: jobingo
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U jobingo"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run lint-imports
+      - run: uv run pyright
+      - run: uv run pytest -q -rs
+      - name: Claude Code guardrails
+        run: uv run python scripts/check_guardrails.py
+
+  client:
+    name: Client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm lint
+      - run: pnpm --filter @jobingo/web exec playwright install --with-deps chromium
+      - run: pnpm test
+      - run: pnpm --filter @jobingo/web exec playwright test
+
+  contract:
+    name: API contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: uv sync
+      - run: pnpm install --frozen-lockfile
+      - run: make api-types
+      - name: The committed contract and types are up to date
+        run: git diff --exit-code apps/web/openapi.json apps/web/src/lib/api/schema.d.ts
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # gitleaks scans the history
+      - uses: astral-sh/setup-uv@v6
+      - name: Dependency vulnerabilities (pip-audit)
+        run: |
+          uv export --all-groups --no-emit-workspace -o requirements.txt
+          uvx pip-audit -r requirements.txt --disable-pip --strict
+      - name: Static analysis (bandit, medium severity and above)
+        run: uvx bandit -r packages/core/src apps/api/src -ll
+      - name: Secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

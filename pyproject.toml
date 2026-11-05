@@ -1,0 +1,76 @@
+[project]
+name = "jobingo-workspace"
+version = "0.1.0"
+description = "Jobingo: an AI job search assistant where the model proposes and the human disposes"
+requires-python = ">=3.12"
+dependencies = ["jobingo-api"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2",
+    "import-linter>=2.15",
+    "pyright>=1.1.390",
+    "pytest>=8.3",
+    "ruff>=0.7",
+]
+
+[tool.uv.workspace]
+members = ["apps/api", "packages/core"]
+
+[tool.uv.sources]
+jobingo-api = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+src = ["apps/api/src", "packages/core/src", "tests", "scripts"]
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["jobingo", "jobingo_api"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
+[tool.pyright]
+include = ["apps/api/src", "packages/core/src", "tests", "scripts"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+extraPaths = ["apps/api/src", "packages/core/src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
+
+[tool.importlinter]
+root_packages = ["jobingo", "jobingo_api"]
+
+# The code path that calls the LLM must be structurally unable to reach the
+# candidate's identity or to send anything. Add `jobingo.domain.identity` here,
+# and an "only hitl.executor imports connectors.smtp" contract, when they land.
+[[tool.importlinter.contracts]]
+name = "llm never reaches services, connectors, hitl, render or the API"
+type = "forbidden"
+source_modules = ["jobingo.llm"]
+forbidden_modules = [
+    "jobingo.services",
+    "jobingo.connectors",
+    "jobingo.hitl",
+    "jobingo.render",
+    "jobingo_api",
+]
+
+[[tool.importlinter.contracts]]
+name = "layers do not import upward"
+type = "layers"
+layers = [
+    "jobingo_api",
+    "jobingo.hitl",
+    "jobingo.services",
+    "jobingo.llm | jobingo.connectors | jobingo.render",
+    "jobingo.domain",
+]

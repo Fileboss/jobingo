@@ -1,0 +1,39 @@
+# This repository is public: anything personal stays out of it.
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# User data: identity, CV, photo, database, generated documents, logs, backups
+/data/
+*.sqlite
+*.sqlite-*
+*.dump
+*_CV.pdf
+
+# Evals: the eval-only key and cached model answers
+evals/.env
+evals/.cache/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+.grimp_cache/
+.coverage
+htmlcov/
+
+# A worktree's ports and database, written by scripts/worktree.sh
+.jobingo-worktree
+
+# Tools and OS
+.claude/settings.local.json
+.idea/
+.DS_Store

@@ -1,0 +1,69 @@
+# In a worktree, this file sets its ports and database (scripts/worktree.sh).
+-include .jobingo-worktree
+
+API_PORT ?= 8000
+export
+
+.PHONY: db-up db-down api web api-types test lint typecheck check check-guardrails \
+	playwright-server e2e agent agent-front agent-back worktree worktree-rm
+
+db-up:
+	docker compose up -d --wait postgres
+
+db-down:
+	docker compose down
+
+api:
+	uv run uvicorn --factory jobingo_api.main:create_app --host 127.0.0.1 --port $(API_PORT) --reload
+
+web:
+	pnpm dev
+
+# Regenerate the API contract, then the client's types from it.
+api-types:
+	uv run python scripts/export_openapi.py
+	pnpm --filter @jobingo/web run api-types
+
+test:
+	uv run pytest -q
+
+lint:
+	uv run ruff check .
+	uv run ruff format --check .
+	uv run lint-imports
+
+typecheck:
+	uv run pyright
+
+check-guardrails:
+	uv run python scripts/check_guardrails.py
+
+# Everything, on both sides. The database must be up (make db-up).
+check: lint typecheck test check-guardrails
+	pnpm check
+	pnpm lint
+	pnpm test
+
+# Chromium cannot start inside Claude Code's sandbox. The user runs the browser server
+# in a terminal, and `make e2e` connects to it, so the test code itself stays sandboxed.
+playwright-server:
+	pnpm --filter @jobingo/web exec playwright run-server --host 127.0.0.1 --port 3111
+
+e2e:
+	PW_TEST_CONNECT_WS_ENDPOINT=ws://127.0.0.1:3111/ pnpm --filter @jobingo/web exec playwright test
+
+# Claude Code sessions, see docs/parallel-work.md. ARGS goes to claude: ARGS=--continue
+agent:
+	@sh scripts/agent.sh full $(ARGS)
+
+agent-front:
+	@sh scripts/agent.sh front $(ARGS)
+
+agent-back:
+	@sh scripts/agent.sh back $(ARGS)
+
+worktree:
+	@sh scripts/worktree.sh new $(NAME)
+
+worktree-rm:
+	@sh scripts/worktree.sh rm $(NAME)

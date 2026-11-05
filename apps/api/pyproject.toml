@@ -1,0 +1,20 @@
+[project]
+name = "jobingo-api"
+version = "0.1.0"
+description = "Jobingo's JSON API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "jobingo-core",
+    "uvicorn[standard]>=0.32",
+]
+
+[tool.uv.sources]
+jobingo-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jobingo_api"]
