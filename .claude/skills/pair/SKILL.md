@@ -27,7 +27,7 @@ Ask the user only what these leave open and what would change the brief. Follow 
 
 Write `docs/briefs/<feature>.md`, in English, where `<feature>` is a short name in lowercase letters, digits and hyphens. Both agents get this same text, and their role, peer and protocol come from the launcher, so leave those out.
 
-Use `docs/briefs/cv-editor.md` as the model, with these sections:
+Use `docs/briefs/cv-editor.md` as the model (its mention of a worktree no longer applies: agents run in the main checkout, on a fictional database), with these sections:
 
 - **Goal**: what the user can do afterwards, and why it matters.
 - **Scope**: what is in, and what is explicitly out.
@@ -42,17 +42,15 @@ Close with "Do not commit: the user reviews first." Anything public-facing stays
 
 ## 4. Start the agents
 
-If `claude agents --json` already lists a `jobingo-<feature>-*` session, stop here and ask the user: a second run would start a second pair on the same worktree.
+If `claude agents --json` already lists a `jobingo-*-back` or `jobingo-*-front` session, stop here and ask the user: both pairs would edit the same checkout.
 
 From the repository root, run `make db-up`, then:
 
 ```sh
-make pair NAME=<feature> BRIEF=docs/briefs/<feature>.md
+make pair BRIEF=docs/briefs/<feature>.md
 ```
 
 **Done when** `claude agents --json` lists both `jobingo-<feature>-back` and `jobingo-<feature>-front`.
-
-If a start fails because the folder is not trusted, ask the user to run `claude` once in the worktree, then run the command again.
 
 ## 5. Report
 

@@ -7,12 +7,14 @@ Sessions on the same machine can message each other (Claude Code 2.1.224 or late
 Type `/pair` in a Claude Code session, followed by what to build, or nothing for the next step of `docs/porting.md`. Claude writes the brief in `docs/briefs/`, then starts both agents in the background with:
 
 ```sh
-make pair NAME=cv-editor BRIEF=docs/briefs/cv-editor.md
+make pair BRIEF=docs/briefs/cv-editor.md
 ```
 
-This creates the worktree if needed. Follow the agents with `claude agents`, where a question or a permission request shows as "Needs input", and open one with `claude attach jobingo-cv-editor-back`. A second run starts a second pair, so stop the first one before running it again. The agents run in auto mode: a classifier reviews their commands, and the deny rules and hooks still apply.
+Both agents work in the main checkout, one feature at a time: they own separate files and talk to each other. They use their own ports (client on 5273, API on 8100) and the `jobingo_pair` database, which is fictional and persists, so your real CV never reaches the model through their screenshots. Commit or set aside your own changes first, or they will mix with theirs.
 
-The sections below explain each piece, for starting agents by hand.
+Follow the agents with `claude agents`, where a question or a permission request shows as "Needs input", and open one with `claude attach jobingo-cv-editor-back`. They run in auto mode: a classifier reviews their commands, and the deny rules and hooks still apply. `worktree.bgIsolation` is `none` in the settings, otherwise each background session would move to its own worktree.
+
+The sections below explain each piece, for starting agents by hand. Worktrees remain available for the rare case of two features at once, but they need a first manual `claude` in each new folder, to trust it.
 
 ## A pair on one feature
 

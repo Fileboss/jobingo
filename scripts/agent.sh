@@ -20,7 +20,7 @@ shift
 
 cd "$(git rev-parse --show-toplevel)"
 
-FEATURE=main
+FEATURE=${FEATURE:-main}
 if [ -f .jobingo-worktree ]; then
   set -a
   . ./.jobingo-worktree
@@ -44,7 +44,8 @@ if [ -n "$peer_role" ]; then
 fi
 
 export JOBINGO_ROLE="$role"
-# Also passed as a setting: a background session (--bg) may not inherit this environment,
-# and the hooks read the role from it.
-exec claude --name "$name" --settings "{\"env\":{\"JOBINGO_ROLE\":\"$role\"}}" \
-  --append-system-prompt "$prompt" "$@"
+# Also passed as settings: a background session (--bg) may not inherit this environment,
+# and the hooks and make targets read it.
+settings=$(jq -n '{env: (env | with_entries(select(.key | IN(
+  "JOBINGO_ROLE", "API_PORT", "WEB_PORT", "PREVIEW_PORT", "DATABASE_URL"))))}')
+exec claude --name "$name" --settings "$settings" --append-system-prompt "$prompt" "$@"

@@ -57,9 +57,9 @@ agent-front:
 agent-back:
 	@sh scripts/agent.sh back $(ARGS)
 
-# Both agents in the background, on a feature's worktree. /pair writes the brief.
+# Both agents in the background, in this checkout. /pair writes the brief.
 pair:
-	@sh scripts/pair.sh "$(NAME)" "$(BRIEF)"
+	@sh scripts/pair.sh "$(BRIEF)"
 
 worktree:
 	@sh scripts/worktree.sh new $(NAME)

@@ -1,6 +1,7 @@
 {
   "worktree": {
-    "baseRef": "head"
+    "baseRef": "head",
+    "bgIsolation": "none"
   },
   "permissions": {
     "defaultMode": "default",
