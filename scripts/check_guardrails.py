@@ -43,19 +43,10 @@ REQUIRED_DENY = [
     "Bash(psql *)",
     "Bash(docker exec *)",
     "Bash(docker compose exec *)",
-]
-REQUIRED_DENY_READ = [
-    "./.env",
-    "./evals/.env",
-    "./data",
-    "../my-job-processor/.env",
-    "../my-job-processor/evals/.env",
-    "../my-job-processor/data",
-    "../../my-job-processor/.env",
-    "../../my-job-processor/evals/.env",
-    "../../my-job-processor/data",
-    "../../jobingo/.env",
-    "../../jobingo/data",
+    "Bash(docker compose down -v*)",
+    "Bash(docker compose down --volumes*)",
+    "Bash(docker volume rm *)",
+    "Bash(rm -rf data*)",
 ]
 MIGRATIONS = "packages/core/src/jobingo/migrations"
 EXECUTOR = "packages/core/src/jobingo/hitl/executor.py"
@@ -86,12 +77,6 @@ def check_settings() -> list[str]:
     settings: dict[str, Any] = json.loads(SETTINGS.read_text(encoding="utf-8"))
     deny = settings.get("permissions", {}).get("deny", [])
     failures += [f"missing deny rule {rule}" for rule in REQUIRED_DENY if rule not in deny]
-
-    sandbox = settings.get("sandbox", {})
-    if not sandbox.get("enabled"):
-        failures.append("sandbox is not enabled")
-    deny_read = sandbox.get("filesystem", {}).get("denyRead", [])
-    failures += [f"missing sandbox denyRead {p}" for p in REQUIRED_DENY_READ if p not in deny_read]
 
     hooks = settings.get("hooks", {})
     wired = json.dumps(hooks)

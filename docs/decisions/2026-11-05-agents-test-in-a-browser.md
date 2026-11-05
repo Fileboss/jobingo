@@ -1,10 +1,12 @@
 ---
 date: 2026-11-05
-status: active
+status: superseded
 applies_when: verifying client work, or a browser-based check is blocked
 ---
 
 # Agents verify the client in a real browser
+
+Superseded by `2026-11-05-no-sandbox.md`.
 
 ## Question
 

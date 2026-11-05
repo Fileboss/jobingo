@@ -32,37 +32,15 @@
       "Bash(nc *)",
       "Bash(psql *)",
       "Bash(docker exec *)",
-      "Bash(docker compose exec *)"
+      "Bash(docker compose exec *)",
+      "Bash(docker compose down -v*)",
+      "Bash(docker compose down --volumes*)",
+      "Bash(docker volume rm *)",
+      "Bash(docker volume prune*)",
+      "Bash(docker system prune*)",
+      "Bash(rm -rf data*)",
+      "Bash(rm -rf ./data*)"
     ]
-  },
-  "sandbox": {
-    "enabled": true,
-    "allowUnsandboxedCommands": false,
-    "filesystem": {
-      "denyRead": [
-        "./.env",
-        "./.env.local",
-        "./evals/.env",
-        "./data",
-        "../my-job-processor/.env",
-        "../my-job-processor/evals/.env",
-        "../my-job-processor/data",
-        "../../my-job-processor/.env",
-        "../../my-job-processor/evals/.env",
-        "../../my-job-processor/data",
-        "../../jobingo/.env",
-        "../../jobingo/data"
-      ],
-      "allowWrite": [
-        "~/.cache/uv",
-        "~/.cache/node/corepack",
-        "~/Library/Caches/ms-playwright",
-        "~/Library/pnpm"
-      ]
-    },
-    "network": {
-      "allowLocalBinding": true
-    }
   },
   "hooks": {
     "UserPromptSubmit": [

@@ -44,4 +44,7 @@ if [ -n "$peer_role" ]; then
 fi
 
 export JOBINGO_ROLE="$role"
-exec claude --name "$name" --append-system-prompt "$prompt" "$@"
+# Also passed as a setting: a background session (--bg) may not inherit this environment,
+# and the hooks read the role from it.
+exec claude --name "$name" --settings "{\"env\":{\"JOBINGO_ROLE\":\"$role\"}}" \
+  --append-system-prompt "$prompt" "$@"

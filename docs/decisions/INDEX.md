@@ -11,11 +11,10 @@ Settled by the user. Follow them instead of asking again. Format and rules: `doc
 - [One CV template, `panneau-lateral`](2026-11-05-one-cv-template.md): when working on CV rendering or tempted to add or port another template
 - [Port all prompts, re-measure every score](2026-11-05-prompts-yes-eval-results-no.md): when porting prompts, evals or model settings from the POC
 - [Review quality at each port from the POC](2026-11-05-review-at-each-port.md): when bringing any code over from the POC
-- [Keep the OS sandbox on](2026-11-05-keep-sandbox.md): when a command fails on a sandbox restriction, or a sandbox setting looks inconvenient
+- [No OS sandbox: deny rules and hooks only](2026-11-05-no-sandbox.md): when choosing what Claude may run, verifying client work, or adding a protection for secrets and data
 - [Prepare the repository for parallel agents](2026-11-05-parallel-agents.md): when organizing work across several Claude Code sessions or worktrees
 - [A clean observability page is a key feature](2026-11-05-observability-page.md): when working on LLM calls, evals, logs or their display, or prioritizing what the demo must show
 - [Development data persists](2026-11-05-persist-dev-data.md): when changing the database setup or schema, or tempted to reset development data
-- [Agents verify the client in a real browser](2026-11-05-agents-test-in-a-browser.md): when verifying client work, or a browser-based check is blocked
 - [No database backup command for now](2026-11-05-no-db-backup-command.md): when considering backups of the development database
 - [Keep CLAUDE.md short](2026-11-05-keep-claude-md-short.md): when adding content to CLAUDE.md, or deciding where a new rule or guide belongs
 - [Record decisions and lessons in the repository](2026-11-05-record-decisions-and-lessons.md): when the user settles a choice, reports a bug or corrects how Claude worked

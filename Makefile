@@ -5,7 +5,7 @@ API_PORT ?= 8000
 export
 
 .PHONY: db-up db-down api web api-types test lint typecheck check check-guardrails \
-	playwright-server e2e agent agent-front agent-back worktree worktree-rm
+	e2e agent agent-front agent-back pair worktree worktree-rm
 
 db-up:
 	docker compose up -d --wait postgres
@@ -44,13 +44,8 @@ check: lint typecheck test check-guardrails
 	pnpm lint
 	pnpm test
 
-# Chromium cannot start inside Claude Code's sandbox. The user runs the browser server
-# in a terminal, and `make e2e` connects to it, so the test code itself stays sandboxed.
-playwright-server:
-	pnpm --filter @jobingo/web exec playwright run-server --host 127.0.0.1 --port 3111
-
 e2e:
-	PW_TEST_CONNECT_WS_ENDPOINT=ws://127.0.0.1:3111/ pnpm --filter @jobingo/web exec playwright test
+	pnpm --filter @jobingo/web exec playwright test
 
 # Claude Code sessions, see docs/parallel-work.md. ARGS goes to claude: ARGS=--continue
 agent:
@@ -61,6 +56,10 @@ agent-front:
 
 agent-back:
 	@sh scripts/agent.sh back $(ARGS)
+
+# Both agents in the background, on a feature's worktree. /pair writes the brief.
+pair:
+	@sh scripts/pair.sh "$(NAME)" "$(BRIEF)"
 
 worktree:
 	@sh scripts/worktree.sh new $(NAME)

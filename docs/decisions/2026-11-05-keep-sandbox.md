@@ -1,10 +1,12 @@
 ---
 date: 2026-11-05
-status: active
+status: superseded
 applies_when: a command fails on a sandbox restriction, or a sandbox setting looks inconvenient
 ---
 
 # Keep the OS sandbox on
+
+Superseded by `2026-11-05-no-sandbox.md`.
 
 ## Question
 

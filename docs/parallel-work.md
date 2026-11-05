@@ -2,6 +2,18 @@
 
 Sessions on the same machine can message each other (Claude Code 2.1.224 or later), with nothing to enable. This repository adds roles, ownership rules, and one isolated environment per feature.
 
+## The quick way
+
+Type `/pair` in a Claude Code session, followed by what to build, or nothing for the next step of `docs/porting.md`. Claude writes the brief in `docs/briefs/`, then starts both agents in the background with:
+
+```sh
+make pair NAME=cv-editor BRIEF=docs/briefs/cv-editor.md
+```
+
+This creates the worktree if needed. Follow the agents with `claude agents`, where a question or a permission request shows as "Needs input", and open one with `claude attach jobingo-cv-editor-back`. A second run starts a second pair, so stop the first one before running it again. The agents run in auto mode: a classifier reviews their commands, and the deny rules and hooks still apply.
+
+The sections below explain each piece, for starting agents by hand.
+
 ## A pair on one feature
 
 One backend agent and one frontend agent, in one checkout. They share the files, so the API contract reaches the client as soon as it is generated.
@@ -45,12 +57,11 @@ When the feature is merged, run `make worktree-rm NAME=cv-editor` from the main 
 ## Good to know
 
 - **Worktrees need a first commit.** `make worktree` refuses until the repository has one.
-- **Run `make worktree`, `make db-up`, `pnpm add` and `make playwright-server` yourself.** The sandbox blocks them for the agents. One browser server serves every worktree, and agents then run `make e2e` themselves.
 - **Messages depend on the permission mode.** A session that bypasses permissions holds messages from other sessions for your approval, and drops them after five minutes. Start both agents in the same kind of mode, without `--dangerously-skip-permissions`.
 - **If both agents sit idle, nudge one:** "contact your peer and tell it where you are". The start-up handshake in the protocol covers either launch order, but it is an instruction to the agents, not a mechanism that enforces anything.
 - **Run `/list-agents` to see who a session can reach.** It also shows your unrelated projects: the protocol tells agents to talk only to their peer.
 - **To resume a pair**, use `make agent-back ARGS=--continue`. A plain `claude --resume` loses the role.
-- **The first launch in a new worktree asks you to trust the folder.**
+- **The first launch in a new worktree asks you to trust the folder.** With `make pair`, if a start fails on that, run `claude` once in the worktree, then run the command again.
 - **Each agent asks for permissions in its own terminal.** Keep an eye on both.
 - **Tokens:** two agents cost about twice as much as one, plus their messages. A pair pays off on a feature with real work on both sides. A small change is better done with `make agent`, or plain `claude`.
 - **Ownership is a guard against collisions, not a security boundary.** It relies on the `JOBINGO_ROLE` variable set by the launcher.
