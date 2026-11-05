@@ -11,7 +11,7 @@ The POC, `../my-job-processor`, is a read-only source. Copy code into this repos
 Small vertical steps. To adjust as we go:
 
 1. ~~Backend foundation~~ (done).
-2. Profile and CV editor, in both modes.
+2. ~~Profile and CV editor, in both modes~~ (done).
 3. `panneau-lateral` rendering and PDF preview.
 4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring.
 5. Offer intake and scoring.
@@ -31,7 +31,7 @@ Small vertical steps. To adjust as we go:
 Copying is not enough, and the POC's quality is not assumed. For each module:
 
 1. Read it and flag what is unclear, dead or overbuilt, such as unused columns or old prompt-version branches.
-2. Bring it up to this repository's checks (`ruff format`, which was not clean in the POC, and pyright).
+2. Bring it up to this repository's checks (`ruff format`, which was not clean in the POC, and pyright). Replace any real name in comments and test data with a fictional one: the POC was private, and this repository is public.
 3. Port its tests and make sure they pass here.
 4. Report what changed and what remains doubtful.
 
@@ -41,7 +41,7 @@ Client-server breaks these:
 
 - Tasks and proposals held in memory → persisted jobs and drafts, which survive a restart.
 - CV diff state in hidden form fields → a server-side draft with its own API.
-- Files in `data/profile/` → versioned rows per user. Markdown stays the CV's canonical format.
+- Files in `data/profile/` → versioned rows per user (`cv_versions`, done for the CV; objectives and style remain). Markdown stays the CV's canonical format.
 - Routes, Jinja templates, HTMX and polling → JSON API, Svelte client and SSE.
 
 ## Template scope

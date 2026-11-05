@@ -7,11 +7,13 @@ dependencies = ["jobingo-api"]
 
 [dependency-groups]
 dev = [
+    "grimp>=3",
     "httpx2>=2",
     "import-linter>=2.15",
     "pyright>=1.1.390",
     "pytest>=8.3",
     "ruff>=0.7",
+    "types-pyyaml>=6",
 ]
 
 [tool.uv.workspace]

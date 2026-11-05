@@ -56,10 +56,589 @@
           }
         }
       }
+    },
+    "/api/cv/{lang}": {
+      "get": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Get Cv",
+        "description": "The CV in both views. A CV never saved is an empty document, not an error.",
+        "operationId": "get_cv",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvDocument"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Save Cv",
+        "operationId": "save_cv",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The draft has a duplicate id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvRejected"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The stored CV changed since it was loaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvConflict"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/{lang}/convert": {
+      "post": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Convert Cv Draft",
+        "description": "Both views and the diagnostics of a draft, without storing anything.",
+        "operationId": "convert_cv_draft",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ConvertRequest": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/CvDraft"
+          }
+        },
+        "type": "object",
+        "required": [
+          "draft"
+        ],
+        "title": "ConvertRequest"
+      },
+      "CvConflict": {
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/CvDocument"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current"
+        ],
+        "title": "CvConflict"
+      },
+      "CvDiagnostic": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/DiagnosticCode"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ],
+            "title": "Level"
+          },
+          "line_no": {
+            "type": "integer",
+            "title": "Line No",
+            "description": "1-based line of the draft's text for a text draft, of the returned `text` otherwise. 0 means no line."
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "suggestion": {
+            "type": "string",
+            "title": "Suggestion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "level",
+          "line_no",
+          "section",
+          "message",
+          "suggestion"
+        ],
+        "title": "CvDiagnostic"
+      },
+      "CvDocument": {
+        "properties": {
+          "lang": {
+            "$ref": "#/components/schemas/CvLang"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/CvFields"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/CvDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lang",
+          "text",
+          "fields",
+          "diagnostics",
+          "sha256",
+          "version",
+          "updated_at"
+        ],
+        "title": "CvDocument"
+      },
+      "CvDraft": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TextDraft"
+          },
+          {
+            "$ref": "#/components/schemas/FormDraft"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "mode",
+          "mapping": {
+            "form": "#/components/schemas/FormDraft",
+            "text": "#/components/schemas/TextDraft"
+          }
+        }
+      },
+      "CvFields": {
+        "properties": {
+          "front": {
+            "type": "string",
+            "title": "Front",
+            "default": ""
+          },
+          "resume": {
+            "type": "string",
+            "title": "Resume",
+            "default": ""
+          },
+          "experiences": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceFields"
+            },
+            "type": "array",
+            "title": "Experiences",
+            "default": []
+          },
+          "formation": {
+            "items": {
+              "$ref": "#/components/schemas/FormationEntry"
+            },
+            "type": "array",
+            "title": "Formation",
+            "default": []
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skills",
+            "default": []
+          },
+          "hobbies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hobbies",
+            "default": []
+          },
+          "before": {
+            "type": "string",
+            "title": "Before",
+            "default": ""
+          },
+          "others": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Others",
+            "default": []
+          },
+          "order": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Order",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "front",
+          "resume",
+          "experiences",
+          "formation",
+          "skills",
+          "hobbies",
+          "before",
+          "others",
+          "order"
+        ],
+        "title": "CvFields"
+      },
+      "CvLang": {
+        "type": "string",
+        "const": "fr"
+      },
+      "CvRejected": {
+        "properties": {
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/CvDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "diagnostics"
+        ],
+        "title": "CvRejected"
+      },
+      "CvView": {
+        "properties": {
+          "lang": {
+            "$ref": "#/components/schemas/CvLang"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/CvFields"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/CvDiagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lang",
+          "text",
+          "fields",
+          "diagnostics"
+        ],
+        "title": "CvView"
+      },
+      "DiagnosticCode": {
+        "type": "string",
+        "enum": [
+          "duplicate_id",
+          "invalid_front_matter",
+          "unknown_section",
+          "unrecognized_line",
+          "heading_outside",
+          "orphan_bullet",
+          "title_line",
+          "outside_section",
+          "missing_title",
+          "invalid_tag",
+          "personal_email",
+          "personal_phone",
+          "personal_url"
+        ]
+      },
+      "ExperienceFields": {
+        "properties": {
+          "company": {
+            "type": "string",
+            "title": "Company",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": ""
+          },
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "default": ""
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "structured": {
+            "type": "boolean",
+            "title": "Structured",
+            "default": true
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          },
+          "bullets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Bullets",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "company",
+          "role",
+          "start",
+          "end",
+          "title",
+          "structured",
+          "tags",
+          "bullets"
+        ],
+        "title": "ExperienceFields"
+      },
+      "FormDraft": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "const": "form",
+            "title": "Mode"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/CvFields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "fields"
+        ],
+        "title": "FormDraft"
+      },
+      "FormationEntry": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "heading": {
+            "type": "boolean",
+            "title": "Heading",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "heading"
+        ],
+        "title": "FormationEntry"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
       "Health": {
         "properties": {
           "database": {
@@ -76,6 +655,49 @@
           "database"
         ],
         "title": "Health"
+      },
+      "SaveRequest": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/CvDraft"
+          },
+          "expected_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "draft",
+          "expected_sha256"
+        ],
+        "title": "SaveRequest"
+      },
+      "TextDraft": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "const": "text",
+            "title": "Mode"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "text"
+        ],
+        "title": "TextDraft"
       },
       "User": {
         "properties": {
@@ -94,6 +716,46 @@
           "username"
         ],
         "title": "User"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
       }
     }
   }

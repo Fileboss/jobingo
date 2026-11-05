@@ -38,10 +38,231 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cv/{lang}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cv
+         * @description The CV in both views. A CV never saved is an empty document, not an error.
+         */
+        get: operations["get_cv"];
+        /** Save Cv */
+        put: operations["save_cv"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/{lang}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert Cv Draft
+         * @description Both views and the diagnostics of a draft, without storing anything.
+         */
+        post: operations["convert_cv_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ConvertRequest */
+        ConvertRequest: {
+            draft: components["schemas"]["CvDraft"];
+        };
+        /** CvConflict */
+        CvConflict: {
+            current: components["schemas"]["CvDocument"];
+        };
+        /** CvDiagnostic */
+        CvDiagnostic: {
+            code: components["schemas"]["DiagnosticCode"];
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "error" | "warning" | "info";
+            /**
+             * Line No
+             * @description 1-based line of the draft's text for a text draft, of the returned `text` otherwise. 0 means no line.
+             */
+            line_no: number;
+            /** Section */
+            section: string | null;
+            /** Message */
+            message: string;
+            /** Suggestion */
+            suggestion: string;
+        };
+        /** CvDocument */
+        CvDocument: {
+            lang: components["schemas"]["CvLang"];
+            /** Text */
+            text: string;
+            fields: components["schemas"]["CvFields"];
+            /** Diagnostics */
+            diagnostics: components["schemas"]["CvDiagnostic"][];
+            /** Sha256 */
+            sha256: string | null;
+            /** Version */
+            version: number;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        CvDraft: components["schemas"]["TextDraft"] | components["schemas"]["FormDraft"];
+        /** CvFields */
+        CvFields: {
+            /**
+             * Front
+             * @default
+             */
+            front: string;
+            /**
+             * Resume
+             * @default
+             */
+            resume: string;
+            /**
+             * Experiences
+             * @default []
+             */
+            experiences: components["schemas"]["ExperienceFields"][];
+            /**
+             * Formation
+             * @default []
+             */
+            formation: components["schemas"]["FormationEntry"][];
+            /**
+             * Skills
+             * @default []
+             */
+            skills: string[];
+            /**
+             * Hobbies
+             * @default []
+             */
+            hobbies: string[];
+            /**
+             * Before
+             * @default
+             */
+            before: string;
+            /**
+             * Others
+             * @default []
+             */
+            others: string[];
+            /**
+             * Order
+             * @default []
+             */
+            order: string[];
+        };
+        /** @constant */
+        CvLang: "fr";
+        /** CvRejected */
+        CvRejected: {
+            /** Diagnostics */
+            diagnostics: components["schemas"]["CvDiagnostic"][];
+        };
+        /** CvView */
+        CvView: {
+            lang: components["schemas"]["CvLang"];
+            /** Text */
+            text: string;
+            fields: components["schemas"]["CvFields"];
+            /** Diagnostics */
+            diagnostics: components["schemas"]["CvDiagnostic"][];
+        };
+        /** @enum {string} */
+        DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
+        /** ExperienceFields */
+        ExperienceFields: {
+            /**
+             * Company
+             * @default
+             */
+            company: string;
+            /**
+             * Role
+             * @default
+             */
+            role: string;
+            /**
+             * Start
+             * @default
+             */
+            start: string;
+            /**
+             * End
+             * @default
+             */
+            end: string;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Structured
+             * @default true
+             */
+            structured: boolean;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            /**
+             * Bullets
+             * @default []
+             */
+            bullets: string[];
+        };
+        /** FormDraft */
+        FormDraft: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            mode: "form";
+            fields: components["schemas"]["CvFields"];
+        };
+        /** FormationEntry */
+        FormationEntry: {
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /**
+             * Heading
+             * @default false
+             */
+            heading: boolean;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** Health */
         Health: {
             /**
@@ -50,12 +271,41 @@ export interface components {
              */
             database: "ok" | "unavailable";
         };
+        /** SaveRequest */
+        SaveRequest: {
+            draft: components["schemas"]["CvDraft"];
+            /** Expected Sha256 */
+            expected_sha256: string | null;
+        };
+        /** TextDraft */
+        TextDraft: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            mode: "text";
+            /** Text */
+            text: string;
+        };
         /** User */
         User: {
             /** Id */
             id: number;
             /** Username */
             username: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -111,6 +361,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["User"];
+                };
+            };
+        };
+    };
+    get_cv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvDocument"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_cv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvDocument"];
+                };
+            };
+            /** @description The draft has a duplicate id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvRejected"];
+                };
+            };
+            /** @description The stored CV changed since it was loaded */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvConflict"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    convert_cv_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

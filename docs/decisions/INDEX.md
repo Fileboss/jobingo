@@ -18,3 +18,4 @@ Settled by the user. Follow them instead of asking again. Format and rules: `doc
 - [No database backup command for now](2026-11-05-no-db-backup-command.md): when considering backups of the development database
 - [Keep CLAUDE.md short](2026-11-05-keep-claude-md-short.md): when adding content to CLAUDE.md, or deciding where a new rule or guide belongs
 - [Record decisions and lessons in the repository](2026-11-05-record-decisions-and-lessons.md): when the user settles a choice, reports a bug or corrects how Claude worked
+- [The interface follows the "Classeur" direction](2026-11-05-visual-direction-classeur.md): when designing or restyling any client screen, or adding a design token or shared component

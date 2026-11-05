@@ -8,7 +8,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from jobingo.config import Settings
 from jobingo.db import connect, create_pool, migrate
 from jobingo.services.accounts import ensure_account
-from jobingo_api.routes import health, me
+from jobingo_api.routes import cv, health, me
 from jobingo_api.security import LocalRequestsOnlyMiddleware, SecurityHeadersMiddleware
 from jobingo_api.spa import SpaFiles
 
@@ -51,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
     app.include_router(me.router, prefix="/api")
+    app.include_router(cv.router, prefix="/api")
 
     # Absent in development, where the Vite dev server serves the client.
     if (settings.web_build_dir / "index.html").is_file():

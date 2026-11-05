@@ -1,3 +1,49 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/* The "Classeur" direction: bristol index cards, one colour per section, in blue ink. */
+@theme {
+	--font-sans: 'Ysabeau Variable', 'Avenir Next', 'Segoe UI', sans-serif;
+	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+	--color-ink: #1b2a8c;
+	--color-ink-deep: #121d63;
+	--color-ink-soft: #565e91;
+	--color-desk: #e6e8f1;
+	--color-paper: #ffffff;
+	--color-alert: #b3220f;
+
+	--color-bristol-yellow: #f8e78f;
+	--color-bristol-blue: #bfe4f4;
+	--color-bristol-green: #c7ecc4;
+	--color-bristol-salmon: #f9c6b3;
+	--color-bristol-lilac: #dcd0f2;
+	--color-bristol-grey: #eceef4;
+	--color-postit: #fff7b0;
+}
+
+@layer base {
+	body {
+		background: var(--color-desk);
+		color: var(--color-ink-deep);
+		font-family: var(--font-sans);
+		font-size: 1.0625rem;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-ink);
+		outline-offset: 2px;
+	}
+}
+
+/* A sheet of ruled paper: the text sits on the lines of its line height. */
+@utility ruled {
+	line-height: 2rem;
+	background-image: repeating-linear-gradient(
+		to bottom,
+		transparent 0 calc(2rem - 1px),
+		color-mix(in srgb, var(--color-ink) 30%, transparent) calc(2rem - 1px) 2rem
+	);
+	background-attachment: local;
+}

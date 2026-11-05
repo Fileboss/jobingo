@@ -24,10 +24,10 @@ paths:
 
 - `llm` never reaches identity, `services`, `connectors`, `hitl`, `render` or `api`.
 - Only `hitl.executor` imports the SMTP connector.
-- Code carrying model output cannot write the user's source CV. Only the profile editor can.
+- Code carrying model output cannot write the user's source CV. Only `services.cv_editor` can, and only the API's CV routes import it (`tests/test_architecture.py`).
 - Known name, e-mail and phone values are replaced by `[CANDIDAT]` before each model call. This is best effort, not a guarantee.
 
-The layer contracts are in `pyproject.toml`. Add the identity and SMTP contracts, and the source-CV test, when those modules land.
+The layer contracts are in `pyproject.toml`. Add the identity and SMTP contracts when those modules land.
 
 ## Local security without authentication
 
