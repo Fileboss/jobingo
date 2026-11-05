@@ -24,6 +24,8 @@ export default defineConfig({
 					'script-src': ['self'],
 					'style-src': ['self', 'unsafe-inline'],
 					'img-src': ['self', 'data:'],
+					// The CV preview: the real PDF, fetched then shown from a blob.
+					'frame-src': ['self', 'blob:'],
 					'object-src': ['none'],
 					'base-uri': ['self'],
 					'form-action': ['self']

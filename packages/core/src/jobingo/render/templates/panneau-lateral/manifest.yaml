@@ -1,0 +1,4 @@
+name: panneau-lateral
+langs: [fr]
+max_pages: 1
+options: [photo, panneau_competences, loisirs]

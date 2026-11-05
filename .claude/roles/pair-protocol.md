@@ -19,7 +19,7 @@ The user starts you in either order, so neither of you can assume the other is t
 2. **Publish the contract early.** The backend agent adds the routes and Pydantic schemas with stub handlers, runs `make api-types`, and tells the frontend agent the contract is ready. Neither of you waits for the other's implementation after this.
 3. **Build in parallel**, each in your own files.
 4. **Announce breaking changes before making them.** Any change to an agreed route or schema is sent to your peer first.
-5. **Integrate.** When both sides are done, run the real client against the real API and verify the flow together, then report to the user.
+5. **Integrate.** When both sides are done, run the real client against the real API and verify the flow together, then report to the user. Stop the servers and other background commands you started before ending your last turn: a session with one still running keeps showing as busy, and looks unfinished.
 
 ## Messages
 

@@ -1,5 +1,6 @@
 """The dependency rules are part of the product: they make the model's isolation structural."""
 
+import logging
 import re
 from pathlib import Path
 
@@ -13,6 +14,11 @@ _WRITES_CV = re.compile(r"(INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE)\s+cv_ver
 
 def test_import_contracts_hold():
     assert lint_imports() == 0
+    # It configures logging, which disables every logger already created: later tests
+    # checking what is logged would see nothing and pass for the wrong reason.
+    for logger in logging.Logger.manager.loggerDict.values():
+        if isinstance(logger, logging.Logger):
+            logger.disabled = False
 
 
 def test_only_the_cv_routes_can_write_the_source_cv():

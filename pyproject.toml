@@ -52,13 +52,14 @@ addopts = ["--import-mode=importlib"]
 root_packages = ["jobingo", "jobingo_api"]
 
 # The code path that calls the LLM must be structurally unable to reach the
-# candidate's identity or to send anything. Add `jobingo.domain.identity` here,
-# and an "only hitl.executor imports connectors.smtp" contract, when they land.
+# candidate's identity or to send anything. Add an "only hitl.executor imports
+# connectors.smtp" contract when it lands.
 [[tool.importlinter.contracts]]
-name = "llm never reaches services, connectors, hitl, render or the API"
+name = "llm never reaches identity, services, connectors, hitl, render or the API"
 type = "forbidden"
 source_modules = ["jobingo.llm"]
 forbidden_modules = [
+    "jobingo.domain.identity",
     "jobingo.services",
     "jobingo.connectors",
     "jobingo.hitl",

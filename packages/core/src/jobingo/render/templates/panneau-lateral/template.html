@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ doc_title }}</title>
+    {% if identity.name %}<meta name="author" content="{{ identity.name }}">{% endif %}
+</head>
+{#- Reading order, which is also the order of the extracted text: header, summary,
+    experience, education, then the side panel, or the linear skills and hobbies
+    sections. The panel comes *first* in the document so that it is laid out on the
+    first page whatever the length of the main column. It is absolutely positioned,
+    and WeasyPrint paints positioned boxes after the page's other content: on a
+    one-page CV its text still comes after the main column in the extracted text. -#}
+<body class="{{ 'with-panel' if options.panneau_competences else 'plain' }}">
+{% if options.panneau_competences %}
+<aside class="panel">
+    {% if photo_uri %}<img class="photo" src="{{ photo_uri }}" alt="">{% endif %}
+    {% if contact %}
+    <ul class="contact">
+        {% for value in contact %}<li>{{ value }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if selection.competences %}
+    <section>
+        <h2>{{ labels.competences }}</h2>
+        <ul>
+            {% for item in selection.competences %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% if options.loisirs and selection.loisirs %}
+    <section>
+        <h2>{{ labels.loisirs }}</h2>
+        <ul>
+            {% for item in selection.loisirs %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</aside>
+{% endif %}
+<main>
+    <header>
+        {% if not options.panneau_competences and photo_uri %}
+        <img class="photo photo-header" src="{{ photo_uri }}" alt="">
+        {% endif %}
+        <div class="identity">
+            {% if identity.name %}<h1>{{ identity.name }}</h1>{% endif %}
+            {% if selection.resume %}<p class="resume">{{ selection.resume.text }}</p>{% endif %}
+        </div>
+        {% if not options.panneau_competences and contact %}
+        <ul class="contact">
+            {% for value in contact %}<li>{{ value }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+    </header>
+
+    {% if selection.experiences %}
+    <section class="timeline">
+        <h2>{{ labels.experiences }}</h2>
+        {% for experience in selection.experiences %}
+        <article>
+            <h3>{{ experience.text }}</h3>
+            {% if experience.bullets %}
+            <ul>
+                {% for bullet in experience.bullets %}<li>{{ bullet.text }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if selection.formation %}
+    <section class="timeline">
+        <h2>{{ labels.formation }}</h2>
+        {% for item in selection.formation %}
+        <article><h3{% if not item.heading %} class="plain-title"{% endif %}>{{ item.text }}</h3></article>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if not options.panneau_competences %}
+    {% if selection.competences %}
+    <section>
+        <h2>{{ labels.competences }}</h2>
+        <ul class="tags">
+            {% for item in selection.competences %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% if options.loisirs and selection.loisirs %}
+    <section>
+        <h2>{{ labels.loisirs }}</h2>
+        <ul class="tags">
+            {% for item in selection.loisirs %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% endif %}
+</main>
+</body>
+</html>

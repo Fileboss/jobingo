@@ -64,6 +64,7 @@ class ProfileItem(BaseModel):
     tags: list[str] = []
     line_no: int
     parent_id: str | None = None
+    heading: bool = False  # written as a `###` line
 
 
 class ProfileError(BaseModel):
@@ -270,6 +271,7 @@ def parse_cv_markdown(text: str) -> Profile:
                 tags=[] if line.kind == "resume" else split_comment_tags(meta.get("tags")),
                 line_no=offset,
                 parent_id=ids_by_index.get(line.parent) if line.parent is not None else None,
+                heading=line.prefix == "### ",
             )
         )
 

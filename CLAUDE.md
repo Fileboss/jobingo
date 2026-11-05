@@ -12,7 +12,7 @@ It succeeds a Python POC, `../my-job-processor`. Before porting anything from it
 
 ## Status
 
-The foundation is in place: API, Postgres, migrations, the account created at startup, local protections, API contract, CI and Claude Code guardrails. The CV editor is in place, in French: `/api/cv/{lang}` (read, convert, save with a conflict check), the source CV stored as versioned rows and written only by `services/cv_editor.py`, and the client's form and text modes in the "Classeur" direction. Known gap: the text mode is a plain textarea, without the section colours the direction asks for, until CodeMirror is added. **No LLM code, template or eval exists yet: what this file says beyond that is the target, not the code.** Update this section as parts land.
+The foundation is in place: API, Postgres, migrations, the account created at startup, local protections, API contract, CI and Claude Code guardrails. The CV editor is in place, in French: `/api/cv/{lang}` (read, convert, save with a conflict check), the source CV stored as versioned rows and written only by `services/cv_editor.py`, and the client's form and text modes in the "Classeur" direction. Known gap: the text mode is a plain textarea, without the section colours the direction asks for, until CodeMirror is added. The CV page is in place: identity and photo stored apart from the CV (`/api/identity`), a persisted manual selection (`/api/cv/{lang}/selection`), and the real PDF of the `panneau-lateral` template (`/api/cv/{lang}/pdf`). **No LLM code or eval exists yet: what this file says beyond that is the target, not the code.** Update this section as parts land.
 
 ## Key features
 
@@ -30,7 +30,7 @@ Out of scope unless asked: hosting, SaaS features (billing, RLS, identity vault,
 ## Stack
 
 - **Client:** SvelteKit SPA, Svelte 5 runes, TypeScript, Tailwind 4, Vitest, Playwright. Planned: Bits UI, CodeMirror 6.
-- **Server:** FastAPI, Pydantic v2, Python 3.12+, uv workspace, ruff, pyright strict, pytest, import-linter. Planned: Procrastinate, SSE, Anthropic SDK behind an `LLMClient` interface, WeasyPrint (`brew install pango`).
+- **Server:** FastAPI, Pydantic v2, Python 3.12+, uv workspace, ruff, pyright strict, pytest, import-linter. WeasyPrint (`brew install pango`). Planned: Procrastinate, SSE, Anthropic SDK behind an `LLMClient` interface.
 - **Database:** PostgreSQL in Docker Compose, psycopg 3, explicit SQL, numbered migrations, no ORM.
 - **Contract:** FastAPI's OpenAPI generates the client's TypeScript types. A test and CI fail on drift.
 

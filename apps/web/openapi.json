@@ -225,6 +225,338 @@
           }
         }
       }
+    },
+    "/api/cv/{lang}/selection": {
+      "get": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Get Cv Page",
+        "description": "The CV with what is on the page. Never chosen means everything is.",
+        "operationId": "get_cv_page",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Save Cv Selection",
+        "operationId": "save_cv_selection",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionChoice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An option that cannot be on",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/{lang}/pdf": {
+      "get": {
+        "tags": [
+          "cv"
+        ],
+        "summary": "Get Cv Pdf",
+        "description": "The PDF of the stored selection.",
+        "operationId": "get_cv_pdf",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "X-Page-Count": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Missing-Items": {
+                "description": "Selected items cut from the PDF: a panel over its page",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The PDF could not be produced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Get Identity",
+        "description": "Never saved is all empty, not an error.",
+        "operationId": "get_identity",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityDocument"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Save Identity",
+        "operationId": "save_identity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Identity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityDocument"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/photo": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Get Photo",
+        "operationId": "get_photo",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No photo"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Save Photo",
+        "operationId": "save_photo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a usable JPEG or PNG",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "Delete Photo",
+        "operationId": "delete_photo",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityDocument"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -463,6 +795,102 @@
         "type": "string",
         "const": "fr"
       },
+      "CvOptions": {
+        "properties": {
+          "photo": {
+            "type": "boolean",
+            "title": "Photo"
+          },
+          "panneau_competences": {
+            "type": "boolean",
+            "title": "Panneau Competences"
+          },
+          "loisirs": {
+            "type": "boolean",
+            "title": "Loisirs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo",
+          "panneau_competences",
+          "loisirs"
+        ],
+        "title": "CvOptions"
+      },
+      "CvPage": {
+        "properties": {
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PageItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "experiences": {
+            "items": {
+              "$ref": "#/components/schemas/PageExperience"
+            },
+            "type": "array",
+            "title": "Experiences"
+          },
+          "formation": {
+            "items": {
+              "$ref": "#/components/schemas/PageFormation"
+            },
+            "type": "array",
+            "title": "Formation"
+          },
+          "competences": {
+            "items": {
+              "$ref": "#/components/schemas/PageItem"
+            },
+            "type": "array",
+            "title": "Competences"
+          },
+          "loisirs": {
+            "items": {
+              "$ref": "#/components/schemas/PageItem"
+            },
+            "type": "array",
+            "title": "Loisirs"
+          },
+          "excluded_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Ids"
+          },
+          "options": {
+            "$ref": "#/components/schemas/CvOptions"
+          },
+          "option_blockers": {
+            "$ref": "#/components/schemas/OptionBlockers"
+          },
+          "max_pages": {
+            "type": "integer",
+            "title": "Max Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resume",
+          "experiences",
+          "formation",
+          "competences",
+          "loisirs",
+          "excluded_ids",
+          "options",
+          "option_blockers",
+          "max_pages"
+        ],
+        "title": "CvPage",
+        "description": "The CV with what is on the page, for the selection screen."
+      },
       "CvRejected": {
         "properties": {
           "diagnostics": {
@@ -656,6 +1084,270 @@
         ],
         "title": "Health"
       },
+      "Identity": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Name",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Email",
+            "default": ""
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Phone",
+            "default": ""
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Address",
+            "default": ""
+          },
+          "linkedin": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Linkedin",
+            "default": ""
+          },
+          "github": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Github",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "address",
+          "linkedin",
+          "github"
+        ],
+        "title": "Identity"
+      },
+      "IdentityDocument": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Name",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Email",
+            "default": ""
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Phone",
+            "default": ""
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Address",
+            "default": ""
+          },
+          "linkedin": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Linkedin",
+            "default": ""
+          },
+          "github": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Github",
+            "default": ""
+          },
+          "has_photo": {
+            "type": "boolean",
+            "title": "Has Photo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "address",
+          "linkedin",
+          "github",
+          "has_photo"
+        ],
+        "title": "IdentityDocument"
+      },
+      "OptionBlockers": {
+        "properties": {
+          "photo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo"
+          },
+          "panneau_competences": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Panneau Competences"
+          },
+          "loisirs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loisirs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo",
+          "panneau_competences",
+          "loisirs"
+        ],
+        "title": "OptionBlockers",
+        "description": "Why each option cannot be on, in French for the screen. None when it can."
+      },
+      "PageExperience": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected"
+          },
+          "dates": {
+            "type": "string",
+            "title": "Dates"
+          },
+          "bullets": {
+            "items": {
+              "$ref": "#/components/schemas/PageItem"
+            },
+            "type": "array",
+            "title": "Bullets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "selected",
+          "dates",
+          "bullets"
+        ],
+        "title": "PageExperience"
+      },
+      "PageFormation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected"
+          },
+          "heading": {
+            "type": "boolean",
+            "title": "Heading"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "selected",
+          "heading"
+        ],
+        "title": "PageFormation"
+      },
+      "PageItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "selected"
+        ],
+        "title": "PageItem"
+      },
+      "PhotoUpload": {
+        "properties": {
+          "data_base64": {
+            "type": "string",
+            "title": "Data Base64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_base64"
+        ],
+        "title": "PhotoUpload"
+      },
+      "Refused": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "Refused",
+        "description": "A request refused for a reason the user can read, in French."
+      },
       "SaveRequest": {
         "properties": {
           "draft": {
@@ -679,6 +1371,26 @@
           "expected_sha256"
         ],
         "title": "SaveRequest"
+      },
+      "SelectionChoice": {
+        "properties": {
+          "excluded_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Ids"
+          },
+          "options": {
+            "$ref": "#/components/schemas/CvOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "excluded_ids",
+          "options"
+        ],
+        "title": "SelectionChoice"
       },
       "TextDraft": {
         "properties": {

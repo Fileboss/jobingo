@@ -12,7 +12,7 @@ Small vertical steps. To adjust as we go:
 
 1. ~~Backend foundation~~ (done).
 2. ~~Profile and CV editor, in both modes~~ (done).
-3. `panneau-lateral` rendering and PDF preview.
+3. ~~`panneau-lateral` rendering and PDF preview~~ (done).
 4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring.
 5. Offer intake and scoring.
 6. Application tracking and cover letters.
@@ -46,4 +46,10 @@ Client-server breaks these:
 
 ## Template scope
 
-Only `panneau-lateral`: one page, French format, experience timeline, with optional photo and optional right-hand panel. Keep its template and manifest options generic enough to allow others later.
+Only `panneau-lateral`: strictly one page, French format, experience timeline, with optional photo and optional right-hand panel. Keep its template and manifest options generic enough to allow others later.
+
+What step 3 left in the POC, for the step that needs it:
+
+- `domain/cv_selection.py`: everything serving the model (proposals, `validate_rewrite`, `short_ids`, the trail fields of `SelectedItem`) waits for step 4, as do the manifest's `sections` limits, and `domain/chronology.py`. This repository's `CvSelection` is built from the CV and the ids left out, in CV order.
+- `domain/colors.py` and the manifest's `colors`/`contrast`: no colour customization yet, so the stylesheet's `:root` is the one source of the defaults.
+- `render/cv.py`: the plain-text export. `render/pdf.py`: the page-fill measure, for filling the page. `render/verify.py`: the letter check. `Identity.signature`.

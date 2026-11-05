@@ -27,7 +27,15 @@ paths:
 - Code carrying model output cannot write the user's source CV. Only `services.cv_editor` can, and only the API's CV routes import it (`tests/test_architecture.py`).
 - Known name, e-mail and phone values are replaced by `[CANDIDAT]` before each model call. This is best effort, not a guarantee.
 
-The layer contracts are in `pyproject.toml`. Add the identity and SMTP contracts when those modules land.
+The layer contracts are in `pyproject.toml`. Add the SMTP contract when that module lands.
+
+## Rendering
+
+- Only `render/pdf.py` imports WeasyPrint: it fixes the library path on Apple Silicon. Its fetcher reads `data:` URIs and files under the template directory only.
+- Identity and photo reach `render_cv` as parameters, never in the selection. The photo is embedded only when its option is on. Nothing from a render goes in a log, not even an exception's message.
+- In the template's CSS: no `position: relative`, no hyphenation, no `text-transform`. The panel stays the first block of the document.
+- The panel is absolutely positioned, so what runs past its page is cut with no extra page. `verify_cv_pdf` is what detects it, and `X-Missing-Items` tells the client. Render tests skip without Pango: read `pytest -rs`.
+- The template embeds its font (Lato, `fonts/`), so the page count does not depend on the machine. `render_pdf` needs its `FontConfiguration` for that, and a test checks the PDF's fonts.
 
 ## Local security without authentication
 

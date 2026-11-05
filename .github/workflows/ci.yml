@@ -37,6 +37,8 @@ jobs:
           --health-retries 15
     steps:
       - uses: actions/checkout@v5
+      - name: Install Pango (WeasyPrint)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -45,6 +47,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run lint-imports
       - run: uv run pyright
+      # -rs lists skips: the render tests skip when Pango is missing.
       - run: uv run pytest -q -rs
       - name: Claude Code guardrails
         run: uv run python scripts/check_guardrails.py

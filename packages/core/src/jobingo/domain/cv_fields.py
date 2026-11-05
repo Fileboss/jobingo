@@ -159,6 +159,16 @@ def _decompose(title: str) -> ExperienceFields:
     return ExperienceFields(title=title, structured=False)
 
 
+def split_title(title: str) -> tuple[str, str]:
+    """(the title without its dates, the dates), the dates being what the form's own
+    fields would hold. A title the form keeps as one free field has none."""
+    fields = _decompose(title)
+    if not fields.structured:
+        return title, ""
+    dates = " – ".join(part for part in (fields.start, fields.end) if part)
+    return " — ".join(part for part in (fields.company, fields.role) if part), dates
+
+
 def _bullets(lines: list[str]) -> list[str] | None:
     """The text of each bullet, None if a line is not a plain top-level bullet."""
     texts: list[str] = []

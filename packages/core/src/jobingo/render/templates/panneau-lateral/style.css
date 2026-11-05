@@ -1,0 +1,244 @@
+/* Title block and a main column with a vertical timeline, and an optional dark panel
+   on the right for the photo, the contact details, the skills and the hobbies. Real
+   text, no table, no icon font and a linear reading order: the panel is the first block
+   of the document, so it stays on the first page, but absolutely positioned, and
+   WeasyPrint paints positioned boxes last, so its text comes after the main column in
+   extraction. `hyphens: none` and no `text-transform` keep the post-render check honest.
+
+   The font ships with the template (Lato, SIL Open Font License, see fonts/OFL.txt), so
+   line breaks and the page count do not depend on the machine. The generic family only
+   covers characters outside the Latin subset. */
+
+@font-face {
+    font-family: "Lato";
+    font-weight: 400;
+    src: url("fonts/lato-latin-400-normal.woff") format("woff");
+}
+
+@font-face {
+    font-family: "Lato";
+    font-weight: 700;
+    src: url("fonts/lato-latin-700-normal.woff") format("woff");
+}
+
+:root {
+    --accent: #3a9d23;
+    --encre: #111111;
+    --muted: #666666;
+    --panneau: #333333;
+    --panel-width: 62mm;
+}
+
+@page {
+    size: A4;
+    margin: 9mm 0 8mm 0;
+}
+
+/* The panel's background must run the full height of every page, margins
+   included, so it is painted on the page box rather than on the element. */
+@page panel {
+    margin: 9mm 0 8mm 0;
+    background: linear-gradient(
+        to right,
+        #ffffff 0,
+        #ffffff calc(100% - 62mm),
+        var(--panneau) calc(100% - 62mm),
+        var(--panneau) 100%
+    );
+}
+
+body {
+    font-family: "Lato", sans-serif;
+    font-size: 9.2pt;
+    line-height: 1.3;
+    color: var(--muted);
+    margin: 0;
+    hyphens: none;
+}
+
+body.with-panel {
+    page: panel;
+}
+
+main {
+    padding: 0 8mm 0 14mm;
+}
+
+body.with-panel main {
+    margin-right: var(--panel-width);
+    padding-right: 8mm;
+}
+
+/* Title block */
+h1 {
+    font-size: 17pt;
+    font-weight: 400;
+    color: var(--encre);
+    margin: 0 0 1mm;
+}
+
+header {
+    margin-bottom: 4mm;
+    display: flow-root;
+}
+
+p.resume {
+    margin: 2mm 0 0;
+    text-align: justify;
+    color: var(--muted);
+}
+
+header .photo-header {
+    float: right;
+    width: 24mm;
+    height: 30mm;
+    object-fit: cover;
+    margin: 0 0 2mm 5mm;
+}
+
+ul.contact {
+    list-style: none;
+    margin: 2mm 0 0;
+    padding: 0;
+    font-size: 9pt;
+}
+
+ul.contact li {
+    display: inline;
+}
+
+ul.contact li + li::before {
+    content: " · ";
+}
+
+/* Main column */
+main section {
+    margin-bottom: 3mm;
+}
+
+main h2 {
+    font-size: 12.5pt;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 2.5mm;
+}
+
+/* No `position: relative` here: WeasyPrint paints positioned boxes after the
+   rest, which would move every article's text after the headings in the PDF's
+   own text stream and break the reading order the post-render check reads. */
+section.timeline article {
+    border-left: 1.6pt solid var(--encre);
+    padding: 0 0 2.6mm 4.5mm;
+    break-inside: avoid;
+}
+
+section.timeline h3::before {
+    content: "";
+    display: inline-block;
+    width: 5.6pt;
+    height: 5.6pt;
+    border-radius: 50%;
+    background: var(--encre);
+    margin-left: -16.4pt;
+    margin-right: 10.8pt;
+}
+
+h3 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--encre);
+    margin: 0 0 1.2mm;
+}
+
+/* Education lines are one string (degree, school, years): regular weight, so
+   a whole line is not shouted the way an experience title is. */
+h3.plain-title {
+    margin: 0;
+    font-weight: 400;
+    color: var(--encre);
+}
+
+main ul {
+    margin: 0;
+    padding-left: 4.5mm;
+}
+
+main section.timeline ul {
+    list-style: "•  "; /* In Lato, unlike the square marker. */
+}
+
+main li {
+    margin-bottom: 0.6mm;
+}
+
+ul.tags {
+    list-style: none;
+    padding: 0;
+}
+
+ul.tags li {
+    display: inline;
+    margin: 0;
+}
+
+ul.tags li + li::before {
+    content: " · ";
+}
+
+/* Side panel: the first block of the document, taken out of the flow and
+   pinned to the right edge of the first page. */
+aside.panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--panel-width);
+    box-sizing: border-box;
+    padding: 0 7mm 0 7mm;
+    color: #f2f2f2;
+    font-size: 9pt;
+}
+
+aside.panel .photo {
+    display: block;
+    width: 100%;
+    height: 50mm;
+    object-fit: cover;
+    margin: 0 0 6mm;
+}
+
+aside.panel ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+aside.panel li {
+    margin-bottom: 1.6mm;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+}
+
+/* A hairline under the contact block separates it from the skills below. */
+aside.panel ul.contact {
+    margin-bottom: 0;
+    padding-bottom: 5mm;
+    border-bottom: 0.6pt solid #888888;
+    font-size: 8.8pt;
+    font-weight: 400;
+}
+
+aside.panel ul.contact li {
+    display: block;
+    font-weight: 400;
+}
+
+aside.panel ul.contact li + li::before {
+    content: none;
+}
+
+aside.panel h2 {
+    font-size: 11pt;
+    font-weight: 400;
+    color: #cccccc;
+    margin: 6mm 0 2.5mm;
+}

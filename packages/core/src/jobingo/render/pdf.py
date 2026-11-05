@@ -1,0 +1,106 @@
+"""WeasyPrint behind one function, plus the macOS library-path fix it needs.
+
+WeasyPrint loads Pango, HarfBuzz and fontconfig through `dlopen` by leaf name
+(`libgobject-2.0.0.dylib`). On macOS, dyld searches `DYLD_FALLBACK_LIBRARY_PATH`,
+whose default (`/usr/local/lib:/usr/lib`) does not include Homebrew's prefix on
+Apple Silicon, so `import weasyprint` fails on an otherwise correct
+`brew install pango`. `ctypes.util.find_library` reads that variable when it is
+called rather than at process start, so setting it before the first import is
+enough, which is why every import of WeasyPrint has to come through here.
+"""
+
+import logging
+import os
+import platform
+import sys
+from importlib import import_module
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlsplit
+from urllib.request import url2pathname
+
+_HOMEBREW_LIB_DIRS = ("/opt/homebrew/lib", "/usr/local/lib")
+
+
+class PdfEngineUnavailable(Exception):
+    """WeasyPrint's system libraries (Pango and friends) are not installed."""
+
+
+class ResourceRefused(ValueError):
+    """A document asked for a resource outside its template directory."""
+
+
+def _prepare_macos_library_path() -> None:
+    if platform.system() != "Darwin":
+        return
+    existing = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+    parts = [part for part in existing.split(":") if part]
+    for lib_dir in _HOMEBREW_LIB_DIRS:
+        if lib_dir not in parts and Path(lib_dir).is_dir():
+            parts.append(lib_dir)
+    if parts:
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = ":".join(parts)
+
+
+def _weasyprint() -> Any:
+    if "weasyprint" not in sys.modules:
+        _prepare_macos_library_path()
+    try:
+        module = import_module("weasyprint")
+    except OSError as error:  # depends on the host's libraries
+        raise PdfEngineUnavailable(
+            "WeasyPrint ne trouve pas ses bibliothèques système (Pango). "
+            "Installez-les : `brew install pango` sur macOS, "
+            "`apt install libpango-1.0-0 libpangoft2-1.0-0` sur Debian/Ubuntu."
+        ) from error
+    # Its messages quote what it could not read, which can be the document's content.
+    logging.getLogger("weasyprint").propagate = False
+    return module
+
+
+def _local_fetcher(root: Path) -> Any:
+    """A fetcher that reads `data:` URIs and files under `root`, and nothing else.
+
+    WeasyPrint's default fetches any URL, and the documents will carry model output: a
+    slot holding an image link would make a render send text to that host. Template
+    assets still resolve; the network and the rest of the disk do not.
+    """
+    urls: Any = import_module("weasyprint.urls")  # after `_weasyprint()`: see the module doc
+    root = root.resolve()
+
+    class LocalOnlyFetcher(urls.URLFetcher):
+        def fetch(self, url: str, headers: Any = None) -> Any:
+            parts = urlsplit(url)
+            if parts.scheme.lower() == "file":
+                path = Path(url2pathname(parts.path)).resolve()
+                if parts.netloc not in ("", "localhost") or not path.is_relative_to(root):
+                    raise ResourceRefused(f"resource outside the template refused: {url}")
+            return urls.URLFetcher.fetch(self, url, headers)
+
+    return LocalOnlyFetcher(allowed_protocols=("data", "file"))
+
+
+def render_pdf(html: str, css: str, base_url: Path) -> tuple[bytes, int]:
+    """One HTML document with one stylesheet, as PDF bytes and a page count.
+
+    `base_url` is the template's own directory, so that an asset referenced relatively
+    resolves inside the template and nowhere else.
+    """
+    weasyprint = _weasyprint()
+    fetcher = _local_fetcher(base_url)
+    # Without it, WeasyPrint ignores the stylesheet's `@font-face` rules without a word.
+    font_config = import_module("weasyprint.text.fonts").FontConfiguration()
+    document = weasyprint.HTML(string=html, base_url=str(base_url), url_fetcher=fetcher)
+    stylesheet = weasyprint.CSS(
+        string=css, base_url=str(base_url), url_fetcher=fetcher, font_config=font_config
+    )
+    rendered = document.render(stylesheets=[stylesheet], font_config=font_config)
+    return rendered.write_pdf(), len(rendered.pages)
+
+
+def engine_available() -> bool:
+    try:
+        _weasyprint()
+    except PdfEngineUnavailable:
+        return False
+    return True

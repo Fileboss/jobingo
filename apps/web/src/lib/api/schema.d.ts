@@ -79,6 +79,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cv/{lang}/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cv Page
+         * @description The CV with what is on the page. Never chosen means everything is.
+         */
+        get: operations["get_cv_page"];
+        /** Save Cv Selection */
+        put: operations["save_cv_selection"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/{lang}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cv Pdf
+         * @description The PDF of the stored selection.
+         */
+        get: operations["get_cv_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/identity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Identity
+         * @description Never saved is all empty, not an error.
+         */
+        get: operations["get_identity"];
+        /** Save Identity */
+        put: operations["save_identity"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/identity/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Photo */
+        get: operations["get_photo"];
+        /** Save Photo */
+        put: operations["save_photo"];
+        post?: never;
+        /** Delete Photo */
+        delete: operations["delete_photo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -177,6 +258,36 @@ export interface components {
         };
         /** @constant */
         CvLang: "fr";
+        /** CvOptions */
+        CvOptions: {
+            /** Photo */
+            photo: boolean;
+            /** Panneau Competences */
+            panneau_competences: boolean;
+            /** Loisirs */
+            loisirs: boolean;
+        };
+        /**
+         * CvPage
+         * @description The CV with what is on the page, for the selection screen.
+         */
+        CvPage: {
+            resume: components["schemas"]["PageItem"] | null;
+            /** Experiences */
+            experiences: components["schemas"]["PageExperience"][];
+            /** Formation */
+            formation: components["schemas"]["PageFormation"][];
+            /** Competences */
+            competences: components["schemas"]["PageItem"][];
+            /** Loisirs */
+            loisirs: components["schemas"]["PageItem"][];
+            /** Excluded Ids */
+            excluded_ids: string[];
+            options: components["schemas"]["CvOptions"];
+            option_blockers: components["schemas"]["OptionBlockers"];
+            /** Max Pages */
+            max_pages: number;
+        };
         /** CvRejected */
         CvRejected: {
             /** Diagnostics */
@@ -271,11 +382,143 @@ export interface components {
              */
             database: "ok" | "unavailable";
         };
+        /** Identity */
+        Identity: {
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+            /**
+             * Linkedin
+             * @default
+             */
+            linkedin: string;
+            /**
+             * Github
+             * @default
+             */
+            github: string;
+        };
+        /** IdentityDocument */
+        IdentityDocument: {
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+            /**
+             * Linkedin
+             * @default
+             */
+            linkedin: string;
+            /**
+             * Github
+             * @default
+             */
+            github: string;
+            /** Has Photo */
+            has_photo: boolean;
+        };
+        /**
+         * OptionBlockers
+         * @description Why each option cannot be on, in French for the screen. None when it can.
+         */
+        OptionBlockers: {
+            /** Photo */
+            photo: string | null;
+            /** Panneau Competences */
+            panneau_competences: string | null;
+            /** Loisirs */
+            loisirs: string | null;
+        };
+        /** PageExperience */
+        PageExperience: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Selected */
+            selected: boolean;
+            /** Dates */
+            dates: string;
+            /** Bullets */
+            bullets: components["schemas"]["PageItem"][];
+        };
+        /** PageFormation */
+        PageFormation: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Selected */
+            selected: boolean;
+            /** Heading */
+            heading: boolean;
+        };
+        /** PageItem */
+        PageItem: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /** Selected */
+            selected: boolean;
+        };
+        /** PhotoUpload */
+        PhotoUpload: {
+            /** Data Base64 */
+            data_base64: string;
+        };
+        /**
+         * Refused
+         * @description A request refused for a reason the user can read, in French.
+         */
+        Refused: {
+            /** Message */
+            message: string;
+        };
         /** SaveRequest */
         SaveRequest: {
             draft: components["schemas"]["CvDraft"];
             /** Expected Sha256 */
             expected_sha256: string | null;
+        };
+        /** SelectionChoice */
+        SelectionChoice: {
+            /** Excluded Ids */
+            excluded_ids: string[];
+            options: components["schemas"]["CvOptions"];
         };
         /** TextDraft */
         TextDraft: {
@@ -480,6 +723,267 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cv_page: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_cv_selection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SelectionChoice"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CvPage"];
+                };
+            };
+            /** @description An option that cannot be on */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cv_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    "X-Page-Count"?: number;
+                    /** @description Selected items cut from the PDF: a panel over its page */
+                    "X-Missing-Items"?: number;
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The PDF could not be produced */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_identity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityDocument"];
+                };
+            };
+        };
+    };
+    save_identity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Identity"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityDocument"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+            /** @description No photo */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    save_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhotoUpload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityDocument"];
+                };
+            };
+            /** @description Not a usable JPEG or PNG */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityDocument"];
                 };
             };
         };
