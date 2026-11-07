@@ -85,7 +85,7 @@ Hosting and SaaS features (billing, OAuth, a template gallery) are out of scope.
 ```text
 apps/web/        SvelteKit client
 apps/api/        FastAPI: JSON routes, security middleware, serves the built client
-packages/core/   config, db, migrations; domain, services, render (llm, hitl and connectors to come)
+packages/core/   config, db, migrations; domain, services, llm, render (hitl and connectors to come)
 tests/           backend tests, against a real Postgres
 docs/            guides, decisions and lessons
 ```

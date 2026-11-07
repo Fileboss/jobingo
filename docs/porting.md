@@ -13,7 +13,11 @@ Small vertical steps. To adjust as we go:
 1. ~~Backend foundation~~ (done).
 2. ~~Profile and CV editor, in both modes~~ (done).
 3. ~~`panneau-lateral` rendering and PDF preview~~ (done).
-4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring.
+4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring. In four steps:
+   1. ~~LLM layer: client interface, Anthropic client, fake client, call journal (`llm_calls`), costs, budget caps, redaction~~ (done).
+   2. Application log, and the observability page's Usage, Calls and Logs tabs, on the journal.
+   3. `select_cv_content`: its prompts, the eval harness and suite, and the Evals tab.
+   4. Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen.
 5. Offer intake and scoring.
 6. Application tracking and cover letters.
 7. Mail, drafted replies and approval queue.
@@ -49,6 +53,8 @@ Client-server breaks these:
 Only `panneau-lateral`: strictly one page, French format, experience timeline, with optional photo and optional right-hand panel. Keep its template and manifest options generic enough to allow others later.
 
 What step 3 left in the POC, for the step that needs it:
+
+What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task` (for 4.4, the CV proposal only), the 90-day purge of prompts and answers (for 4.2), and `RedactingFilter` with the log's handlers (for 4.2).
 
 - `domain/cv_selection.py`: everything serving the model (proposals, `validate_rewrite`, `short_ids`, the trail fields of `SelectedItem`) waits for step 4, as do the manifest's `sections` limits, and `domain/chronology.py`. This repository's `CvSelection` is built from the CV and the ids left out, in CV order.
 - `domain/colors.py` and the manifest's `colors`/`contrast`: no colour customization yet, so the stylesheet's `:root` is the one source of the defaults.

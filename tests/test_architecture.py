@@ -36,3 +36,19 @@ def test_only_the_cv_routes_can_write_the_source_cv():
         if _WRITES_CV.search(path.read_text(encoding="utf-8"))
     ]
     assert writers == ["cv_editor.py"]
+
+
+def test_the_model_is_only_reached_through_the_journal():
+    """Services call `llm.journal.run_task`, which redacts, checks the budget and journals
+    every call. Only the factory builds the real client, and only the client and the
+    factory import the SDK."""
+    graph = grimp.build_graph("jobingo", "jobingo_api", "anthropic")
+    assert graph.find_modules_that_directly_import("jobingo.llm.anthropic_client") == {
+        "jobingo.llm.factory"
+    }
+    sdk_importers = {
+        module
+        for module in graph.find_modules_that_directly_import("anthropic")
+        if module.startswith("jobingo")
+    }
+    assert sdk_importers <= {"jobingo.llm.anthropic_client", "jobingo.llm.factory"}

@@ -26,6 +26,14 @@ paths:
 - Only `hitl.executor` imports the SMTP connector.
 - Code carrying model output cannot write the user's source CV. Only `services.cv_editor` can, and only the API's CV routes import it (`tests/test_architecture.py`).
 - Known name, e-mail and phone values are replaced by `[CANDIDAT]` before each model call. This is best effort, not a guarantee.
+- Services call the model only through `llm.journal.run_task`, passing `redaction_values` from `services.identity`. Only `llm.factory` builds the real client, and a test checks it.
+
+## Model calls
+
+- Every call is journalled in `llm_calls`, failed ones with what they cost, and whatever derives from a call stores its `llm_call_id`. Log events carry ids and counts, never a prompt or an answer.
+- Costs come from `llm/pricing.py`, USD per million tokens. A model without a price is refused, since it would make every cost and cap wrong.
+- Untrusted text in a task input is `UntrustedText`, or goes through the `xml` filter: `<` and `>` are escaped. Templates render with `StrictUndefined`.
+- Strict structured output forbids free-form mappings: a `dict` field travels as a list of pairs through `Task.schema_model`.
 
 The layer contracts are in `pyproject.toml`. Add the SMTP contract when that module lands.
 

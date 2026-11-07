@@ -17,6 +17,16 @@ def load_identity(conn: Conn, user_id: int) -> Identity:
     return Identity.model_validate(row) if row else Identity()
 
 
+def redaction_values(conn: Conn, user_id: int) -> list[str]:
+    """The values to replace with `[CANDIDAT]` in everything sent to the model.
+
+    `llm` cannot import identity, so redaction is decided here, above it, and handed
+    down as opaque strings that `llm.journal.run_task` requires.
+    """
+    identity = load_identity(conn, user_id)
+    return [value for value in (identity.name, identity.email, identity.phone) if value]
+
+
 def save_identity(conn: Conn, user_id: int, identity: Identity) -> None:
     conn.execute(
         """
