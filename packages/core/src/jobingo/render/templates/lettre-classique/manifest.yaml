@@ -1,0 +1,8 @@
+name: lettre-classique
+langs: [fr]
+max_pages: 1
+# What the model writes. The rest of the letter belongs to the template.
+slots:
+  - {name: accroche, max_words: 60}
+  - {name: adequation, max_words: 140, sources: [realisations]}
+  - {name: motivation, max_words: 100, sources: [offre, notes_entreprise]}

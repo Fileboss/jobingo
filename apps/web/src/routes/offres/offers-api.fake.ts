@@ -149,7 +149,7 @@ export class FakeOffersApi {
 			const id = Number(route.request().url().split('/').at(-1));
 			const found = this.offers.find((o) => o.id === id);
 			if (!found) return route.fulfill({ status: 404, json: { detail: 'Offre introuvable' } });
-			return route.fulfill({ json: { ...found, drafts: [] } });
+			return route.fulfill({ json: { ...found, drafts: [], application_id: null } });
 		});
 		await page.route(/\/api\/offers\/\d+\/cv-drafts\/fr$/, (route) => {
 			this.adaptRequests += 1;

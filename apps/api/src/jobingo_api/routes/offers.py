@@ -8,7 +8,7 @@ from jobingo.domain.cv_document import CvLang
 from jobingo.domain.cv_draft import DraftSummary, DraftView
 from jobingo.domain.offers import IntakeResult, OfferDecision, OfferIntake
 from jobingo.domain.scoring import ScoredOffer, ScoringRun
-from jobingo.services import cv_drafts, offer_intake, offers, scoring
+from jobingo.services import applications, cv_drafts, offer_intake, offers, scoring
 from jobingo.services.cv_proposal import NothingToTailorError, PersonalDataInCvError
 from jobingo_api.deps import CurrentUser, DbConn, LlmBudget, LlmClient
 from jobingo_api.llm_errors import LLM_RESPONSES, llm_refusal, not_configured, refused
@@ -22,6 +22,8 @@ _NOT_FOUND = "Offre introuvable"
 class OfferPage(ScoredOffer):
     # The CVs adapted to this offer, newest first.
     drafts: list[DraftSummary]
+    # Its application, if the user applied.
+    application_id: int | None
 
 
 class DecisionBody(BaseModel):
@@ -97,7 +99,11 @@ def rescore_stale_offers(
 def get_offer(offer_id: int, user: CurrentUser, conn: DbConn) -> OfferPage:
     scored = _scored(conn, user.id, offer_id)
     drafts = cv_drafts.list_drafts(conn, user.id, offer_id=offer_id)
-    return OfferPage(**scored.model_dump(), drafts=drafts)
+    return OfferPage(
+        **scored.model_dump(),
+        drafts=drafts,
+        application_id=applications.application_for_offer(conn, user.id, offer_id),
+    )
 
 
 @router.post(

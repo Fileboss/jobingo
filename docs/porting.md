@@ -22,7 +22,9 @@ Small vertical steps. To adjust as we go:
    1. ~~Offer intake: pasted text, `extract_offer`, the `offers` table with merging, the Offers screens, its eval suite, adapting the CV from an offer~~ (done).
    2. ~~The objectives: hard filters, weights and preferences, with their editor~~ (done).
    3. ~~Scoring: hard filters in code, `score_offer` per criterion, the global score in code, its eval suite~~ (done).
-6. Application tracking and cover letters.
+6. ~~Application tracking and cover letters~~ (done). In two steps:
+   1. ~~Applications: created from an offer or by hand, a timeline of events, the status derived from it, follow-ups, contact, soft delete~~ (done).
+   2. ~~Cover letters: a letter template, `draft_letter`, code checks per slot, a review screen, the PDF, its eval suite~~ (done).
 7. Mail, drafted replies and approval queue.
 8. Demo: fictional seed, screenshots, README.
 
@@ -58,6 +60,21 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 6.2 changed or left:
+
+- One letter template, `lettre-classique`, shipped with the code like the CV template: a manifest declaring the slots, an HTML body and a stylesheet with the same embedded font. The POC's user-editable Markdown templates and their parser are not ported, nor markdown-it.
+- `draft_letter` ships as v4: the POC's v3 without the page-overflow retry and the single-slot regeneration, which this app does not offer yet. Its 6 fictional cases are ported. Measured on 2026-11-07: 6/6 letters with no refused slot, 0.067 $ for the run. The system part carries the offer and the notes, so it changes from one application to the next: every case paid a cache write and none read it. A cache only pays here when one application gets several letters.
+- The POC's checks hold: a slot over its word limit, with a figure absent from its declared sources, or with a forbidden phrase is refused and comes back empty, the proposal and the reason beside it; an added proper noun is flagged. The user may write or adopt anything: the download is blocked only by an empty slot, one over its limit, or a second page.
+- Company notes are a field of the application, a source of the `motivation` slot. The letter draws on the CV adapted to the offer when there is one, else on the whole CV.
+- No archive of sent documents with their SHA-256 yet: it comes with sending, at step 7.
+
+What step 6.1 changed or left:
+
+- `domain/applications.py` keeps the POC's rules: the status is derived from the events in date order, a message never takes an application back from the interview nor reopens a closed one, a follow-up is due a week after sending if nothing happened, deleting only hides. One live application per offer is a unique index.
+- No `companies` table, no company preference or slug yet: the company is a name on the application. Company notes, which the letter uses as a source, come with step 6.2.
+- Follow-ups are computed and shown, not written as events; the POC's `ensure_follow_ups` and its scheduler are not ported.
+- Mail events (`message_id`, moving events between applications) come with step 7.
 
 What step 5.3 changed or left:
 

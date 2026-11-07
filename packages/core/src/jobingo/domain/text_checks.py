@@ -46,3 +46,7 @@ def unsourced_proper_nouns(text: str, source: str) -> list[str]:
         if fold(noun) not in known and noun not in unsourced:
             unsourced.append(noun)
     return unsourced
+
+
+def count_words(text: str) -> int:
+    return len(_WORD_RE.findall(text))

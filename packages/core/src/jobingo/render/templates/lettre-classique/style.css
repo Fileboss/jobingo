@@ -1,0 +1,63 @@
+/* A one-page French cover letter. Same embedded font as the CV, so the page count
+   does not depend on the machine, and no hyphenation or text-transform, so the text
+   extracted from the PDF is the text written. */
+
+@font-face {
+    font-family: "Lato";
+    font-weight: 400;
+    src: url("fonts/lato-latin-400-normal.woff") format("woff");
+}
+
+@font-face {
+    font-family: "Lato";
+    font-weight: 700;
+    src: url("fonts/lato-latin-700-normal.woff") format("woff");
+}
+
+@page {
+    size: A4;
+    margin: 22mm 24mm 20mm 24mm;
+}
+
+body {
+    font-family: "Lato", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #111111;
+    hyphens: none;
+}
+
+p {
+    margin: 0 0 3.2mm 0;
+    text-align: justify;
+}
+
+.sender p {
+    margin: 0;
+    text-align: left;
+}
+
+.sender .name,
+.subject,
+.signature {
+    font-weight: 700;
+}
+
+.date,
+.recipient {
+    text-align: right;
+}
+
+.date {
+    margin-top: 10mm;
+}
+
+.subject {
+    margin: 8mm 0 6mm 0;
+    text-align: left;
+}
+
+.signature {
+    margin-top: 8mm;
+    text-align: right;
+}

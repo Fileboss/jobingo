@@ -12,9 +12,10 @@
 		{ href: resolve('/offres'), label: 'Offres' },
 		{ href: resolve('/objectifs'), label: 'Objectifs' },
 		{ href: resolve('/adapter'), label: 'Adapter' },
+		{ href: resolve('/candidatures'), label: 'Candidatures' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
-	const upcoming = ['Candidatures', 'Courrier'];
+	const upcoming = ['Courrier'];
 </script>
 
 <div class="flex min-h-dvh flex-col">
@@ -27,7 +28,12 @@
 						<a
 							href={screen.href}
 							aria-current={page.url.pathname === screen.href ||
-							([resolve('/suivi'), resolve('/adapter'), resolve('/offres')].includes(screen.href) &&
+							([
+								resolve('/suivi'),
+								resolve('/adapter'),
+								resolve('/offres'),
+								resolve('/candidatures')
+							].includes(screen.href) &&
 								page.url.pathname.startsWith(screen.href + '/'))
 								? 'page'
 								: undefined}

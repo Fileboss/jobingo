@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+</head>
+<body>
+<header class="sender">
+{% if identity.name %}<p class="name">{{ identity.name }}</p>{% endif %}
+{% if identity.address %}<p>{{ identity.address }}</p>{% endif %}
+{% if identity.email or identity.phone %}<p>{{ identity.email }}{% if identity.email and identity.phone %} · {% endif %}{{ identity.phone }}</p>{% endif %}
+</header>
+
+<p class="date">{{ date }}</p>
+{% if recipient %}<p class="recipient">{{ recipient }}</p>{% endif %}
+
+<p class="subject">Objet : candidature — {{ offer_title }}</p>
+
+<p>Madame, Monsieur,</p>
+
+{% for paragraph in slots.accroche %}<p>{{ paragraph }}</p>
+{% endfor %}
+{% for paragraph in slots.adequation %}<p>{{ paragraph }}</p>
+{% endfor %}
+{% for paragraph in slots.motivation %}<p>{{ paragraph }}</p>
+{% endfor %}
+
+<p>Dans l’attente de vous rencontrer, je vous prie d’agréer, Madame, Monsieur, l’expression de mes salutations distinguées.</p>
+
+{% if identity.name %}<p class="signature">{{ identity.name }}</p>{% endif %}
+</body>
+</html>

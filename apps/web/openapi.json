@@ -1692,6 +1692,713 @@
           }
         }
       }
+    },
+    "/api/applications": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "List Applications",
+        "description": "Newest first, each with its status derived from its events.",
+        "operationId": "list_applications",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Applications"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Create Application",
+        "description": "An application with no stored offer: a spontaneous one, or a referral.",
+        "operationId": "create_application",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewApplication"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offers/{offer_id}/application": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Apply To Offer",
+        "description": "The offer's application, created on the first call. Applying keeps the offer.",
+        "operationId": "apply_to_offer",
+        "parameters": [
+          {
+            "name": "offer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Offer Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such offer"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Get Application",
+        "operationId": "get_application",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Delete Application",
+        "description": "Hidden, not erased: its events stay, for the record.",
+        "operationId": "delete_application",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/events": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Add Event",
+        "description": "Record what happened. The status follows from the events.",
+        "operationId": "add_event",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/events/{event_id}": {
+      "delete": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Remove Event",
+        "operationId": "remove_event",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/contact": {
+      "put": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Set Contact",
+        "operationId": "set_contact",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Contact"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/company-notes": {
+      "put": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Set Company Notes",
+        "description": "What the user knows about the company: a source the letter's facts may come from.",
+        "operationId": "set_company_notes",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyNotes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/letters": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "List Letters",
+        "operationId": "list_letters",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LetterSummary"
+                  },
+                  "title": "Response List Letters"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Propose Letter",
+        "description": "One call writes every slot; code checks each one. A refused slot comes back\nempty, with the proposal and the reason beside it.",
+        "operationId": "propose_letter",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to write from, or contact details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "429": {
+            "description": "A spending cap is reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The model's answer was unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No API key, or the API is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/letters/{letter_id}": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Get Letter",
+        "operationId": "get_letter",
+        "parameters": [
+          {
+            "name": "letter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Letter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such letter"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/letters/{letter_id}/texts": {
+      "put": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Save Letter Texts",
+        "description": "The user's texts: theirs, so not checked for facts, only for the limits.",
+        "operationId": "save_letter_texts",
+        "parameters": [
+          {
+            "name": "letter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Letter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterTexts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such letter"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/letters/{letter_id}/pdf": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Get Letter Pdf",
+        "operationId": "get_letter_pdf",
+        "parameters": [
+          {
+            "name": "letter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Letter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "X-Page-Count": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such letter"
+          },
+          "503": {
+            "description": "The PDF could not be produced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1741,6 +2448,203 @@
           "llm_call_id"
         ],
         "title": "AppEvent"
+      },
+      "ApplicationEvent": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Occurred At"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "occurred_at",
+          "note",
+          "created_at"
+        ],
+        "title": "ApplicationEvent"
+      },
+      "ApplicationSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/Tone"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "follow_up_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Follow Up On"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "offer_id",
+          "title",
+          "company_name",
+          "status",
+          "tone",
+          "last_event",
+          "follow_up_on",
+          "created_at"
+        ],
+        "title": "ApplicationSummary"
+      },
+      "ApplicationView": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/Tone"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "follow_up_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Follow Up On"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "company_notes": {
+            "type": "string",
+            "title": "Company Notes"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "offer_id",
+          "title",
+          "company_name",
+          "status",
+          "tone",
+          "last_event",
+          "follow_up_on",
+          "created_at",
+          "contact",
+          "company_notes",
+          "events"
+        ],
+        "title": "ApplicationView"
       },
       "BudgetUse": {
         "properties": {
@@ -2058,6 +2962,46 @@
           "latency_ms"
         ],
         "title": "CallSummary"
+      },
+      "CompanyNotes": {
+        "properties": {
+          "notes": {
+            "type": "string",
+            "maxLength": 10000,
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "title": "CompanyNotes"
+      },
+      "Contact": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "pattern": "^$|^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email",
+            "default": ""
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Phone",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Contact",
+        "description": "Someone at the company: third-party data, used to address a message, never put\nin a prompt on its own."
       },
       "Contract": {
         "type": "string",
@@ -3196,6 +4140,20 @@
         ],
         "title": "EventPage"
       },
+      "EventType": {
+        "type": "string",
+        "enum": [
+          "applied",
+          "message_received",
+          "message_sent",
+          "interview_scheduled",
+          "interview_done",
+          "offer_received",
+          "rejected",
+          "withdrawn",
+          "note"
+        ]
+      },
       "ExperienceFields": {
         "properties": {
           "company": {
@@ -3595,6 +4553,209 @@
         "title": "IntakeResult",
         "description": "The offers the text held: new ones, and known ones completed by it."
       },
+      "LetterSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "application_id": {
+            "type": "integer",
+            "title": "Application Id"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application_id",
+          "llm_call_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LetterSummary"
+      },
+      "LetterTexts": {
+        "properties": {
+          "texts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Texts"
+          },
+          "recipient": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Recipient",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "texts"
+        ],
+        "title": "LetterTexts"
+      },
+      "LetterView": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "application_id": {
+            "type": "integer",
+            "title": "Application Id"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "application_title": {
+            "type": "string",
+            "title": "Application Title"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "recipient": {
+            "type": "string",
+            "title": "Recipient"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotView"
+            },
+            "type": "array",
+            "title": "Slots"
+          },
+          "cited_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cited Ids"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems"
+          },
+          "max_pages": {
+            "type": "integer",
+            "title": "Max Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application_id",
+          "llm_call_id",
+          "created_at",
+          "updated_at",
+          "application_title",
+          "company_name",
+          "recipient",
+          "slots",
+          "cited_ids",
+          "warnings",
+          "problems",
+          "max_pages"
+        ],
+        "title": "LetterView"
+      },
+      "NewApplication": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Company Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "NewApplication"
+      },
+      "NewEvent": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Occurred At"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "occurred_at"
+        ],
+        "title": "NewEvent"
+      },
       "Objectives": {
         "properties": {
           "hard_filters": {
@@ -3937,6 +5098,17 @@
             },
             "type": "array",
             "title": "Drafts"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
           }
         },
         "type": "object",
@@ -3957,7 +5129,8 @@
           "created_at",
           "updated_at",
           "current_score",
-          "drafts"
+          "drafts",
+          "application_id"
         ],
         "title": "OfferPage"
       },
@@ -4479,6 +5652,52 @@
         ],
         "title": "SelectionChoice"
       },
+      "SlotView": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "max_words": {
+            "type": "integer",
+            "title": "Max Words"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "words": {
+            "type": "integer",
+            "title": "Words"
+          },
+          "proposed": {
+            "type": "string",
+            "title": "Proposed"
+          },
+          "rejected_reason": {
+            "type": "string",
+            "title": "Rejected Reason"
+          },
+          "unsourced_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsourced Names"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "max_words",
+          "text",
+          "words",
+          "proposed",
+          "rejected_reason",
+          "unsourced_names"
+        ],
+        "title": "SlotView"
+      },
       "StaleCount": {
         "properties": {
           "count": {
@@ -4491,6 +5710,17 @@
           "count"
         ],
         "title": "StaleCount"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "a_postuler",
+          "postule",
+          "en_echange",
+          "entretien",
+          "offre",
+          "cloture"
+        ]
       },
       "TaskUsage": {
         "properties": {
@@ -4629,6 +5859,15 @@
           "effort"
         ],
         "title": "TierModel"
+      },
+      "Tone": {
+        "type": "string",
+        "enum": [
+          "todo",
+          "active",
+          "final",
+          "lost"
+        ]
       },
       "UsageFigures": {
         "properties": {

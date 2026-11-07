@@ -536,6 +536,221 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Applications
+         * @description Newest first, each with its status derived from its events.
+         */
+        get: operations["list_applications"];
+        put?: never;
+        /**
+         * Create Application
+         * @description An application with no stored offer: a spontaneous one, or a referral.
+         */
+        post: operations["create_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/offers/{offer_id}/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply To Offer
+         * @description The offer's application, created on the first call. Applying keeps the offer.
+         */
+        post: operations["apply_to_offer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Application */
+        get: operations["get_application"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Application
+         * @description Hidden, not erased: its events stay, for the record.
+         */
+        delete: operations["delete_application"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Event
+         * @description Record what happened. The status follows from the events.
+         */
+        post: operations["add_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Event */
+        delete: operations["remove_event"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Contact */
+        put: operations["set_contact"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/company-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Company Notes
+         * @description What the user knows about the company: a source the letter's facts may come from.
+         */
+        put: operations["set_company_notes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Letters */
+        get: operations["list_letters"];
+        put?: never;
+        /**
+         * Propose Letter
+         * @description One call writes every slot; code checks each one. A refused slot comes back
+         *     empty, with the proposal and the reason beside it.
+         */
+        post: operations["propose_letter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/letters/{letter_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Letter */
+        get: operations["get_letter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/letters/{letter_id}/texts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Letter Texts
+         * @description The user's texts: theirs, so not checked for facts, only for the limits.
+         */
+        put: operations["save_letter_texts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/letters/{letter_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Letter Pdf */
+        get: operations["get_letter_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -558,6 +773,71 @@ export interface components {
             };
             /** Llm Call Id */
             llm_call_id: number | null;
+        };
+        /** ApplicationEvent */
+        ApplicationEvent: {
+            /** Id */
+            id: number;
+            type: components["schemas"]["EventType"];
+            /**
+             * Occurred At
+             * Format: date
+             */
+            occurred_at: string;
+            /** Note */
+            note: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ApplicationSummary */
+        ApplicationSummary: {
+            /** Id */
+            id: number;
+            /** Offer Id */
+            offer_id: number | null;
+            /** Title */
+            title: string;
+            /** Company Name */
+            company_name: string;
+            status: components["schemas"]["Status"];
+            tone: components["schemas"]["Tone"];
+            last_event: components["schemas"]["ApplicationEvent"] | null;
+            /** Follow Up On */
+            follow_up_on: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ApplicationView */
+        ApplicationView: {
+            /** Id */
+            id: number;
+            /** Offer Id */
+            offer_id: number | null;
+            /** Title */
+            title: string;
+            /** Company Name */
+            company_name: string;
+            status: components["schemas"]["Status"];
+            tone: components["schemas"]["Tone"];
+            last_event: components["schemas"]["ApplicationEvent"] | null;
+            /** Follow Up On */
+            follow_up_on: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            contact: components["schemas"]["Contact"];
+            /** Company Notes */
+            company_notes: string;
+            /** Events */
+            events: components["schemas"]["ApplicationEvent"][];
         };
         /** BudgetUse */
         BudgetUse: {
@@ -664,6 +944,33 @@ export interface components {
             cost_usd: string;
             /** Latency Ms */
             latency_ms: number;
+        };
+        /** CompanyNotes */
+        CompanyNotes: {
+            /** Notes */
+            notes: string;
+        };
+        /**
+         * Contact
+         * @description Someone at the company: third-party data, used to address a message, never put
+         *     in a prompt on its own.
+         */
+        Contact: {
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
         };
         /** @enum {string} */
         Contract: "CDI" | "CDD" | "freelance" | "stage" | "alternance" | "interim" | "";
@@ -1066,6 +1373,8 @@ export interface components {
             /** Next Before Id */
             next_before_id: number | null;
         };
+        /** @enum {string} */
+        EventType: "applied" | "message_received" | "message_sent" | "interview_scheduled" | "interview_done" | "offer_received" | "rejected" | "withdrawn" | "note";
         /** ExperienceFields */
         ExperienceFields: {
             /**
@@ -1279,6 +1588,96 @@ export interface components {
             /** Scoring Error */
             scoring_error?: string | null;
         };
+        /** LetterSummary */
+        LetterSummary: {
+            /** Id */
+            id: number;
+            /** Application Id */
+            application_id: number;
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** LetterTexts */
+        LetterTexts: {
+            /** Texts */
+            texts: {
+                [key: string]: string;
+            };
+            /**
+             * Recipient
+             * @default
+             */
+            recipient: string;
+        };
+        /** LetterView */
+        LetterView: {
+            /** Id */
+            id: number;
+            /** Application Id */
+            application_id: number;
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Application Title */
+            application_title: string;
+            /** Company Name */
+            company_name: string;
+            /** Recipient */
+            recipient: string;
+            /** Slots */
+            slots: components["schemas"]["SlotView"][];
+            /** Cited Ids */
+            cited_ids: string[];
+            /** Warnings */
+            warnings: string[];
+            /** Problems */
+            problems: string[];
+            /** Max Pages */
+            max_pages: number;
+        };
+        /** NewApplication */
+        NewApplication: {
+            /** Title */
+            title: string;
+            /**
+             * Company Name
+             * @default
+             */
+            company_name: string;
+        };
+        /** NewEvent */
+        NewEvent: {
+            type: components["schemas"]["EventType"];
+            /**
+             * Occurred At
+             * Format: date
+             */
+            occurred_at: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** Objectives */
         Objectives: {
             /**
@@ -1408,6 +1807,8 @@ export interface components {
             current_score: components["schemas"]["OfferScore"] | null;
             /** Drafts */
             drafts: components["schemas"]["DraftSummary"][];
+            /** Application Id */
+            application_id: number | null;
         };
         /** OfferScore */
         OfferScore: {
@@ -1571,11 +1972,30 @@ export interface components {
             excluded_ids: string[];
             options: components["schemas"]["CvOptions"];
         };
+        /** SlotView */
+        SlotView: {
+            /** Name */
+            name: string;
+            /** Max Words */
+            max_words: number;
+            /** Text */
+            text: string;
+            /** Words */
+            words: number;
+            /** Proposed */
+            proposed: string;
+            /** Rejected Reason */
+            rejected_reason: string;
+            /** Unsourced Names */
+            unsourced_names: string[];
+        };
         /** StaleCount */
         StaleCount: {
             /** Count */
             count: number;
         };
+        /** @enum {string} */
+        Status: "a_postuler" | "postule" | "en_echange" | "entretien" | "offre" | "cloture";
         /** TaskUsage */
         TaskUsage: {
             /** Calls */
@@ -1629,6 +2049,8 @@ export interface components {
             /** Effort */
             effort: string;
         };
+        /** @enum {string} */
+        Tone: "todo" | "active" | "final" | "lost";
         /** UsageFigures */
         UsageFigures: {
             /** Calls */
@@ -2965,6 +3387,568 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_applications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationSummary"][];
+                };
+            };
+        };
+    };
+    create_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewApplication"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_to_offer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such offer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewEvent"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Contact"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_company_notes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyNotes"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_letters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_letter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterView"];
+                };
+            };
+            /** @description Nothing to write from, or contact details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description A spending cap is reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model's answer was unusable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No API key, or the API is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_letter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                letter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterView"];
+                };
+            };
+            /** @description No such letter */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_letter_texts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                letter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LetterTexts"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterView"];
+                };
+            };
+            /** @description No such letter */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_letter_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                letter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    "X-Page-Count"?: number;
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description No such letter */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The PDF could not be produced */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
                 };
             };
         };

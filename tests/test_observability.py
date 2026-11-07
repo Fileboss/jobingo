@@ -21,6 +21,7 @@ from jobingo.llm.client import LLMCallError, LLMUnavailable, LLMValidationError,
 from jobingo.llm.fake import FakeLLMClient
 from jobingo.llm.journal import Budget, run_task
 from jobingo.llm.prompts import prompt_environment
+from jobingo.llm.tasks import TASKS
 from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
 from jobingo.logs import event
 from jobingo.services import app_log
@@ -352,7 +353,7 @@ def _eval_result(
 
 def test_evals_list_every_shipped_task_even_unmeasured(client: TestClient):
     tasks = {task["task"]: task for task in client.get("/api/observability/evals").json()}
-    assert set(tasks) == {"extract_offer", "score_offer", "select_cv_content"}
+    assert set(tasks) == set(TASKS)  # every shipped task, measured or not
     assert tasks["select_cv_content"] == {
         "task": "select_cv_content",
         "shipped_version": SELECT_CV_CONTENT_TASK.prompt_version,

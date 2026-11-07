@@ -1,0 +1,107 @@
+{
+  "summary": {
+    "suite": "draft_letter",
+    "metric": "lettres dont aucun emplacement n'est refusé ni vide",
+    "prompt_version": 4,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 1.0,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "6/6",
+      "refused_slots": 0,
+      "names_to_check": 0
+    },
+    "cases": 6,
+    "spend": {
+      "live_calls": 6,
+      "cached_calls": 0,
+      "input_tokens": 162,
+      "output_tokens": 2892,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 15298,
+      "cost_usd": "0.067489",
+      "latency_p50_ms": 4149,
+      "latency_p95_ms": 4822
+    },
+    "stopped": null,
+    "run_at": "2026-11-07T15:59:19+00:00"
+  },
+  "rows": [
+    {
+      "id": "let-01",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre d'ingénieur data plateforme senior chez Plume Énergie rejoint mon parcours : depuis plusieurs années, je conçois des plateformes de données en Python, avec Airflow et PostgreSQL, et je souhaite mettre cette expérience au service du suivi énergétique.",
+        "adequation": "Chez Nordlys, j'ai migré 120 tâches ETL de cron vers Airflow, ce qui a rendu les traitements plus lisibles et plus fiables. J'ai aussi réduit de 40 % le coût mensuel de l'entrepôt de données et conçu une API de facturation traitant 2 millions d'appels par jour. J'ai mis en place l'astreinte et les alertes de production, et encadré trois développeurs juniors, ce qui correspond à un poste senior sur une plateforme de données.",
+        "motivation": "Un produit utilisé par 300 collectivités donne un sens concret au travail sur les données. J'apprécie aussi une équipe plateforme proche de la CTO, où les choix techniques se discutent avec ceux qui portent le produit, et je me vois bien contribuer à l'évolution de cette plateforme."
+      }
+    },
+    {
+      "id": "let-02",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre de développeur backend Python correspond au travail que je mène depuis plusieurs années sur des API et des bases de données PostgreSQL. Je serais heureux de mettre cette expérience au service de votre plateforme de réservation.",
+        "adequation": "Chez Batiflux, j'ai refondu le module de devis sous Django, fait passer la suite de tests de 20 à 85 % de couverture et migré la base de MySQL vers PostgreSQL. Chez Nordlys, j'ai conçu une API de facturation traitant 2 millions d'appels par jour et encadré trois développeurs juniors. Cette double expérience, de Django comme de PostgreSQL, correspond directement à votre stack.",
+        "motivation": "Rejoindre l'équipe de huit développeurs de Kiosque Numérique, pour travailler sur l'API de votre plateforme de réservation, me motive particulièrement. J'y retrouverais Django et PostgreSQL, que je pratique au quotidien, dans un cadre de collaboration étroite."
+      }
+    },
+    {
+      "id": "let-03",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre de Staff Engineer ingestion chez Hexaflow rejoint directement mon expérience sur des chaînes de traitement de données à fort volume, en Python, et le rôle de référent technique que j'ai déjà exercé auprès de mes équipes.",
+        "adequation": "Chez Nordlys, j'ai migré 120 tâches ETL de cron vers Airflow et réduit de 40 % le coût mensuel de l'entrepôt de données. J'y ai aussi conçu une API de facturation traitant 2 millions d'appels par jour, mis en place l'astreinte et les alertes de production, et encadré trois développeurs juniors. Ce parcours m'a appris à fiabiliser des flux de données exigeants tout en faisant progresser une équipe.",
+        "motivation": "Hexaflow construit un moteur d'ingestion de données à fort volume, en Go et Python, et la récente levée de fonds laisse envisager un vrai chantier de structuration. Rejoindre une équipe ingestion de six ingénieurs, comme référent technique, me permettrait d'avoir un impact concret sur l'architecture et sur la montée en compétence du groupe."
+      }
+    },
+    {
+      "id": "let-04",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre d'ingénieur backend Python chez Maison Verte, centrée sur une API de pilotage de bornes de recharge, correspond directement au travail que je mène depuis plusieurs années sur des services backend fiables et exploités en production.",
+        "adequation": "J'ai conçu une API de facturation traitant 2 millions d'appels par jour, ce qui m'a appris à bâtir des services robustes et à en assurer l'exploitation, avec la mise en place de l'astreinte et des alertes de production. J'ai aussi migré 120 tâches ETL vers Airflow et réduit de 40 % le coût mensuel de l'entrepôt de données. Auparavant, j'ai refondu un module sous Django et porté la couverture de tests de 20 à 85 %. Je pratique Python, PostgreSQL, Docker et Kubernetes au quotidien.",
+        "motivation": "Piloter des bornes de recharge à travers une API est un sujet concret, utile à la transition énergétique, et la combinaison de Python et de Kubernetes correspond à mes outils de travail. Je souhaite contribuer à une équipe qui fait de ce service une brique fiable au quotidien."
+      }
+    },
+    {
+      "id": "let-05",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre de Tech Lead backend, avec l'encadrement d'une équipe de développeurs Python sur une plateforme IoT, rejoint le travail que je mène depuis plusieurs années en Python, entre conception d'API et accompagnement d'équipes.",
+        "adequation": "Chez Nordlys, j'ai conçu une API de facturation traitant 2 millions d'appels par jour, réduit de 40 % le coût mensuel de l'entrepôt de données et migré 120 tâches ETL vers Airflow. J'y ai aussi encadré trois développeurs juniors et mis en place l'astreinte et les alertes de production. Auparavant, chez Batiflux, j'ai porté la couverture de tests de 20 à 85 %, ce qui nourrit mon exigence de qualité au sein d'une équipe.",
+        "motivation": "Voltéo équipe des bâtiments tertiaires en capteurs, et la plateforme IoT que vous décrivez me semble un terrain concret pour un travail backend. Diriger une équipe de cinq développeurs Python me permettrait de prolonger l'encadrement que j'ai déjà pratiqué, avec davantage de responsabilité technique."
+      }
+    },
+    {
+      "id": "let-06",
+      "passed": true,
+      "refused": [],
+      "empty": [],
+      "unsourced": [],
+      "texts": {
+        "accroche": "Votre offre de premier ingénieur plateforme data chez Lumen Analytics rejoint directement ce que j'ai construit ces dernières années : des chaînes de traitement de données fiables, bâties sur Airflow, PostgreSQL et AWS.",
+        "adequation": "Chez Nordlys, j'ai migré 120 tâches ETL de cron vers Airflow, ce qui a rendu les traitements visibles et reproductibles. J'ai aussi réduit de 40 % le coût mensuel de l'entrepôt de données, et conçu une API de facturation traitant 2 millions d'appels par jour. J'y ai mis en place l'astreinte et les alertes de production, et encadré trois développeurs juniors. Chez Batiflux, j'ai migré une base de MySQL vers PostgreSQL. Je sais donc poser des fondations solides et les faire vivre en production.",
+        "motivation": "Construire une plateforme data dans une équipe de 12 personnes me motive : les choix techniques y ont un effet immédiat et chacun voit ce qu'il apporte. Votre stack, Airflow, dbt, PostgreSQL et AWS, est celle sur laquelle je souhaite m'investir."
+      }
+    }
+  ]
+}

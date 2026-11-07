@@ -18,10 +18,13 @@ from evals.harness import NO_BUDGET, Workspace
 from jobingo.domain.text import fold
 from jobingo.llm.client import LLMCallError, LLMClient, Tier
 from jobingo.llm.journal import run_task
+from jobingo.llm.tasks.draft_letter import DRAFT_LETTER_TASK
 from jobingo.llm.tasks.extract_offer import EXTRACT_OFFER_TASK, ExtractOfferInput
 from jobingo.llm.tasks.score_offer import SCORE_OFFER_TASK
 from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
+from jobingo.services.applications import apply_to_offer
 from jobingo.services.cv_proposal import OfferText, propose_cv
+from jobingo.services.letters import propose_letter, set_company_notes
 from jobingo.services.scoring import score_offer
 
 CASES_DIR = Path(__file__).resolve().parent / "cases"
@@ -280,7 +283,60 @@ def grade_score(rows: list[Row]) -> dict[str, Any]:
     }
 
 
+# --- draft_letter -----------------------------------------------------------------------
+
+
+def run_letter(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> list[Row]:
+    rows: list[Row] = []
+    for case in cases:
+        application = apply_to_offer(ws.conn, ws.user_id, _insert_offer(ws, case["offer"]))
+        assert application is not None
+        set_company_notes(ws.conn, ws.user_id, application.id, case.get("notes", ""))
+        row: Row = {"id": case["id"]}
+        try:
+            letter = propose_letter(ws.conn, client, NO_BUDGET, ws.user_id, application.id)
+        except LLMCallError as exc:
+            rows.append(row | {"passed": False, "error": str(exc)})
+            continue
+        assert letter is not None
+        refused = [f"{s.name}: {s.rejected_reason}" for s in letter.slots if s.rejected_reason]
+        empty = [s.name for s in letter.slots if not s.text and not s.rejected_reason]
+        rows.append(
+            row
+            | {
+                "passed": not refused and not empty,
+                "refused": refused,
+                "empty": empty,
+                "unsourced": [n for s in letter.slots for n in s.unsourced_names],
+                # The texts, so a person can read what the score does not grade.
+                "texts": {s.name: s.text or s.proposed for s in letter.slots},
+            }
+        )
+    return rows
+
+
+def grade_letter(rows: list[Row]) -> dict[str, Any]:
+    passed = sum(bool(row["passed"]) for row in rows)
+    return {
+        "score": round(passed / len(rows), 3) if rows else None,
+        "detail": {
+            "cases": f"{passed}/{len(rows)}",
+            "refused_slots": sum(len(row.get("refused", [])) for row in rows),
+            "names_to_check": sum(len(row.get("unsourced", [])) for row in rows),
+        },
+    }
+
+
 SUITES: dict[str, Suite] = {
+    "draft_letter": Suite(
+        name="draft_letter",
+        metric="lettres dont aucun emplacement n'est refusé ni vide",
+        tier="writing",
+        prompt_version=DRAFT_LETTER_TASK.prompt_version,
+        threshold=None,
+        run=run_letter,
+        grade=grade_letter,
+    ),
     "score_offer": Suite(
         name="score_offer",
         metric="corrélation de rang avec le classement fait à la main",

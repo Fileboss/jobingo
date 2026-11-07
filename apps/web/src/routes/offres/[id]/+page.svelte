@@ -72,6 +72,20 @@
 		}
 	}
 
+	let applying = $state(false);
+
+	async function apply() {
+		applying = true;
+		try {
+			const { data } = await api.POST('/api/offers/{offer_id}/application', {
+				params: { path: { offer_id: id } }
+			});
+			if (data) await goto(resolve('/candidatures/[id]', { id: String(data.id) }));
+		} finally {
+			applying = false;
+		}
+	}
+
 	async function adapt() {
 		adapting = true;
 		failure = null;
@@ -189,6 +203,18 @@
 			</section>
 
 			<aside class="grid content-start gap-4">
+				<div class="bg-bristol-yellow px-4 py-4">
+					<h2 class="mb-2 font-extrabold text-ink">Candidature</h2>
+					{#if offer.application_id}
+						<a
+							href={resolve('/candidatures/[id]', { id: String(offer.application_id) })}
+							class="font-bold text-ink">Voir la candidature</a
+						>
+					{:else}
+						<Button onclick={apply} disabled={applying}>Candidater</Button>
+						<p class="mt-2 text-sm">Crée son suivi ; l’offre est marquée retenue.</p>
+					{/if}
+				</div>
 				<div class="bg-bristol-blue px-4 py-4">
 					<h2 class="mb-2 font-extrabold text-ink">Mon CV pour cette offre</h2>
 					<Button onclick={adapt} disabled={adapting}>Adapter mon CV</Button>

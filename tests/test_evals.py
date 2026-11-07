@@ -234,3 +234,38 @@ def test_the_ranking_suite_correlates_scores_with_the_hand_made_ranking(
     assert summary["threshold"] == 0.85 and summary["passed"] is True
     _, prompt = fake.prompts[0]
     assert "plateformes de données" in prompt.user  # the fictional objectives
+
+
+def test_the_letter_suite_fails_a_case_with_a_refused_slot(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from jobingo.domain.letter import LetterProposalSchema, SlotText
+
+    cases = load_cases("draft_letter")
+    fake = FakeLLMClient(
+        model="claude-sonnet-5-5",
+        usage=Usage(input_tokens=3000, output_tokens=400, attempts=1),
+    )
+    good = [
+        SlotText(name="accroche", text="Votre offre m'intéresse."),
+        SlotText(name="adequation", text="J'ai migré des tâches vers Airflow."),
+        SlotText(name="motivation", text="Votre plateforme de données m'attire."),
+    ]
+    fake.queue(
+        "draft_letter",
+        LetterProposalSchema(
+            slots=[*good[:2], SlotText(name="motivation", text="Vos 999 clients.")]
+        ),
+    )
+    for _ in cases[1:]:
+        fake.queue("draft_letter", LetterProposalSchema(slots=good))
+
+    summary = run_suite(
+        SUITES["draft_letter"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    assert summary["detail"]["cases"] == f"{len(cases) - 1}/{len(cases)}"
+    assert summary["detail"]["refused_slots"] == 1

@@ -11,11 +11,13 @@ from jobingo.llm.factory import create_llm_client
 from jobingo.services import app_log
 from jobingo.services.accounts import ensure_account
 from jobingo_api.routes import (
+    applications,
     cv,
     cv_drafts,
     cv_page,
     health,
     identity,
+    letters,
     me,
     objectives,
     observability,
@@ -76,6 +78,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(observability.router, prefix="/api")
     app.include_router(offers.router, prefix="/api")
     app.include_router(objectives.router, prefix="/api")
+    app.include_router(applications.router, prefix="/api")
+    app.include_router(letters.router, prefix="/api")
 
     # Absent in development, where the Vite dev server serves the client.
     if (settings.web_build_dir / "index.html").is_file():
