@@ -31,11 +31,12 @@ from jobingo.render.cv import load_manifest
 from jobingo.services.cv import load_cv
 from jobingo.services.cv_page import CvPdf, OptionUnavailableError, page_options, render_selection
 from jobingo.services.cv_proposal import OfferText, propose_cv
+from jobingo.services.offers import get_offer
 
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, lang, offer_title, offer_company, offer_description, llm_call_id, proposal,
+    id, lang, offer_id, offer_title, offer_company, offer_description, llm_call_id, proposal,
     choices, created_at, updated_at
 """
 
@@ -52,6 +53,8 @@ def create_draft(
     user_id: int,
     lang: CvLang,
     offer: OfferInput,
+    *,
+    offer_id: int | None = None,
 ) -> DraftView:
     """Ask for a proposal and store it with the starting choices: what the model kept,
     with the rewrites code accepted, and the options of the CV page.
@@ -70,14 +73,15 @@ def create_draft(
     )
     row = conn.execute(
         """
-        INSERT INTO cv_drafts (user_id, lang, offer_title, offer_company, offer_description,
-            llm_call_id, proposal, choices)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO cv_drafts (user_id, lang, offer_id, offer_title, offer_company,
+            offer_description, llm_call_id, proposal, choices)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
         (
             user_id,
             lang,
+            offer_id,
             offer.title,
             offer.company,
             offer.description,
@@ -93,13 +97,37 @@ def create_draft(
     return view
 
 
-def list_drafts(conn: Conn, user_id: int) -> list[DraftSummary]:
+def create_draft_for_offer(
+    conn: Conn,
+    client: LLMClient,
+    budget: Budget,
+    user_id: int,
+    lang: CvLang,
+    offer_id: int,
+) -> DraftView | None:
+    """`create_draft` on a stored offer. None when there is no such offer."""
+    offer = get_offer(conn, user_id, offer_id)
+    if offer is None:
+        return None
+    text = OfferInput(
+        title=offer.title,
+        company=offer.company_name,
+        # A title-only offer is still something to adapt to.
+        description=offer.description_md or offer.title,
+    )
+    return create_draft(conn, client, budget, user_id, lang, text, offer_id=offer_id)
+
+
+def list_drafts(conn: Conn, user_id: int, *, offer_id: int | None = None) -> list[DraftSummary]:
+    """Newest first; only those adapted to `offer_id` when it is given."""
     rows = conn.execute(
         """
-        SELECT id, offer_title, offer_company, llm_call_id, created_at, updated_at
-        FROM cv_drafts WHERE user_id = %s ORDER BY created_at DESC, id DESC
+        SELECT id, offer_id, offer_title, offer_company, llm_call_id, created_at, updated_at
+        FROM cv_drafts
+        WHERE user_id = %s AND (%s::bigint IS NULL OR offer_id = %s)
+        ORDER BY created_at DESC, id DESC
         """,
-        (user_id,),
+        (user_id, offer_id, offer_id),
     )
     return [DraftSummary.model_validate(row) for row in rows]
 
@@ -124,6 +152,7 @@ def load_draft(conn: Conn, user_id: int, draft_id: int) -> DraftView | None:
     return DraftView(
         id=row["id"],
         lang=lang,
+        offer_id=row["offer_id"],
         offer=OfferInput(
             title=row["offer_title"],
             company=row["offer_company"],

@@ -351,8 +351,9 @@ def _eval_result(
 
 
 def test_evals_list_every_shipped_task_even_unmeasured(client: TestClient):
-    [task] = client.get("/api/observability/evals").json()
-    assert task == {
+    tasks = {task["task"]: task for task in client.get("/api/observability/evals").json()}
+    assert set(tasks) == {"extract_offer", "select_cv_content"}
+    assert tasks["select_cv_content"] == {
         "task": "select_cv_content",
         "shipped_version": SELECT_CV_CONTENT_TASK.prompt_version,
         "current": None,
@@ -367,7 +368,8 @@ def test_evals_show_the_shipped_version_and_every_run(client: TestClient, settin
     _eval_result(results, shipped - 1, "2026-11-07T10:00:00+00:00", 0.875)
     (results / "select_cv_content.v9.broken.json").write_text("{", encoding="utf-8")
 
-    [task] = client.get("/api/observability/evals").json()
+    tasks = client.get("/api/observability/evals").json()
+    [task] = [task for task in tasks if task["task"] == "select_cv_content"]
 
     assert task["current"]["prompt_version"] == shipped
     assert task["current"]["score"] == 0.5

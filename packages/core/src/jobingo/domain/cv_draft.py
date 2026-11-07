@@ -165,6 +165,7 @@ class DraftFormation(DraftItem):
 
 class DraftSummary(BaseModel):
     id: int
+    offer_id: int | None
     offer_title: str
     offer_company: str
     llm_call_id: int | None
@@ -176,6 +177,8 @@ class DraftView(BaseModel):
     id: int
     lang: str
     offer: OfferInput
+    # The stored offer it was adapted to; None for pasted text.
+    offer_id: int | None
     llm_call_id: int | None
     created_at: datetime
     updated_at: datetime

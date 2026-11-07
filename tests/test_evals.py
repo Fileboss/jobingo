@@ -168,3 +168,36 @@ def test_the_workspace_holds_the_fictional_profile_and_goes_away(database_url: s
         assert row is not None and row["n"] == 1
         assert row["name"].startswith("jobingo_eval_")
         assert "n'hésitez pas à" in workspace.style.forbidden
+
+
+def test_the_extraction_suite_compares_fields_case_by_case(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from jobingo.domain.offers import ExtractedOffer
+    from jobingo.llm.tasks.extract_offer import ExtractOfferOutput
+
+    cases = load_cases("extract_offer")
+    fake = FakeLLMClient(usage=Usage(input_tokens=800, output_tokens=200, attempts=1))
+    first = ExtractedOffer(
+        title="Ingénieur backend Python",
+        company_name="Stratus",
+        location="Lyon 3e",
+        contract="CDI",
+        remote="hybride",
+    )
+    for _ in cases:
+        fake.queue("extract_offer", ExtractOfferOutput(offers=[first]))
+
+    summary = run_suite(
+        SUITES["extract_offer"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    stored = json.loads(next((tmp_path / "results").iterdir()).read_text(encoding="utf-8"))
+    rows = {row["id"]: row for row in stored["rows"]}
+    assert rows["ext-01"]["passed"] and rows["ext-01"]["misses"] == []
+    assert not rows["ext-06"]["count_ok"]  # three offers in that digest
+    assert summary["cases"] == len(cases)
+    assert 0 < summary["score"] < 1

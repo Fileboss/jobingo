@@ -37,6 +37,7 @@ export class FakeDraftsApi {
 	draft: DraftView = {
 		id: 7,
 		lang: 'fr',
+		offer_id: null,
 		offer: {
 			title: 'Ingénieur data plateforme',
 			company: 'Plume Énergie',
@@ -114,6 +115,7 @@ export class FakeDraftsApi {
 				json: [
 					{
 						id: this.draft.id,
+						offer_id: null,
 						offer_title: this.draft.offer.title,
 						offer_company: this.draft.offer.company,
 						llm_call_id: 42,

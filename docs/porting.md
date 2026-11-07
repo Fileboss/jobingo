@@ -18,7 +18,10 @@ Small vertical steps. To adjust as we go:
    2. ~~Application log, and the observability page's Usage, Calls and Logs tabs, on the journal~~ (done).
    3. ~~`select_cv_content`: its prompts, the eval harness and suite, and the Evals tab~~ (done).
    4. ~~Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen~~ (done).
-5. Offer intake and scoring.
+5. Offer intake and scoring. In three steps:
+   1. ~~Offer intake: pasted text, `extract_offer`, the `offers` table with merging, the Offers screens, its eval suite, adapting the CV from an offer~~ (done).
+   2. The objectives: hard filters, weights and preferences, with their editor.
+   3. Scoring: hard filters in code, `score_offer` per criterion, the global score in code, its eval suite.
 6. Application tracking and cover letters.
 7. Mail, drafted replies and approval queue.
 8. Demo: fictional seed, screenshots, README.
@@ -55,6 +58,13 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 5.1 changed or left:
+
+- `extract_offer` ships as v2, the POC's version in service (its v3 cost 23 % more for the same score). Its contract and remote values are `Literal`s on `ExtractedOffer` itself: there are no older answers to stay compatible with.
+- Offers arrive only by pasting for now. Mail alerts (`linkedin_alert.py`, IMAP) come with step 7, France Travail is not planned.
+- No status yet: it comes with scoring, with the rule that scoring never walks back a status the user set.
+- The POC's intake ran in a thread with polling; here the request waits for the call, a few seconds on the fast tier.
 
 What step 4.4 changed or left:
 
