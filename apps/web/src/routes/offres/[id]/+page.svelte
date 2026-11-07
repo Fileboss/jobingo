@@ -135,7 +135,12 @@
 			{/each}
 		</dl>
 		<p class="mt-2 text-sm text-ink-soft">
-			Reçue le {formatDateTime(offer.created_at)}{#if offer.llm_call_id}, extraite par
+			Reçue le {formatDateTime(offer.created_at)}{#if offer.message_id}
+				par
+				<a
+					href={resolve('/courrier/[id]', { id: String(offer.message_id) })}
+					class="font-bold text-ink">une alerte e-mail</a
+				>{/if}{#if offer.llm_call_id}, extraite par
 				<a
 					href={resolve('/suivi/appels/[id]', { id: String(offer.llm_call_id) })}
 					class="font-bold text-ink">l’appel #{offer.llm_call_id}</a

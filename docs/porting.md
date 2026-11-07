@@ -25,7 +25,11 @@ Small vertical steps. To adjust as we go:
 6. ~~Application tracking and cover letters~~ (done). In two steps:
    1. ~~Applications: created from an offer or by hand, a timeline of events, the status derived from it, follow-ups, contact, soft delete~~ (done).
    2. ~~Cover letters: a letter template, `draft_letter`, code checks per slot, a review screen, the PDF, its eval suite~~ (done).
-7. Mail, drafted replies and approval queue.
+7. Mail, drafted replies and approval queue. In four steps:
+   1. ~~Reading mail: IMAP connector, stored messages, LinkedIn alerts read in code, the Courrier screen~~ (done).
+   2. `classify_message` and its eval suite, linking a message to an application, suggestions confirmed by a click.
+   3. The approval queue and its one executor, the SMTP connector, dry run by default.
+   4. `draft_reply` and its injection eval suite.
 8. Demo: fictional seed, screenshots, README.
 
 ## What to bring over
@@ -60,6 +64,14 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 7.1 changed or left:
+
+- The IMAP connector uses the standard library's `imaplib`, not `imap-tools`: EXAMINE and BODY.PEEK make it read-only, and plain IMAP is refused beyond loopback, so a password never crosses the network in clear. Tests read a real GreenMail mailbox per test, not a fake source.
+- The cursor is kept per mailbox and folder (`mail_folders`), so switching from the local server to Gmail starts fresh. The first sync reads the last 30 days only, then at most 200 messages per folder and per sync.
+- Alerts: a LinkedIn sender whose HTML holds job cards is read in code, in any folder; any other message in a dedicated alert folder waits for `extract_offer`. With the alert folder equal to the inbox, other senders' alerts are only found once classification lands (7.2).
+- The POC's thread and in-memory sync status are not ported: the request waits for the sync. Classification, blocked senders, the newsletter rule and matching to applications come with 7.2.
+- The HTML part is stored for the alert reader and never sent to the client: the screen shows the text only.
 
 What step 6.2 changed or left:
 

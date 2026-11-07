@@ -2399,6 +2399,159 @@
           }
         }
       }
+    },
+    "/api/mail/status": {
+      "get": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Get Status",
+        "description": "The mailbox read, whether it is the local demo server, and each folder's last sync.",
+        "operationId": "get_status",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/sync": {
+      "post": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Sync Mailbox",
+        "description": "Read the inbox and the alert folder, read-only. LinkedIn alerts are read in code;\nother alerts, and scoring the new offers, need the model. Without it, or when a call\nfails, what was read is kept and the report says what waits.",
+        "operationId": "sync_mailbox",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncReport"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The mailbox could not be read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages": {
+      "get": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "List Messages",
+        "description": "Newest first.",
+        "operationId": "list_messages",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MessageKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageSummary"
+                  },
+                  "title": "Response List Messages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}": {
+      "get": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Get Message",
+        "operationId": "get_message",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4260,6 +4413,32 @@
         ],
         "title": "FilteredOffer"
       },
+      "FolderState": {
+        "properties": {
+          "folder": {
+            "type": "string",
+            "title": "Folder"
+          },
+          "synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Synced At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "folder",
+          "synced_at"
+        ],
+        "title": "FolderState"
+      },
       "FormDraft": {
         "properties": {
           "mode": {
@@ -4711,6 +4890,195 @@
         ],
         "title": "LetterView"
       },
+      "MailboxStatus": {
+        "properties": {
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "host": {
+            "type": "string",
+            "title": "Host"
+          },
+          "local": {
+            "type": "boolean",
+            "title": "Local"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "folders": {
+            "items": {
+              "$ref": "#/components/schemas/FolderState"
+            },
+            "type": "array",
+            "title": "Folders"
+          },
+          "waiting": {
+            "type": "integer",
+            "title": "Waiting"
+          }
+        },
+        "type": "object",
+        "required": [
+          "address",
+          "host",
+          "local",
+          "dry_run",
+          "folders",
+          "waiting"
+        ],
+        "title": "MailboxStatus"
+      },
+      "Message": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "folder": {
+            "type": "string",
+            "title": "Folder"
+          },
+          "from_addr": {
+            "type": "string",
+            "title": "From Addr"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "offer_count": {
+            "type": "integer",
+            "title": "Offer Count"
+          },
+          "excerpt": {
+            "type": "string",
+            "title": "Excerpt"
+          },
+          "to_addrs": {
+            "type": "string",
+            "title": "To Addrs"
+          },
+          "body_text": {
+            "type": "string",
+            "title": "Body Text"
+          },
+          "offer_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Offer Ids"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "folder",
+          "from_addr",
+          "subject",
+          "received_at",
+          "kind",
+          "offer_count",
+          "excerpt",
+          "to_addrs",
+          "body_text",
+          "offer_ids",
+          "processed_at"
+        ],
+        "title": "Message"
+      },
+      "MessageKind": {
+        "type": "string",
+        "enum": [
+          "alert",
+          "message"
+        ]
+      },
+      "MessageSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "folder": {
+            "type": "string",
+            "title": "Folder"
+          },
+          "from_addr": {
+            "type": "string",
+            "title": "From Addr"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "offer_count": {
+            "type": "integer",
+            "title": "Offer Count"
+          },
+          "excerpt": {
+            "type": "string",
+            "title": "Excerpt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "folder",
+          "from_addr",
+          "subject",
+          "received_at",
+          "kind",
+          "offer_count",
+          "excerpt"
+        ],
+        "title": "MessageSummary"
+      },
       "NewApplication": {
         "properties": {
           "title": {
@@ -4892,6 +5260,17 @@
             ],
             "title": "Llm Call Id"
           },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
           "state": {
             "$ref": "#/components/schemas/OfferState"
           },
@@ -4929,6 +5308,7 @@
           "url",
           "description_md",
           "llm_call_id",
+          "message_id",
           "state",
           "decision",
           "created_at",
@@ -5059,6 +5439,17 @@
             ],
             "title": "Llm Call Id"
           },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
           "state": {
             "$ref": "#/components/schemas/OfferState"
           },
@@ -5124,6 +5515,7 @@
           "url",
           "description_md",
           "llm_call_id",
+          "message_id",
           "state",
           "decision",
           "created_at",
@@ -5540,6 +5932,17 @@
             ],
             "title": "Llm Call Id"
           },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
           "state": {
             "$ref": "#/components/schemas/OfferState"
           },
@@ -5587,6 +5990,7 @@
           "url",
           "description_md",
           "llm_call_id",
+          "message_id",
           "state",
           "decision",
           "created_at",
@@ -5721,6 +6125,64 @@
           "offre",
           "cloture"
         ]
+      },
+      "SyncReport": {
+        "properties": {
+          "fetched": {
+            "type": "integer",
+            "title": "Fetched",
+            "default": 0
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates",
+            "default": 0
+          },
+          "alerts": {
+            "type": "integer",
+            "title": "Alerts",
+            "default": 0
+          },
+          "offer_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Offer Ids",
+            "default": []
+          },
+          "unscored_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unscored Ids",
+            "default": []
+          },
+          "waiting": {
+            "type": "integer",
+            "title": "Waiting",
+            "default": 0
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "SyncReport"
       },
       "TaskUsage": {
         "properties": {

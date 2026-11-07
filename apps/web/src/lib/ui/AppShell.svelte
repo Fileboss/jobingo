@@ -13,9 +13,9 @@
 		{ href: resolve('/objectifs'), label: 'Objectifs' },
 		{ href: resolve('/adapter'), label: 'Adapter' },
 		{ href: resolve('/candidatures'), label: 'Candidatures' },
+		{ href: resolve('/courrier'), label: 'Courrier' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
-	const upcoming = ['Courrier'];
 </script>
 
 <div class="flex min-h-dvh flex-col">
@@ -32,7 +32,8 @@
 								resolve('/suivi'),
 								resolve('/adapter'),
 								resolve('/offres'),
-								resolve('/candidatures')
+								resolve('/candidatures'),
+								resolve('/courrier')
 							].includes(screen.href) &&
 								page.url.pathname.startsWith(screen.href + '/'))
 								? 'page'
@@ -41,11 +42,6 @@
 						>
 							{screen.label}
 						</a>
-					</li>
-				{/each}
-				{#each upcoming as label (label)}
-					<li class="text-ink-soft">
-						{label}<span class="sr-only"> (bientôt disponible)</span>
 					</li>
 				{/each}
 			</ul>

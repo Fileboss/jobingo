@@ -37,14 +37,15 @@ services:
       - '127.0.0.1:8025:8025'
 
   # Reading: a fictional mailbox, empty at each start. Tests deliver to it over its
-  # SMTP port, and the app reads it over IMAP like any mailbox.
+  # SMTP port, and the app reads it over IMAP like any mailbox. Any address logs in
+  # with any password and gets its own mailbox, so each test has one to itself.
   greenmail:
     image: greenmail/standalone@sha256:8a2024725c7b1ce8f720644bccb6f237781992a8cbf283023446eb7d29326ad0
     environment:
       GREENMAIL_OPTS: >-
         -Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap
         -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=alex:jobingo@jobingo.test
-        -Dgreenmail.users.login=email
+        -Dgreenmail.users.login=email -Dgreenmail.auth.disabled
     ports:
       - '127.0.0.1:3025:3025'
       - '127.0.0.1:3143:3143'

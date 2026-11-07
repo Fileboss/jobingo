@@ -751,6 +751,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mail/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Status
+         * @description The mailbox read, whether it is the local demo server, and each folder's last sync.
+         */
+        get: operations["get_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Mailbox
+         * @description Read the inbox and the alert folder, read-only. LinkedIn alerts are read in code;
+         *     other alerts, and scoring the new offers, need the model. Without it, or when a call
+         *     fails, what was read is kept and the report says what waits.
+         */
+        post: operations["sync_mailbox"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Messages
+         * @description Newest first.
+         */
+        get: operations["list_messages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Message */
+        get: operations["get_message"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1433,6 +1512,13 @@ export interface components {
             /** Unknown */
             unknown: string[];
         };
+        /** FolderState */
+        FolderState: {
+            /** Folder */
+            folder: string;
+            /** Synced At */
+            synced_at: string | null;
+        };
         /** FormDraft */
         FormDraft: {
             /**
@@ -1654,6 +1740,73 @@ export interface components {
             /** Max Pages */
             max_pages: number;
         };
+        /** MailboxStatus */
+        MailboxStatus: {
+            /** Address */
+            address: string;
+            /** Host */
+            host: string;
+            /** Local */
+            local: boolean;
+            /** Dry Run */
+            dry_run: boolean;
+            /** Folders */
+            folders: components["schemas"]["FolderState"][];
+            /** Waiting */
+            waiting: number;
+        };
+        /** Message */
+        Message: {
+            /** Id */
+            id: number;
+            /** Folder */
+            folder: string;
+            /** From Addr */
+            from_addr: string;
+            /** Subject */
+            subject: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            kind: components["schemas"]["MessageKind"] | null;
+            /** Offer Count */
+            offer_count: number;
+            /** Excerpt */
+            excerpt: string;
+            /** To Addrs */
+            to_addrs: string;
+            /** Body Text */
+            body_text: string;
+            /** Offer Ids */
+            offer_ids: number[];
+            /** Processed At */
+            processed_at: string | null;
+        };
+        /** @enum {string} */
+        MessageKind: "alert" | "message";
+        /** MessageSummary */
+        MessageSummary: {
+            /** Id */
+            id: number;
+            /** Folder */
+            folder: string;
+            /** From Addr */
+            from_addr: string;
+            /** Subject */
+            subject: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            kind: components["schemas"]["MessageKind"] | null;
+            /** Offer Count */
+            offer_count: number;
+            /** Excerpt */
+            excerpt: string;
+        };
         /** NewApplication */
         NewApplication: {
             /** Title */
@@ -1735,6 +1888,8 @@ export interface components {
             description_md: string;
             /** Llm Call Id */
             llm_call_id: number | null;
+            /** Message Id */
+            message_id: number | null;
             state: components["schemas"]["OfferState"];
             decision: components["schemas"]["OfferDecision"] | null;
             /**
@@ -1792,6 +1947,8 @@ export interface components {
             description_md: string;
             /** Llm Call Id */
             llm_call_id: number | null;
+            /** Message Id */
+            message_id: number | null;
             state: components["schemas"]["OfferState"];
             decision: components["schemas"]["OfferDecision"] | null;
             /**
@@ -1939,6 +2096,8 @@ export interface components {
             description_md: string;
             /** Llm Call Id */
             llm_call_id: number | null;
+            /** Message Id */
+            message_id: number | null;
             state: components["schemas"]["OfferState"];
             decision: components["schemas"]["OfferDecision"] | null;
             /**
@@ -1996,6 +2155,46 @@ export interface components {
         };
         /** @enum {string} */
         Status: "a_postuler" | "postule" | "en_echange" | "entretien" | "offre" | "cloture";
+        /** SyncReport */
+        SyncReport: {
+            /**
+             * Fetched
+             * @default 0
+             */
+            fetched: number;
+            /**
+             * Duplicates
+             * @default 0
+             */
+            duplicates: number;
+            /**
+             * Alerts
+             * @default 0
+             */
+            alerts: number;
+            /**
+             * Offer Ids
+             * @default []
+             */
+            offer_ids: number[];
+            /**
+             * Unscored Ids
+             * @default []
+             */
+            unscored_ids: number[];
+            /**
+             * Waiting
+             * @default 0
+             */
+            waiting: number;
+            /**
+             * Has More
+             * @default false
+             */
+            has_more: boolean;
+            /** Error */
+            error?: string | null;
+        };
         /** TaskUsage */
         TaskUsage: {
             /** Calls */
@@ -3949,6 +4148,124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxStatus"];
+                };
+            };
+        };
+    };
+    sync_mailbox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncReport"];
+                };
+            };
+            /** @description The mailbox could not be read */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    list_messages: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["MessageKind"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

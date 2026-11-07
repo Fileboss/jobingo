@@ -5,7 +5,7 @@ type Schemas = components['schemas'];
 type Offer = Schemas['ScoredOffer'];
 type OfferScore = Schemas['OfferScore'];
 
-const offer = (id: number, title: string, extra: Partial<Offer> = {}): Offer => ({
+export const offer = (id: number, title: string, extra: Partial<Offer> = {}): Offer => ({
 	id,
 	title,
 	company_name: 'Stratus',
@@ -17,6 +17,7 @@ const offer = (id: number, title: string, extra: Partial<Offer> = {}): Offer => 
 	url: 'https://stratus.example/jobs/12',
 	description_md: 'Vous concevrez les API de notre produit.',
 	llm_call_id: 12,
+	message_id: null,
 	state: 'scored',
 	decision: null,
 	created_at: '2026-11-07T09:00:00Z',

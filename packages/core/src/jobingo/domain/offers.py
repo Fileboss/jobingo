@@ -46,6 +46,8 @@ class Offer(BaseModel):
     description_md: str
     # The extraction that created the offer, and the last one that completed it.
     llm_call_id: int | None
+    # The alert it was read from, when it came by mail.
+    message_id: int | None
     # Set by scoring: not scored yet, scored, or eliminated by the hard filters.
     state: OfferState
     # Set by the user only; scoring never changes it.
