@@ -4,11 +4,16 @@
 API_PORT ?= 8000
 export
 
-.PHONY: db-up db-down api web api-types test lint typecheck check check-guardrails \
+.PHONY: db-up db-down mail-up api web api-types test lint typecheck check check-guardrails \
 	e2e eval agent agent-front agent-back pair worktree worktree-rm
 
 db-up:
 	docker compose up -d --wait postgres
+
+# Local mail servers for development and tests: Mailpit (SMTP, http://127.0.0.1:8025)
+# and GreenMail (IMAP, a fictional mailbox, empty at each start).
+mail-up:
+	docker compose up -d mailpit greenmail
 
 db-down:
 	docker compose down

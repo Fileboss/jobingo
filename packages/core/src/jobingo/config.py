@@ -21,6 +21,26 @@ class Settings(BaseSettings):
     # Committed eval results, read by the observability page. Runs are `make eval`.
     evals_results_dir: Path = Path("evals/results")
 
+    # The mailbox the app reads and sends from. The defaults are the local servers of
+    # docker-compose.yml (`make mail-up`); the Gmail values in .env replace them. The
+    # passwords are server-side only, never shown or sent to the client.
+    mail_imap_host: str = "127.0.0.1"
+    mail_imap_port: int = 3143
+    mail_imap_ssl: bool = False
+    mail_imap_user: str = "alex@jobingo.test"
+    mail_imap_password: SecretStr = SecretStr("jobingo")
+    mail_inbox_folder: str = "INBOX"
+    # Where job alerts land, when a filter moves them out of the inbox.
+    mail_alert_folder: str = "INBOX"
+    mail_smtp_host: str = "127.0.0.1"
+    mail_smtp_port: int = 1025
+    mail_smtp_ssl: bool = False
+    mail_smtp_user: str = ""
+    mail_smtp_password: SecretStr | None = None
+    mail_from: str = "alex@jobingo.test"
+    # Nothing is sent unless this is turned off, whatever the server.
+    smtp_dry_run: bool = True
+
     # Without a key the app runs, and the AI features say they are not configured.
     anthropic_api_key: SecretStr | None = None
     # Starting hypotheses, adopted only once an eval measures them (docs/porting.md).

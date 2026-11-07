@@ -125,6 +125,7 @@ You need Docker, [uv](https://docs.astral.sh/uv/), Node with `corepack enable`, 
 ```sh
 uv sync && pnpm install
 make db-up        # Postgres on 127.0.0.1:5433
+make mail-up      # local mail servers: Mailpit (sent mail at :8025) and GreenMail (IMAP)
 make api          # API at http://127.0.0.1:8000
 make web          # client at http://localhost:5173
 ```

@@ -22,3 +22,5 @@ Settled by the user. Follow them instead of asking again. Format and rules: `doc
 - [A CV is one page, strictly](2026-11-05-one-page-cv.md): when working on CV rendering, page limits, the preview or the download
 - [Defaults and behaviour of the CV page](2026-11-05-cv-page-choices.md): when changing what the CV page selects by default, or how its options behave
 - [The CV embeds a free font](2026-11-05-embedded-font.md): when changing the CV's typography or adding a template
+- [Real local mail servers in Docker, not hand-made mocks](2026-11-07-mailpit-for-mail-tests.md): when building or testing sending or reading mail, the approval queue's executor, or a local mail setup for development and demos
+- [The mail account is set in `.env`, local servers by default](2026-11-07-mail-account-in-env.md): when configuring the mailbox the app reads and sends from, or adding a setting for it

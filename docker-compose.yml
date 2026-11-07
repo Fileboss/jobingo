@@ -21,5 +21,33 @@ services:
       timeout: 3s
       retries: 15
 
+  # Local mail for development and tests: a real SMTP and a real IMAP server, so the
+  # mail code speaks the actual protocols with no mailbox of the user's involved.
+  # Setting the Gmail values in .env points the app at Gmail instead.
+  # Pinned by digest: Mailpit v1.27 and GreenMail 2.1.5, both from 2025.
+
+  # Sending: keeps every message, shown at http://127.0.0.1:8025 and in its API.
+  mailpit:
+    image: axllent/mailpit@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
+
+  # Reading: a fictional mailbox, empty at each start. Tests deliver to it over its
+  # SMTP port, and the app reads it over IMAP like any mailbox.
+  greenmail:
+    image: greenmail/standalone@sha256:8a2024725c7b1ce8f720644bccb6f237781992a8cbf283023446eb7d29326ad0
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap
+        -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=alex:jobingo@jobingo.test
+        -Dgreenmail.users.login=email
+    ports:
+      - '127.0.0.1:3025:3025'
+      - '127.0.0.1:3143:3143'
+
 volumes:
   postgres-data:

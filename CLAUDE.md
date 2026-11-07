@@ -108,6 +108,7 @@ Run from the repository root. Run `corepack enable` once: `pnpm` must be on the 
 uv sync && pnpm install   # first setup; also needs Docker running
 
 make db-up        # Postgres on 127.0.0.1:5433 (make db-down to stop it)
+make mail-up      # local mail: Mailpit (SMTP, UI on :8025) and GreenMail (IMAP)
 make api          # API at http://127.0.0.1:8000, with reload
 make web          # client at http://localhost:5173
 
