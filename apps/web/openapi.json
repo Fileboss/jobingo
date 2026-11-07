@@ -557,10 +557,671 @@
           }
         }
       }
+    },
+    "/api/observability/usage": {
+      "get": {
+        "tags": [
+          "observability"
+        ],
+        "summary": "Get Usage",
+        "description": "Calls, tokens, cost and latency over the last `days` days, per task and per day.",
+        "operationId": "get_usage",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/observability/calls": {
+      "get": {
+        "tags": [
+          "observability"
+        ],
+        "summary": "List Calls",
+        "description": "Newest first.",
+        "operationId": "list_calls",
+        "parameters": [
+          {
+            "name": "task",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CallStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "before_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/observability/calls/{call_id}": {
+      "get": {
+        "tags": [
+          "observability"
+        ],
+        "summary": "Get Call",
+        "description": "One call with its prompts, its answer and the events it caused.",
+        "operationId": "get_call",
+        "parameters": [
+          {
+            "name": "call_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Call Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such call"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/observability/events": {
+      "get": {
+        "tags": [
+          "observability"
+        ],
+        "summary": "List Events",
+        "description": "Newest first, at `level` or above.",
+        "operationId": "list_events",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+              ],
+              "type": "string",
+              "default": "DEBUG",
+              "title": "Level"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "llm_call_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Llm Call Id"
+            }
+          },
+          {
+            "name": "before_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AppEvent": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "level": {
+            "$ref": "#/components/schemas/EventLevel"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fields"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "level",
+          "name",
+          "fields",
+          "llm_call_id"
+        ],
+        "title": "AppEvent"
+      },
+      "BudgetUse": {
+        "properties": {
+          "today_usd": {
+            "type": "string",
+            "title": "Today Usd"
+          },
+          "daily_cap_usd": {
+            "type": "string",
+            "title": "Daily Cap Usd"
+          },
+          "month_usd": {
+            "type": "string",
+            "title": "Month Usd"
+          },
+          "monthly_cap_usd": {
+            "type": "string",
+            "title": "Monthly Cap Usd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "today_usd",
+          "daily_cap_usd",
+          "month_usd",
+          "monthly_cap_usd"
+        ],
+        "title": "BudgetUse"
+      },
+      "CallDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "task": {
+            "type": "string",
+            "title": "Task"
+          },
+          "prompt_version": {
+            "type": "integer",
+            "title": "Prompt Version"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CallStatus"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "title": "Cache Read Tokens"
+          },
+          "cache_write_tokens": {
+            "type": "integer",
+            "title": "Cache Write Tokens"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "user_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Prompt"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameters"
+          },
+          "answer": {
+            "title": "Answer"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response"
+          },
+          "purged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purged At"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AppEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "task",
+          "prompt_version",
+          "model",
+          "status",
+          "error",
+          "attempts",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_write_tokens",
+          "cost_usd",
+          "latency_ms",
+          "system_prompt",
+          "user_prompt",
+          "parameters",
+          "answer",
+          "response",
+          "purged_at",
+          "events"
+        ],
+        "title": "CallDetail"
+      },
+      "CallPage": {
+        "properties": {
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/CallSummary"
+            },
+            "type": "array",
+            "title": "Calls"
+          },
+          "next_before_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Before Id"
+          },
+          "tasks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "calls",
+          "next_before_id",
+          "tasks"
+        ],
+        "title": "CallPage"
+      },
+      "CallStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "failed",
+          "error"
+        ]
+      },
+      "CallSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "task": {
+            "type": "string",
+            "title": "Task"
+          },
+          "prompt_version": {
+            "type": "integer",
+            "title": "Prompt Version"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CallStatus"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "title": "Cache Read Tokens"
+          },
+          "cache_write_tokens": {
+            "type": "integer",
+            "title": "Cache Write Tokens"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "task",
+          "prompt_version",
+          "model",
+          "status",
+          "error",
+          "attempts",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_write_tokens",
+          "cost_usd",
+          "latency_ms"
+        ],
+        "title": "CallSummary"
+      },
       "ConvertRequest": {
         "properties": {
           "draft": {
@@ -936,6 +1597,30 @@
         ],
         "title": "CvView"
       },
+      "DailyCost": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "calls",
+          "cost_usd"
+        ],
+        "title": "DailyCost"
+      },
       "DiagnosticCode": {
         "type": "string",
         "enum": [
@@ -953,6 +1638,44 @@
           "personal_phone",
           "personal_url"
         ]
+      },
+      "EventLevel": {
+        "type": "string",
+        "enum": [
+          "DEBUG",
+          "INFO",
+          "WARNING",
+          "ERROR",
+          "CRITICAL"
+        ]
+      },
+      "EventPage": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AppEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "next_before_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Before Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events",
+          "next_before_id"
+        ],
+        "title": "EventPage"
       },
       "ExperienceFields": {
         "properties": {
@@ -1392,6 +2115,93 @@
         ],
         "title": "SelectionChoice"
       },
+      "TaskUsage": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls"
+          },
+          "ok": {
+            "type": "integer",
+            "title": "Ok"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors"
+          },
+          "retried": {
+            "type": "integer",
+            "title": "Retried"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "title": "Cache Read Tokens"
+          },
+          "cache_write_tokens": {
+            "type": "integer",
+            "title": "Cache Write Tokens"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          },
+          "task": {
+            "type": "string",
+            "title": "Task"
+          }
+        },
+        "type": "object",
+        "required": [
+          "calls",
+          "ok",
+          "failed",
+          "errors",
+          "retried",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_write_tokens",
+          "cost_usd",
+          "latency_p50_ms",
+          "latency_p95_ms",
+          "task"
+        ],
+        "title": "TaskUsage"
+      },
       "TextDraft": {
         "properties": {
           "mode": {
@@ -1410,6 +2220,176 @@
           "text"
         ],
         "title": "TextDraft"
+      },
+      "TierModel": {
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "fast",
+              "writing"
+            ],
+            "title": "Tier"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "thinking": {
+            "type": "string",
+            "title": "Thinking"
+          },
+          "effort": {
+            "type": "string",
+            "title": "Effort"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "model",
+          "thinking",
+          "effort"
+        ],
+        "title": "TierModel"
+      },
+      "UsageFigures": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls"
+          },
+          "ok": {
+            "type": "integer",
+            "title": "Ok"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors"
+          },
+          "retried": {
+            "type": "integer",
+            "title": "Retried"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "title": "Cache Read Tokens"
+          },
+          "cache_write_tokens": {
+            "type": "integer",
+            "title": "Cache Write Tokens"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "calls",
+          "ok",
+          "failed",
+          "errors",
+          "retried",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_write_tokens",
+          "cost_usd",
+          "latency_p50_ms",
+          "latency_p95_ms"
+        ],
+        "title": "UsageFigures"
+      },
+      "UsageReport": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Since"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/TierModel"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "total": {
+            "$ref": "#/components/schemas/UsageFigures"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskUsage"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/DailyCost"
+            },
+            "type": "array",
+            "title": "Daily"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/BudgetUse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "since",
+          "configured",
+          "models",
+          "total",
+          "tasks",
+          "daily",
+          "budget"
+        ],
+        "title": "UsageReport"
       },
       "User": {
         "properties": {

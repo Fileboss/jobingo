@@ -160,10 +160,215 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/observability/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Usage
+         * @description Calls, tokens, cost and latency over the last `days` days, per task and per day.
+         */
+        get: operations["get_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/observability/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calls
+         * @description Newest first.
+         */
+        get: operations["list_calls"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/observability/calls/{call_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Call
+         * @description One call with its prompts, its answer and the events it caused.
+         */
+        get: operations["get_call"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/observability/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Events
+         * @description Newest first, at `level` or above.
+         */
+        get: operations["list_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AppEvent */
+        AppEvent: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            level: components["schemas"]["EventLevel"];
+            /** Name */
+            name: string;
+            /** Fields */
+            fields: {
+                [key: string]: unknown;
+            };
+            /** Llm Call Id */
+            llm_call_id: number | null;
+        };
+        /** BudgetUse */
+        BudgetUse: {
+            /** Today Usd */
+            today_usd: string;
+            /** Daily Cap Usd */
+            daily_cap_usd: string;
+            /** Month Usd */
+            month_usd: string;
+            /** Monthly Cap Usd */
+            monthly_cap_usd: string;
+        };
+        /** CallDetail */
+        CallDetail: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Task */
+            task: string;
+            /** Prompt Version */
+            prompt_version: number;
+            /** Model */
+            model: string;
+            status: components["schemas"]["CallStatus"];
+            /** Error */
+            error: string | null;
+            /** Attempts */
+            attempts: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cache Read Tokens */
+            cache_read_tokens: number;
+            /** Cache Write Tokens */
+            cache_write_tokens: number;
+            /** Cost Usd */
+            cost_usd: string;
+            /** Latency Ms */
+            latency_ms: number;
+            /** System Prompt */
+            system_prompt: string | null;
+            /** User Prompt */
+            user_prompt: string | null;
+            /** Parameters */
+            parameters: {
+                [key: string]: unknown;
+            } | null;
+            /** Answer */
+            answer: unknown;
+            /** Response */
+            response: {
+                [key: string]: unknown;
+            } | null;
+            /** Purged At */
+            purged_at: string | null;
+            /** Events */
+            events: components["schemas"]["AppEvent"][];
+        };
+        /** CallPage */
+        CallPage: {
+            /** Calls */
+            calls: components["schemas"]["CallSummary"][];
+            /** Next Before Id */
+            next_before_id: number | null;
+            /** Tasks */
+            tasks: string[];
+        };
+        /** @enum {string} */
+        CallStatus: "ok" | "failed" | "error";
+        /** CallSummary */
+        CallSummary: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Task */
+            task: string;
+            /** Prompt Version */
+            prompt_version: number;
+            /** Model */
+            model: string;
+            status: components["schemas"]["CallStatus"];
+            /** Error */
+            error: string | null;
+            /** Attempts */
+            attempts: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cache Read Tokens */
+            cache_read_tokens: number;
+            /** Cache Write Tokens */
+            cache_write_tokens: number;
+            /** Cost Usd */
+            cost_usd: string;
+            /** Latency Ms */
+            latency_ms: number;
+        };
         /** ConvertRequest */
         ConvertRequest: {
             draft: components["schemas"]["CvDraft"];
@@ -302,8 +507,29 @@ export interface components {
             /** Diagnostics */
             diagnostics: components["schemas"]["CvDiagnostic"][];
         };
+        /** DailyCost */
+        DailyCost: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Calls */
+            calls: number;
+            /** Cost Usd */
+            cost_usd: string;
+        };
         /** @enum {string} */
         DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
+        /** @enum {string} */
+        EventLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+        /** EventPage */
+        EventPage: {
+            /** Events */
+            events: components["schemas"]["AppEvent"][];
+            /** Next Before Id */
+            next_before_id: number | null;
+        };
         /** ExperienceFields */
         ExperienceFields: {
             /**
@@ -520,6 +746,35 @@ export interface components {
             excluded_ids: string[];
             options: components["schemas"]["CvOptions"];
         };
+        /** TaskUsage */
+        TaskUsage: {
+            /** Calls */
+            calls: number;
+            /** Ok */
+            ok: number;
+            /** Failed */
+            failed: number;
+            /** Errors */
+            errors: number;
+            /** Retried */
+            retried: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cache Read Tokens */
+            cache_read_tokens: number;
+            /** Cache Write Tokens */
+            cache_write_tokens: number;
+            /** Cost Usd */
+            cost_usd: string;
+            /** Latency P50 Ms */
+            latency_p50_ms: number | null;
+            /** Latency P95 Ms */
+            latency_p95_ms: number | null;
+            /** Task */
+            task: string;
+        };
         /** TextDraft */
         TextDraft: {
             /**
@@ -529,6 +784,67 @@ export interface components {
             mode: "text";
             /** Text */
             text: string;
+        };
+        /** TierModel */
+        TierModel: {
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "fast" | "writing";
+            /** Model */
+            model: string;
+            /** Thinking */
+            thinking: string;
+            /** Effort */
+            effort: string;
+        };
+        /** UsageFigures */
+        UsageFigures: {
+            /** Calls */
+            calls: number;
+            /** Ok */
+            ok: number;
+            /** Failed */
+            failed: number;
+            /** Errors */
+            errors: number;
+            /** Retried */
+            retried: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cache Read Tokens */
+            cache_read_tokens: number;
+            /** Cache Write Tokens */
+            cache_write_tokens: number;
+            /** Cost Usd */
+            cost_usd: string;
+            /** Latency P50 Ms */
+            latency_p50_ms: number | null;
+            /** Latency P95 Ms */
+            latency_p95_ms: number | null;
+        };
+        /** UsageReport */
+        UsageReport: {
+            /** Days */
+            days: number;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /** Configured */
+            configured: boolean;
+            /** Models */
+            models: components["schemas"]["TierModel"][];
+            total: components["schemas"]["UsageFigures"];
+            /** Tasks */
+            tasks: components["schemas"]["TaskUsage"][];
+            /** Daily */
+            daily: components["schemas"]["DailyCost"][];
+            budget: components["schemas"]["BudgetUse"];
         };
         /** User */
         User: {
@@ -984,6 +1300,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IdentityDocument"];
+                };
+            };
+        };
+    };
+    get_usage: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_calls: {
+        parameters: {
+            query?: {
+                task?: string | null;
+                status?: components["schemas"]["CallStatus"] | null;
+                before_id?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_call: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallDetail"];
+                };
+            };
+            /** @description No such call */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events: {
+        parameters: {
+            query?: {
+                level?: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+                q?: string | null;
+                llm_call_id?: number | null;
+                before_id?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

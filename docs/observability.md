@@ -1,6 +1,8 @@
 # Observability page
 
-A key feature (`docs/decisions/2026-11-05-observability-page.md`). A reviewer should understand from this page what the AI does, what it costs, how well it performs, and be able to trace any result back to its call. Nothing here is built yet.
+A key feature (`docs/decisions/2026-11-05-observability-page.md`). A reviewer should understand from this page what the AI does, what it costs, how well it performs, and be able to trace any result back to its call.
+
+Built: the "Suivi de l'IA" section (`/suivi`), with the Usage, Calls (`/suivi/appels`, and one call at `/suivi/appels/{id}`) and Logs (`/suivi/journal`) tabs, on `/api/observability/*`. The Evals tab comes with step 4.3.
 
 ## What it shows
 
@@ -23,6 +25,13 @@ The links between these areas are the point: from a score or a document to its c
 - **Failed calls count.** They appear in the statistics, with their real cost.
 - **Latency percentiles cover successful calls only**, since a call that fails fast would flatter them.
 - **Keep POC invariants:** every call is journalled with its real cost, and each result stores its `llm_call_id`. The POC's prompt and answer retention is 90 days.
+
+## How it works
+
+- **Calls** are the `llm_calls` journal, written by `llm.journal.run_task`. The page reads it through `services/observability.py`.
+- **Logs** are structured events only (`jobingo.logs.event`), which `services/app_log.DatabaseEventHandler` writes to `app_events` on its own connection, so an event outlives a request that fails after it. String fields are redacted again before they are stored. Plain log lines stay on the console. An event about an account passes `user_id`; one that passes `llm_call_id` appears on that call's page.
+- **Retention:** at each startup, prompts and answers older than 90 days are erased (`purged_at`), with counts and costs kept, and older events are deleted.
+- **Days** start at local midnight, like the budget caps.
 
 ## Design
 

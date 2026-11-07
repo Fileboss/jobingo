@@ -8,9 +8,10 @@
 	const screens = [
 		{ href: resolve('/cv'), label: 'Mon CV' },
 		{ href: resolve('/identite'), label: 'Identité' },
-		{ href: resolve('/apercu'), label: 'Aperçu' }
+		{ href: resolve('/apercu'), label: 'Aperçu' },
+		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
-	const upcoming = ['Offres', 'Candidatures', 'Courrier', 'Suivi de l’IA'];
+	const upcoming = ['Offres', 'Candidatures', 'Courrier'];
 </script>
 
 <div class="flex min-h-dvh flex-col">
@@ -22,7 +23,10 @@
 					<li>
 						<a
 							href={screen.href}
-							aria-current={page.url.pathname === screen.href ? 'page' : undefined}
+							aria-current={page.url.pathname === screen.href ||
+							(screen.href === resolve('/suivi') && page.url.pathname.startsWith(screen.href + '/'))
+								? 'page'
+								: undefined}
 							class="font-bold text-ink underline-offset-4 aria-[current=page]:underline"
 						>
 							{screen.label}

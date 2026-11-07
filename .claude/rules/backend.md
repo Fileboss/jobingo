@@ -30,7 +30,8 @@ paths:
 
 ## Model calls
 
-- Every call is journalled in `llm_calls`, failed ones with what they cost, and whatever derives from a call stores its `llm_call_id`. Log events carry ids and counts, never a prompt or an answer.
+- Every call is journalled in `llm_calls`, failed ones with what they cost, and whatever derives from a call stores its `llm_call_id`.
+- Log what is worth monitoring with `jobingo.logs.event(log, "area.what", level, user_id=..., llm_call_id=..., **fields)`: it lands in `app_events` and on the observability page. Fields are ids, counts, categories and short reasons, never a prompt, a mail or a CV. Every model-derived decision and every human decision on one logs an event with its call id.
 - Costs come from `llm/pricing.py`, USD per million tokens. A model without a price is refused, since it would make every cost and cap wrong.
 - Untrusted text in a task input is `UntrustedText`, or goes through the `xml` filter: `<` and `>` are escaped. Templates render with `StrictUndefined`.
 - Strict structured output forbids free-form mappings: a `dict` field travels as a list of pairs through `Task.schema_model`.

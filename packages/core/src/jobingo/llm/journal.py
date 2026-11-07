@@ -150,7 +150,14 @@ def run_task[OutT: BaseModel](
     try:
         check_budget(conn, user_id, budget)
     except LLMBudgetExceeded as exc:
-        event(log, "llm.budget_exceeded", logging.WARNING, task=task.name, reason=str(exc))
+        event(
+            log,
+            "llm.budget_exceeded",
+            logging.WARNING,
+            user_id=user_id,
+            task=task.name,
+            reason=str(exc),
+        )
         raise
 
     prompt = render_prompt(task, payload, redaction_values)
@@ -177,6 +184,7 @@ def run_task[OutT: BaseModel](
             log,
             "llm.call",
             logging.ERROR if status == "error" else logging.WARNING,
+            user_id=user_id,
             llm_call_id=call_id,
             task=task.name,
             status=status,
@@ -204,6 +212,7 @@ def run_task[OutT: BaseModel](
     event(
         log,
         "llm.call",
+        user_id=user_id,
         llm_call_id=call_id,
         task=task.name,
         status="ok",

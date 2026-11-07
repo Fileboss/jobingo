@@ -7,8 +7,9 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from jobingo.config import Settings
 from jobingo.db import connect, create_pool, migrate
+from jobingo.services import app_log
 from jobingo.services.accounts import ensure_account
-from jobingo_api.routes import cv, cv_page, health, identity, me
+from jobingo_api.routes import cv, cv_page, health, identity, me, observability
 from jobingo_api.security import LocalRequestsOnlyMiddleware, SecurityHeadersMiddleware
 from jobingo_api.spa import SpaFiles
 
@@ -22,9 +23,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     pool = create_pool(settings.database_url)
     pool.open(wait=True)
     app.state.pool = pool
+    events = app_log.install(pool)
     try:
+        with pool.connection() as conn:
+            app_log.purge_expired(conn)
         yield
     finally:
+        app_log.uninstall(events)
         pool.close()
 
 
@@ -54,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(cv.router, prefix="/api")
     app.include_router(cv_page.router, prefix="/api")
     app.include_router(identity.router, prefix="/api")
+    app.include_router(observability.router, prefix="/api")
 
     # Absent in development, where the Vite dev server serves the client.
     if (settings.web_build_dir / "index.html").is_file():
