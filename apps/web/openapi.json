@@ -1193,7 +1193,7 @@
           "offers"
         ],
         "summary": "Intake Offers",
-        "description": "Every offer in a pasted text: an offer, an alert, a digest. One call, journalled.\nA known offer is completed rather than duplicated.",
+        "description": "Every offer in a pasted text: an offer, an alert, a digest. One call to extract,\nthen one per offer that passes the filters to score it. A known offer is completed\nrather than duplicated. Offers are kept even when their scoring fails.",
         "operationId": "intake_offers",
         "requestBody": {
           "content": {
@@ -1265,7 +1265,7 @@
           "offers"
         ],
         "summary": "List Offers",
-        "description": "Newest first.",
+        "description": "Newest first, each with its current score.",
         "operationId": "list_offers",
         "responses": {
           "200": {
@@ -1274,10 +1274,83 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/Offer"
+                    "$ref": "#/components/schemas/ScoredOffer"
                   },
                   "type": "array",
                   "title": "Response List Offers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offers/stale": {
+      "get": {
+        "tags": [
+          "offers"
+        ],
+        "summary": "Count Stale Offers",
+        "operationId": "count_stale_offers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaleCount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offers/rescore": {
+      "post": {
+        "tags": [
+          "offers"
+        ],
+        "summary": "Rescore Stale Offers",
+        "description": "Score again every offer never scored, or scored on other objectives or another CV\nversion: one call per offer that passes the filters. Stops at the first failure.",
+        "operationId": "rescore_stale_offers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoringRun"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A spending cap is reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The model's answer was unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No API key, or the API is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
                 }
               }
             }
@@ -1310,6 +1383,138 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OfferPage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such offer"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offers/{offer_id}/score": {
+      "post": {
+        "tags": [
+          "offers"
+        ],
+        "summary": "Score Offer",
+        "description": "Filter and score this offer again. An offer the filters eliminate costs no call.",
+        "operationId": "score_offer",
+        "parameters": [
+          {
+            "name": "offer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Offer Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoredOffer"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such offer"
+          },
+          "429": {
+            "description": "A spending cap is reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The model's answer was unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No API key, or the API is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offers/{offer_id}/decision": {
+      "put": {
+        "tags": [
+          "offers"
+        ],
+        "summary": "Decide On Offer",
+        "description": "Keep or dismiss an offer, or take the decision back. Scoring never changes it.",
+        "operationId": "decide_on_offer",
+        "parameters": [
+          {
+            "name": "offer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Offer Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoredOffer"
                 }
               }
             }
@@ -1878,6 +2083,42 @@
         ],
         "title": "ConvertRequest"
       },
+      "Criteria": {
+        "properties": {
+          "mission": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Mission"
+          },
+          "stack": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Stack"
+          },
+          "salary": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Salary"
+          },
+          "culture": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Culture"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mission",
+          "stack",
+          "salary",
+          "culture"
+        ],
+        "title": "Criteria"
+      },
       "CvConflict": {
         "properties": {
           "current": {
@@ -2264,6 +2505,25 @@
           "cost_usd"
         ],
         "title": "DailyCost"
+      },
+      "DecisionBody": {
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "DecisionBody"
       },
       "DiagnosticCode": {
         "type": "string",
@@ -3305,6 +3565,25 @@
           "llm_call_id": {
             "type": "integer",
             "title": "Llm Call Id"
+          },
+          "unscored_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unscored Ids",
+            "default": []
+          },
+          "scoring_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Error"
           }
         },
         "type": "object",
@@ -3452,6 +3731,19 @@
             ],
             "title": "Llm Call Id"
           },
+          "state": {
+            "$ref": "#/components/schemas/OfferState"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3476,10 +3768,19 @@
           "url",
           "description_md",
           "llm_call_id",
+          "state",
+          "decision",
           "created_at",
           "updated_at"
         ],
         "title": "Offer"
+      },
+      "OfferDecision": {
+        "type": "string",
+        "enum": [
+          "shortlisted",
+          "dismissed"
+        ]
       },
       "OfferInput": {
         "properties": {
@@ -3597,6 +3898,19 @@
             ],
             "title": "Llm Call Id"
           },
+          "state": {
+            "$ref": "#/components/schemas/OfferState"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3606,6 +3920,16 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "current_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferScore"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "drafts": {
             "items": {
@@ -3628,11 +3952,156 @@
           "url",
           "description_md",
           "llm_call_id",
+          "state",
+          "decision",
           "created_at",
           "updated_at",
+          "current_score",
           "drafts"
         ],
         "title": "OfferPage"
+      },
+      "OfferScore": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "offer_id": {
+            "type": "integer",
+            "title": "Offer Id"
+          },
+          "passed_filters": {
+            "type": "boolean",
+            "title": "Passed Filters"
+          },
+          "eliminated_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Eliminated By"
+          },
+          "unknown": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknown"
+          },
+          "criteria": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Criteria"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
+          "salary_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Score"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "strengths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strengths"
+          },
+          "gaps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Gaps"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "offer_id",
+          "passed_filters",
+          "eliminated_by",
+          "unknown",
+          "criteria",
+          "score",
+          "fit_score",
+          "salary_score",
+          "summary",
+          "strengths",
+          "gaps",
+          "weights",
+          "llm_call_id",
+          "created_at"
+        ],
+        "title": "OfferScore"
+      },
+      "OfferState": {
+        "type": "string",
+        "enum": [
+          "new",
+          "scored",
+          "filtered"
+        ]
       },
       "OptionBlockers": {
         "properties": {
@@ -3826,6 +4295,170 @@
         ],
         "title": "SaveRequest"
       },
+      "ScoredOffer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "contract": {
+            "$ref": "#/components/schemas/Contract"
+          },
+          "remote": {
+            "$ref": "#/components/schemas/Remote"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "description_md": {
+            "type": "string",
+            "title": "Description Md"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "state": {
+            "$ref": "#/components/schemas/OfferState"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "current_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferScore"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "company_name",
+          "location",
+          "contract",
+          "remote",
+          "salary_min",
+          "salary_max",
+          "url",
+          "description_md",
+          "llm_call_id",
+          "state",
+          "decision",
+          "created_at",
+          "updated_at",
+          "current_score"
+        ],
+        "title": "ScoredOffer"
+      },
+      "ScoringRun": {
+        "properties": {
+          "scored_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Scored Ids"
+          },
+          "unscored_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unscored Ids"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scored_ids",
+          "unscored_ids",
+          "error"
+        ],
+        "title": "ScoringRun",
+        "description": "What a batch of scorings did. It stops at the first failed call: the next one\nwould most likely fail the same way, and each one costs."
+      },
       "SelectionChoice": {
         "properties": {
           "excluded_ids": {
@@ -3845,6 +4478,19 @@
           "options"
         ],
         "title": "SelectionChoice"
+      },
+      "StaleCount": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "StaleCount"
       },
       "TaskUsage": {
         "properties": {

@@ -201,3 +201,36 @@ def test_the_extraction_suite_compares_fields_case_by_case(
     assert not rows["ext-06"]["count_ok"]  # three offers in that digest
     assert summary["cases"] == len(cases)
     assert 0 < summary["score"] < 1
+
+
+def test_the_ranking_suite_correlates_scores_with_the_hand_made_ranking(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from evals.suites import spearman
+    from jobingo.llm.tasks.score_offer import ScoreOfferOutput
+
+    assert spearman([1, 2, 3], [90, 50, 10]) == pytest.approx(1)
+    assert spearman([1, 2, 3], [10, 50, 90]) == pytest.approx(-1)
+    assert spearman([1, 3, 5], [90, 50, 10]) == pytest.approx(1)  # gaps in the ranking
+
+    cases = load_cases("score_offer")
+    fake = FakeLLMClient(usage=Usage(input_tokens=900, output_tokens=150, attempts=1))
+    # Rate each offer by its hand-made rank: the ranking then agrees perfectly.
+    for case in cases:
+        rating = 10 - 10 * (case["rank"] - 1) / len(cases)
+        fake.queue(
+            "score_offer",
+            ScoreOfferOutput(mission=rating, stack=rating, salary=rating, culture=rating),
+        )
+
+    summary = run_suite(
+        SUITES["score_offer"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    assert summary["score"] == 1.0
+    assert summary["threshold"] == 0.85 and summary["passed"] is True
+    _, prompt = fake.prompts[0]
+    assert "plateformes de données" in prompt.user  # the fictional objectives

@@ -1,0 +1,229 @@
+{
+  "summary": {
+    "suite": "score_offer",
+    "metric": "corrélation de rang avec le classement fait à la main",
+    "prompt_version": 1,
+    "setup": "claude-haiku-5-5.off-medium",
+    "model": "claude-haiku-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 0.948,
+    "threshold": 0.85,
+    "passed": true,
+    "detail": {
+      "scored": "15/15",
+      "by_expected_rank": "1:80 2:70 3:72 4:80 5:58 6:67 7:48 8:58 9:32 10:38 11:40 12:22 13:23 14:18 15:20"
+    },
+    "cases": 15,
+    "spend": {
+      "live_calls": 15,
+      "cached_calls": 0,
+      "input_tokens": 17988,
+      "output_tokens": 3483,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": "0.003541",
+      "latency_p50_ms": 1816,
+      "latency_p95_ms": 2192
+    },
+    "stopped": null,
+    "run_at": "2026-11-07T15:41:06+00:00"
+  },
+  "rows": [
+    {
+      "id": "sc-01",
+      "expected_rank": 1,
+      "passed": true,
+      "score": 80,
+      "criteria": {
+        "mission": 8.0,
+        "stack": 8.0,
+        "salary": 8.0,
+        "culture": 8.0
+      },
+      "summary": "Offre très alignée avec le profil data/Python, salaire au-dessus du minimum visé, télétravail seulement hybride."
+    },
+    {
+      "id": "sc-02",
+      "expected_rank": 2,
+      "passed": true,
+      "score": 70,
+      "criteria": {
+        "mission": 8.0,
+        "stack": 5.0,
+        "salary": 9.0,
+        "culture": 7.0
+      },
+      "summary": "Poste de référent technique sur un moteur d'ingestion data bien rémunéré et en remote, mais centré sur Go plutôt que Python."
+    },
+    {
+      "id": "sc-03",
+      "expected_rank": 5,
+      "passed": true,
+      "score": 58,
+      "criteria": {
+        "mission": 6.0,
+        "stack": 7.0,
+        "salary": 4.0,
+        "culture": 5.0
+      },
+      "summary": "Poste backend Python/Django en CDI à Villeurbanne, pertinent sur la stack et les API mais avec un salaire et un télétravail en deçà des objectifs."
+    },
+    {
+      "id": "sc-04",
+      "expected_rank": 3,
+      "passed": true,
+      "score": 72,
+      "criteria": {
+        "mission": 8.0,
+        "stack": 8.0,
+        "salary": 6.0,
+        "culture": 5.0
+      },
+      "summary": "Poste data bien aligné sur les objectifs (Airflow, PostgreSQL, CDI à Lyon en remote), mais pratiques d'ingénierie et usage de Python à vérifier."
+    },
+    {
+      "id": "sc-05",
+      "expected_rank": 13,
+      "passed": true,
+      "score": 23,
+      "criteria": {
+        "mission": 2.0,
+        "stack": 4.0,
+        "salary": 1.0,
+        "culture": 1.0
+      },
+      "summary": "Poste en régie chez une ESN, maintenance d'outils internes, salaire sous le seuil visé et sans télétravail, donc peu aligné avec les objectifs."
+    },
+    {
+      "id": "sc-06",
+      "expected_rank": 14,
+      "passed": true,
+      "score": 18,
+      "criteria": {
+        "mission": 2.0,
+        "stack": 1.0,
+        "salary": 2.0,
+        "culture": 3.0
+      },
+      "summary": "Poste de maintenance Java sur site, peu aligné avec les objectifs backend/data Python et la rémunération visée."
+    },
+    {
+      "id": "sc-07",
+      "expected_rank": 4,
+      "passed": true,
+      "score": 80,
+      "criteria": {
+        "mission": 8.0,
+        "stack": 8.0,
+        "salary": 9.0,
+        "culture": 7.0
+      },
+      "summary": "Poste backend Python senior en CDI, full remote, sur la facturation avec un salaire au-dessus des objectifs et une culture d'ingénierie solide."
+    },
+    {
+      "id": "sc-08",
+      "expected_rank": 7,
+      "passed": true,
+      "score": 48,
+      "criteria": {
+        "mission": 5.0,
+        "stack": 7.0,
+        "salary": 2.0,
+        "culture": 3.0
+      },
+      "summary": "Poste backend Django à Lyon en CDI, intéressant techniquement mais sous le seuil salarial visé et peu aligné sur les missions data/API recherchées."
+    },
+    {
+      "id": "sc-09",
+      "expected_rank": 8,
+      "passed": true,
+      "score": 58,
+      "criteria": {
+        "mission": 5.0,
+        "stack": 6.0,
+        "salary": 8.0,
+        "culture": 5.0
+      },
+      "summary": "Tech Lead backend Python sur plateforme IoT à Grenoble, bien rémunéré mais avec présence sur site et un rôle orienté management."
+    },
+    {
+      "id": "sc-10",
+      "expected_rank": 9,
+      "passed": true,
+      "score": 32,
+      "criteria": {
+        "mission": 3.0,
+        "stack": 3.0,
+        "salary": 3.0,
+        "culture": 4.0
+      },
+      "summary": "Offre DevOps/SRE en CDI et full remote, mais orientée infrastructure, peu alignée avec les objectifs backend/data en Python et sous le salaire visé."
+    },
+    {
+      "id": "sc-11",
+      "expected_rank": 15,
+      "passed": true,
+      "score": 20,
+      "criteria": {
+        "mission": 2.0,
+        "stack": 1.0,
+        "salary": 2.0,
+        "culture": 4.0
+      },
+      "summary": "Poste front-end React/TypeScript mal aligné avec la recherche backend Python et sous le salaire visé."
+    },
+    {
+      "id": "sc-12",
+      "expected_rank": 12,
+      "passed": true,
+      "score": 22,
+      "criteria": {
+        "mission": 3.0,
+        "stack": 2.0,
+        "salary": 0.0,
+        "culture": 3.0
+      },
+      "summary": "Poste d'analyse décisionnelle sous-payé et éloigné d'un rôle backend data en Python, malgré une localisation lyonnaise et un contrat CDI."
+    },
+    {
+      "id": "sc-13",
+      "expected_rank": 6,
+      "passed": true,
+      "score": 67,
+      "criteria": {
+        "mission": 7.0,
+        "stack": 8.0,
+        "salary": 5.0,
+        "culture": 5.0
+      },
+      "summary": "Poste backend Python sur une API de pilotage de bornes de recharge à Lyon, avec un salaire pouvant rester sous l'objectif et des pratiques d'équipe non détaillées."
+    },
+    {
+      "id": "sc-14",
+      "expected_rank": 11,
+      "passed": true,
+      "score": 40,
+      "criteria": {
+        "mission": 4.0,
+        "stack": 6.0,
+        "salary": 1.0,
+        "culture": 3.0
+      },
+      "summary": "Poste junior Python en CDI en télétravail, intéressant techniquement mais dont le salaire reste très en dessous de l'objectif de 60 000 €."
+    },
+    {
+      "id": "sc-15",
+      "expected_rank": 10,
+      "passed": true,
+      "score": 38,
+      "criteria": {
+        "mission": 4.0,
+        "stack": 2.0,
+        "salary": 6.0,
+        "culture": 5.0
+      },
+      "summary": "Poste backend lyonnais en CDI correspondant au salaire minimum visé, mais orienté Java/Kotlin, peu aligné avec la préférence Python et les plateformes de données."
+    }
+  ]
+}

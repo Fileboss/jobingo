@@ -8,6 +8,7 @@ would see.
 """
 
 import json
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,8 +19,10 @@ from jobingo.domain.text import fold
 from jobingo.llm.client import LLMCallError, LLMClient, Tier
 from jobingo.llm.journal import run_task
 from jobingo.llm.tasks.extract_offer import EXTRACT_OFFER_TASK, ExtractOfferInput
+from jobingo.llm.tasks.score_offer import SCORE_OFFER_TASK
 from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
 from jobingo.services.cv_proposal import OfferText, propose_cv
+from jobingo.services.scoring import score_offer
 
 CASES_DIR = Path(__file__).resolve().parent / "cases"
 
@@ -175,7 +178,118 @@ def grade_extract(rows: list[Row]) -> dict[str, Any]:
     }
 
 
+# --- score_offer ------------------------------------------------------------------------
+
+# Inherited from the POC as a policy, not as a score: the ranking must agree with the
+# hand-made one at least this well.
+SCORE_THRESHOLD = 0.85
+
+
+def _ranks(values: list[float]) -> list[float]:
+    """1-based ranks, highest value first, ties sharing their average rank."""
+    order = sorted(range(len(values)), key=lambda i: -values[i])
+    ranks = [0.0] * len(values)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    return ranks
+
+
+def spearman(expected_ranks: list[float], scores: list[float]) -> float:
+    """The rank correlation between the hand-made ranking (1 is the best) and the
+    scores. Both are ranked again, so a failed case leaving a gap changes nothing."""
+    want = _ranks([-rank for rank in expected_ranks])
+    got = _ranks(scores)
+    mean_a, mean_b = sum(want) / len(want), sum(got) / len(got)
+    cov = sum((a - mean_a) * (b - mean_b) for a, b in zip(want, got, strict=True))
+    var_a = sum((a - mean_a) ** 2 for a in want)
+    var_b = sum((b - mean_b) ** 2 for b in got)
+    return cov / (var_a * var_b) ** 0.5 if var_a and var_b else 0.0
+
+
+def _insert_offer(ws: Workspace, offer: dict[str, Any]) -> int:
+    row = ws.conn.execute(
+        """
+        INSERT INTO offers (user_id, title, company_name, location, contract, remote,
+            salary_min, salary_max, description_md, dedup_key)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        """,
+        (
+            ws.user_id,
+            offer["title"],
+            offer.get("company_name", ""),
+            offer.get("location", ""),
+            offer.get("contract", ""),
+            offer.get("remote", ""),
+            offer.get("salary_min"),
+            offer.get("salary_max"),
+            offer.get("description_md", ""),
+            uuid.uuid4().hex,
+        ),
+    ).fetchone()
+    assert row is not None
+    return row["id"]
+
+
+def run_score(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> list[Row]:
+    rows: list[Row] = []
+    for case in cases:
+        row: Row = {"id": case["id"], "expected_rank": case["rank"]}
+        try:
+            score = score_offer(
+                ws.conn, client, NO_BUDGET, ws.user_id, _insert_offer(ws, case["offer"])
+            )
+        except LLMCallError as exc:
+            rows.append(row | {"passed": False, "score": None, "error": str(exc)})
+            continue
+        rows.append(
+            row
+            | {
+                # A case fails alone only when it could not be scored; the suite is
+                # graded on the whole ranking.
+                "passed": score.score is not None,
+                "score": score.score,
+                "criteria": score.criteria.model_dump() if score.criteria else None,
+                "summary": score.summary,
+            }
+        )
+    return rows
+
+
+def grade_score(rows: list[Row]) -> dict[str, Any]:
+    scored = [row for row in rows if row["score"] is not None]
+    rho = (
+        spearman([r["expected_rank"] for r in scored], [r["score"] for r in scored])
+        if len(scored) > 1
+        else None
+    )
+    return {
+        "score": round(rho, 3) if rho is not None else None,
+        "detail": {
+            "scored": f"{len(scored)}/{len(rows)}",
+            "by_expected_rank": " ".join(
+                f"{r['expected_rank']}:{r['score']}"
+                for r in sorted(scored, key=lambda r: r["expected_rank"])
+            ),
+        },
+    }
+
+
 SUITES: dict[str, Suite] = {
+    "score_offer": Suite(
+        name="score_offer",
+        metric="corrélation de rang avec le classement fait à la main",
+        tier="fast",
+        prompt_version=SCORE_OFFER_TASK.prompt_version,
+        threshold=SCORE_THRESHOLD,
+        run=run_score,
+        grade=grade_score,
+    ),
     "extract_offer": Suite(
         name="extract_offer",
         metric="champs extraits correctement (contrat et télétravail à l'identique)",

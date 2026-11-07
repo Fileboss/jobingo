@@ -352,7 +352,7 @@ def _eval_result(
 
 def test_evals_list_every_shipped_task_even_unmeasured(client: TestClient):
     tasks = {task["task"]: task for task in client.get("/api/observability/evals").json()}
-    assert set(tasks) == {"extract_offer", "select_cv_content"}
+    assert set(tasks) == {"extract_offer", "score_offer", "select_cv_content"}
     assert tasks["select_cv_content"] == {
         "task": "select_cv_content",
         "shipped_version": SELECT_CV_CONTENT_TASK.prompt_version,

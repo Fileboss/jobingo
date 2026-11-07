@@ -1,0 +1,10 @@
+{
+  "hard_filters": {},
+  "weights": {
+    "mission": 2,
+    "stack": 2,
+    "salary": 1,
+    "culture": 1
+  },
+  "preferences": "Je cherche un poste d'ingénieur backend ou data, en CDI, à Lyon ou en télétravail complet. Je veux travailler sur des plateformes de données ou des API, en Python de préférence. Je vise 60 000 € brut par an au minimum. J'évite les ESN, le travail en régie et les postes purement Java. Une équipe produit avec des pratiques d'ingénierie solides (revue de code, tests, astreinte partagée) compte beaucoup."
+}

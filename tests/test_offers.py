@@ -87,7 +87,8 @@ def test_the_candidate_is_redacted_before_the_call(client: TestClient, fake: Fak
         },
     )
     _intake(client, fake, _offers(DATA), text="Bonjour Alex Moreau, voici une offre.")
-    [(_, prompt)] = fake.prompts
+    task, prompt = fake.prompts[0]
+    assert task == "extract_offer"
     assert "Alex" not in prompt.user
     assert "[CANDIDAT]" in prompt.user
 

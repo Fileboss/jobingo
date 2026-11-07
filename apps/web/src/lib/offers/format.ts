@@ -1,6 +1,8 @@
 import type { components } from '#lib/api/schema.d.ts';
 
 export type Offer = components['schemas']['Offer'];
+export type ScoredOffer = components['schemas']['ScoredOffer'];
+export type OfferScore = components['schemas']['OfferScore'];
 
 const thousands = (euros: number) => `${Math.round(euros / 1000)} k€`;
 
@@ -19,3 +21,10 @@ export const remoteLabels: Record<string, string> = {
 	'sur site': 'Sur site',
 	'': '—'
 };
+
+/** Where an offer stands: the user's decision first, then what scoring found. */
+export function standing(offer: ScoredOffer): 'shortlisted' | 'dismissed' | 'filtered' | 'open' {
+	if (offer.decision) return offer.decision;
+	if (offer.state === 'filtered') return 'filtered';
+	return 'open';
+}

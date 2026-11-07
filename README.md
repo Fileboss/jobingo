@@ -2,7 +2,7 @@
 
 An AI job search assistant that keeps the AI on a short leash. It collects and ranks job offers, tracks applications, tailors a CV and a cover letter to each offer, and drafts replies to recruiters. Nothing leaves without a human click.
 
-**Status: work in progress.** The CV editor, the CV page, the first AI feature (a CV adapted to an offer) and the observability page work today. Its eval suite is ready but no score is measured yet: see [what works today](#what-works-today) and the [roadmap](#roadmap). The interface is in French.
+**Status: work in progress.** The CV editor and page, offer intake and scoring, CVs adapted to an offer and the observability page work today. Each AI task has a measured eval: see [what works today](#what-works-today) and the [roadmap](#roadmap). The interface is in French.
 
 ![The CV page: a selection on the left, the real PDF on the right](docs/images/cv-page.png)
 
@@ -50,9 +50,21 @@ Paste an offer: one model call selects what serves it from the whole CV, and may
 
 The review screen shows the whole CV with what the model kept, rewrote, had refused or left out and why, next to the real PDF. You tick, untick, adopt a refused rewrite or write your own words. The proposal is stored unchanged as the trail, your choices apart, and the source CV is never written: an architecture test enforces it.
 
+### Offers, filtered by code and scored by criterion
+
+Paste an offer, an alert or a digest: one call extracts each position, and code stores it, completing a known offer rather than duplicating it. Your objectives' hard filters run in code first, and an offer they eliminate costs no call. The model then rates four criteria from 0 to 10, and code computes the score from your weights, so every score can be explained and recomputed. A score made on older objectives or an older CV is marked stale. Keeping or dismissing an offer is your decision, which scoring never changes.
+
 ### Measured, on one page
 
-The "Suivi de l'IA" section shows usage and cost per task and per day against the spending caps, every call with its prompts as the model read them, its answer and the events it caused, the eval results per prompt version and model, and the application log. Every figure comes from the call journal or a recorded eval run. Until the user runs `make eval`, the Evals tab says "not measured yet".
+The "Suivi de l'IA" section shows usage and cost per task and per day against the spending caps, every call with its prompts as the model read them, its answer and the events it caused, the eval results per prompt version and model, and the application log. Every figure comes from the call journal or a recorded eval run, and a task with no run reads "not measured yet". The first runs, on 2026-11-07, on fictional cases:
+
+| Task | Model | Measure | Result | Run cost |
+| ---- | ---- | ---- | ---- | ---- |
+| `extract_offer` v2 | Haiku 5.5 | fields extracted correctly | 103/103, 20/20 offer counts | 0.002 $ |
+| `score_offer` v1 | Haiku 5.5 | rank correlation with a hand-made ranking (threshold 0.85) | 0.948 | 0.004 $ |
+| `select_cv_content` v5 | Sonnet 5.5 | cases keeping all that is expected and nothing excluded | 8/8 | 0.044 $ |
+
+These sets are small: 20, 15 and 8 cases. They catch a regression, they do not prove general quality. The Evals tab holds the current figures.
 
 ### Engineering foundations
 
@@ -78,7 +90,7 @@ Small vertical steps, each one reviewable and working end to end.
 - [x] CV editor, in both modes
 - [x] CV rendering and PDF preview
 - [x] LLM layer, prompts and evals, with the observability page, then per-offer CV tailoring on a diff screen
-- [ ] Offer intake and scoring
+- [x] Offer intake and scoring
 - [ ] Application tracking and cover letters
 - [ ] Mail, drafted replies and the approval queue
 - [ ] Demo: a full fictional seed and a guided tour

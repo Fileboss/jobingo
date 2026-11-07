@@ -72,3 +72,54 @@ for (const path of ['/offres', '/offres/1']) {
 		expect(width).toBeLessThanOrEqual(390);
 	});
 }
+
+test('offers sort by score and split into views', async ({ page }) => {
+	const api = await open(page, '/offres');
+	await page.getByLabel('Texte des offres').fill('Des offres');
+	await page.getByRole('button', { name: 'Extraire les offres' }).click();
+	await expect(page.getByText('2 offres ajoutées.')).toBeVisible();
+
+	const titles = page.locator('tbody tr td:nth-child(2) a');
+	await expect(titles).toHaveText([
+		'Développeur Python',
+		'Ingénieur backend senior',
+		'Ingénieur plateforme'
+	]);
+	await page.getByRole('button', { name: 'Écartées' }).click();
+	await expect(titles).toHaveText(['Développeur Java']);
+	await expect(page.getByText('filtrée')).toBeVisible();
+	expect(api.texts).toHaveLength(1);
+});
+
+test('stale scores are counted and scored again on request', async ({ page }) => {
+	const api = new FakeOffersApi();
+	api.stale = 2;
+	await open(page, '/offres', api);
+	await expect(page.getByText('2 offres à noter')).toBeVisible();
+	await page.getByRole('button', { name: 'Noter maintenant' }).click();
+	await expect(page.getByText('à noter')).toHaveCount(0);
+	expect(api.rescoreRequests).toBe(1);
+});
+
+test('an offer shows how its score was computed, and the user decides', async ({ page }) => {
+	const api = await open(page, '/offres/1');
+	await expect(page.getByText('78/100')).toBeVisible();
+	await expect(page.getByText('Kubernetes peu pratiqué')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Voir l’appel #21' })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Retenir' }).click();
+	await expect(page.getByText('Retenue par vous.')).toBeVisible();
+	await page.getByRole('button', { name: 'Annuler' }).click();
+	await expect(page.getByRole('button', { name: 'Retenir' })).toBeVisible();
+	expect(api.decisions).toEqual(['shortlisted', null]);
+
+	await page.getByRole('button', { name: 'Noter à nouveau' }).click();
+	await expect(page.getByText('64/100')).toBeVisible();
+	expect(api.scoreRequests).toBe(1);
+});
+
+test('a filtered offer says which filter, with no call', async ({ page }) => {
+	await open(page, '/offres/4');
+	await expect(page.getByText('Écartée par vos filtres, sans appel au modèle.')).toBeVisible();
+	await expect(page.getByText('contrat non retenu : CDD')).toBeVisible();
+});

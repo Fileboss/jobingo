@@ -366,8 +366,9 @@ export interface paths {
         put?: never;
         /**
          * Intake Offers
-         * @description Every offer in a pasted text: an offer, an alert, a digest. One call, journalled.
-         *     A known offer is completed rather than duplicated.
+         * @description Every offer in a pasted text: an offer, an alert, a digest. One call to extract,
+         *     then one per offer that passes the filters to score it. A known offer is completed
+         *     rather than duplicated. Offers are kept even when their scoring fails.
          */
         post: operations["intake_offers"];
         delete?: never;
@@ -385,11 +386,49 @@ export interface paths {
         };
         /**
          * List Offers
-         * @description Newest first.
+         * @description Newest first, each with its current score.
          */
         get: operations["list_offers"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/offers/stale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count Stale Offers */
+        get: operations["count_stale_offers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/offers/rescore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rescore Stale Offers
+         * @description Score again every offer never scored, or scored on other objectives or another CV
+         *     version: one call per offer that passes the filters. Stops at the first failure.
+         */
+        post: operations["rescore_stale_offers"];
         delete?: never;
         options?: never;
         head?: never;
@@ -406,6 +445,46 @@ export interface paths {
         /** Get Offer */
         get: operations["get_offer"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/offers/{offer_id}/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Score Offer
+         * @description Filter and score this offer again. An offer the filters eliminate costs no call.
+         */
+        post: operations["score_offer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/offers/{offer_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Decide On Offer
+         * @description Keep or dismiss an offer, or take the decision back. Scoring never changes it.
+         */
+        put: operations["decide_on_offer"];
         post?: never;
         delete?: never;
         options?: never;
@@ -592,6 +671,17 @@ export interface components {
         ConvertRequest: {
             draft: components["schemas"]["CvDraft"];
         };
+        /** Criteria */
+        Criteria: {
+            /** Mission */
+            mission: number;
+            /** Stack */
+            stack: number;
+            /** Salary */
+            salary: number;
+            /** Culture */
+            culture: number;
+        };
         /** CvConflict */
         CvConflict: {
             current: components["schemas"]["CvDocument"];
@@ -737,6 +827,10 @@ export interface components {
             calls: number;
             /** Cost Usd */
             cost_usd: string;
+        };
+        /** DecisionBody */
+        DecisionBody: {
+            decision: components["schemas"]["OfferDecision"] | null;
         };
         /** @enum {string} */
         DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
@@ -1177,6 +1271,13 @@ export interface components {
             merged_ids: number[];
             /** Llm Call Id */
             llm_call_id: number;
+            /**
+             * Unscored Ids
+             * @default []
+             */
+            unscored_ids: number[];
+            /** Scoring Error */
+            scoring_error?: string | null;
         };
         /** Objectives */
         Objectives: {
@@ -1235,6 +1336,8 @@ export interface components {
             description_md: string;
             /** Llm Call Id */
             llm_call_id: number | null;
+            state: components["schemas"]["OfferState"];
+            decision: components["schemas"]["OfferDecision"] | null;
             /**
              * Created At
              * Format: date-time
@@ -1246,6 +1349,8 @@ export interface components {
              */
             updated_at: string;
         };
+        /** @enum {string} */
+        OfferDecision: "shortlisted" | "dismissed";
         /**
          * OfferInput
          * @description An offer pasted by the user, until offers have their own screen.
@@ -1288,6 +1393,8 @@ export interface components {
             description_md: string;
             /** Llm Call Id */
             llm_call_id: number | null;
+            state: components["schemas"]["OfferState"];
+            decision: components["schemas"]["OfferDecision"] | null;
             /**
              * Created At
              * Format: date-time
@@ -1298,9 +1405,51 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            current_score: components["schemas"]["OfferScore"] | null;
             /** Drafts */
             drafts: components["schemas"]["DraftSummary"][];
         };
+        /** OfferScore */
+        OfferScore: {
+            /** Id */
+            id: number;
+            /** Offer Id */
+            offer_id: number;
+            /** Passed Filters */
+            passed_filters: boolean;
+            /** Eliminated By */
+            eliminated_by: string[];
+            /** Unknown */
+            unknown: string[];
+            criteria: components["schemas"]["Criteria"] | null;
+            /** Score */
+            score: number | null;
+            /** Fit Score */
+            fit_score: number | null;
+            /** Salary Score */
+            salary_score: number | null;
+            /** Summary */
+            summary: string;
+            /** Strengths */
+            strengths: string[];
+            /** Gaps */
+            gaps: string[];
+            weights: components["schemas"]["Weights"];
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+        };
+        /** @enum {string} */
+        OfferState: "new" | "scored" | "filtered";
         /**
          * OptionBlockers
          * @description Why each option cannot be on, in French for the screen. None when it can.
@@ -1367,11 +1516,65 @@ export interface components {
             /** Expected Sha256 */
             expected_sha256: string | null;
         };
+        /** ScoredOffer */
+        ScoredOffer: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Company Name */
+            company_name: string;
+            /** Location */
+            location: string;
+            contract: components["schemas"]["Contract"];
+            remote: components["schemas"]["Remote"];
+            /** Salary Min */
+            salary_min: number | null;
+            /** Salary Max */
+            salary_max: number | null;
+            /** Url */
+            url: string | null;
+            /** Description Md */
+            description_md: string;
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            state: components["schemas"]["OfferState"];
+            decision: components["schemas"]["OfferDecision"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            current_score: components["schemas"]["OfferScore"] | null;
+        };
+        /**
+         * ScoringRun
+         * @description What a batch of scorings did. It stops at the first failed call: the next one
+         *     would most likely fail the same way, and each one costs.
+         */
+        ScoringRun: {
+            /** Scored Ids */
+            scored_ids: number[];
+            /** Unscored Ids */
+            unscored_ids: number[];
+            /** Error */
+            error: string | null;
+        };
         /** SelectionChoice */
         SelectionChoice: {
             /** Excluded Ids */
             excluded_ids: string[];
             options: components["schemas"]["CvOptions"];
+        };
+        /** StaleCount */
+        StaleCount: {
+            /** Count */
+            count: number;
         };
         /** TaskUsage */
         TaskUsage: {
@@ -2421,7 +2624,74 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Offer"][];
+                    "application/json": components["schemas"]["ScoredOffer"][];
+                };
+            };
+        };
+    };
+    count_stale_offers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaleCount"];
+                };
+            };
+        };
+    };
+    rescore_stale_offers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoringRun"];
+                };
+            };
+            /** @description A spending cap is reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model's answer was unusable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No API key, or the API is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
                 };
             };
         };
@@ -2444,6 +2714,113 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OfferPage"];
+                };
+            };
+            /** @description No such offer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    score_offer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoredOffer"];
+                };
+            };
+            /** @description No such offer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description A spending cap is reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model's answer was unusable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No API key, or the API is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    decide_on_offer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offer_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoredOffer"];
                 };
             };
             /** @description No such offer */

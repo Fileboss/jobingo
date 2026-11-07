@@ -29,6 +29,10 @@ class ExtractedOffer(BaseModel):
     description_md: str = ""
 
 
+type OfferState = Literal["new", "scored", "filtered"]
+type OfferDecision = Literal["shortlisted", "dismissed"]
+
+
 class Offer(BaseModel):
     id: int
     title: str
@@ -42,6 +46,10 @@ class Offer(BaseModel):
     description_md: str
     # The extraction that created the offer, and the last one that completed it.
     llm_call_id: int | None
+    # Set by scoring: not scored yet, scored, or eliminated by the hard filters.
+    state: OfferState
+    # Set by the user only; scoring never changes it.
+    decision: OfferDecision | None
     created_at: datetime
     updated_at: datetime
 
@@ -56,6 +64,9 @@ class IntakeResult(BaseModel):
     offers: list[Offer]
     merged_ids: list[int]
     llm_call_id: int
+    # Offers stored but not scored, because a scoring call failed, and why.
+    unscored_ids: list[int] = []
+    scoring_error: str | None = None
 
 
 _WEB_SCHEMES = ("http", "https")

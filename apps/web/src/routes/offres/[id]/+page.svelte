@@ -7,6 +7,7 @@
 	import type { components } from '#lib/api/schema.d.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
 	import { remoteLabels, salaryLabel } from '#lib/offers/format.ts';
+	import ScoreCard from '#lib/offers/ScoreCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
 	type OfferPage = components['schemas']['OfferPage'];
@@ -35,6 +36,41 @@
 	}
 
 	onMount(load);
+
+	let scoring = $state(false);
+	let scoreFailure = $state<string | null>(null);
+
+	async function rescore() {
+		scoring = true;
+		scoreFailure = null;
+		try {
+			const { data, error } = await api.POST('/api/offers/{offer_id}/score', {
+				params: { path: { offer_id: id } }
+			});
+			if (!data) {
+				scoreFailure = error && 'message' in error ? error.message : 'La notation a échoué.';
+				return;
+			}
+			offer = offer ? { ...offer, ...data } : offer;
+		} catch {
+			scoreFailure = 'Le serveur ne répond pas. Réessayez.';
+		} finally {
+			scoring = false;
+		}
+	}
+
+	async function decide(decision: 'shortlisted' | 'dismissed' | null) {
+		scoreFailure = null;
+		try {
+			const { data } = await api.PUT('/api/offers/{offer_id}/decision', {
+				params: { path: { offer_id: id } },
+				body: { decision }
+			});
+			if (data && offer) offer = { ...offer, ...data };
+		} catch {
+			scoreFailure = 'Le serveur ne répond pas. Réessayez.';
+		}
+	}
 
 	async function adapt() {
 		adapting = true;
@@ -101,6 +137,41 @@
 				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			{/if}
 		</p>
+
+		<section aria-labelledby="score-title" class="mt-8 bg-paper px-5 py-5">
+			<div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+				<h2 id="score-title" class="text-2xl font-extrabold text-ink">Note</h2>
+				<div class="flex flex-wrap items-center gap-2">
+					{#if offer.decision}
+						<span class="font-bold text-ink">
+							{offer.decision === 'shortlisted' ? 'Retenue par vous.' : 'Écartée par vous.'}
+						</span>
+						<Button variant="quiet" onclick={() => decide(null)}>Annuler</Button>
+					{:else}
+						<Button onclick={() => decide('shortlisted')}>Retenir</Button>
+						<Button variant="quiet" onclick={() => decide('dismissed')}>Écarter</Button>
+					{/if}
+				</div>
+			</div>
+			{#if offer.current_score}
+				{#if offer.current_score.stale}
+					<p class="mb-3 bg-postit px-3 py-2">
+						<span class="font-bold">Note périmée :</span> vos objectifs ou votre CV ont changé depuis.
+					</p>
+				{/if}
+				<ScoreCard score={offer.current_score} />
+			{:else}
+				<p class="text-ink-soft">Pas encore notée.</p>
+			{/if}
+			{#if scoreFailure}
+				<p role="alert" class="mt-3 bg-alert px-3 py-2 font-bold text-white">{scoreFailure}</p>
+			{/if}
+			<div class="mt-4">
+				<Button variant="quiet" disabled={scoring} onclick={rescore}>
+					{scoring ? 'Notation…' : offer.current_score ? 'Noter à nouveau' : 'Noter'}
+				</Button>
+			</div>
+		</section>
 
 		<div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
 			<section aria-labelledby="description-title">

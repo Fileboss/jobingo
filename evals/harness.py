@@ -24,6 +24,7 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 from jobingo.config import Settings
 from jobingo.db import Conn, connect, migrate
+from jobingo.domain.objectives import Objectives
 from jobingo.domain.style import StyleGuide, parse_style
 from jobingo.llm.anthropic_client import AnthropicLLMClient, TierSettings
 from jobingo.llm.client import (
@@ -39,6 +40,7 @@ from jobingo.llm.client import (
 from jobingo.llm.journal import Budget
 from jobingo.llm.pricing import cost_usd
 from jobingo.services.accounts import ensure_account
+from jobingo.services.objectives import save_objectives
 
 EVALS_DIR = Path(__file__).resolve().parent
 CACHE_DIR = EVALS_DIR / ".cache"
@@ -247,6 +249,10 @@ class Workspace:
             (self.user_id, cv),
         )
         self.style: StyleGuide = parse_style((FIXTURES / "style.md").read_text(encoding="utf-8"))
+        objectives = Objectives.model_validate_json(
+            (FIXTURES / "objectives.json").read_text(encoding="utf-8")
+        )
+        save_objectives(self.conn, self.user_id, objectives)
 
     def close(self) -> None:
         self.conn.close()

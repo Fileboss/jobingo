@@ -3,11 +3,24 @@
 	import { resolve } from '$app/paths';
 	import { api } from '#lib/api/client.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
-	import { remoteLabels, salaryLabel, type Offer } from '#lib/offers/format.ts';
+	import { remoteLabels, salaryLabel, standing, type ScoredOffer } from '#lib/offers/format.ts';
+	import ScoreBadge from '#lib/offers/ScoreBadge.svelte';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
-	let offers = $state.raw<Offer[] | null>(null);
+	type View = 'open' | 'shortlisted' | 'dismissed' | 'all';
+	const VIEWS: [View, string][] = [
+		['open', 'À examiner'],
+		['shortlisted', 'Retenues'],
+		['dismissed', 'Écartées'],
+		['all', 'Toutes']
+	];
+
+	let offers = $state.raw<ScoredOffer[] | null>(null);
+	let view = $state<View>('open');
+	let byScore = $state(true);
+	let stale = $state(0);
+	let rescoring = $state(false);
 	let unavailable = $state(false);
 	let text = $state('');
 	let sending = $state(false);
@@ -17,14 +30,50 @@
 
 	async function load() {
 		try {
-			const { data } = await api.GET('/api/offers');
+			const [{ data }, { data: count }] = await Promise.all([
+				api.GET('/api/offers'),
+				api.GET('/api/offers/stale')
+			]);
 			if (!data) throw new Error('no offers');
 			offers = data;
+			stale = count?.count ?? 0;
 			unavailable = false;
 		} catch {
 			unavailable = true;
 		}
 	}
+
+	async function rescore() {
+		rescoring = true;
+		failure = null;
+		try {
+			const { data, error } = await api.POST('/api/offers/rescore');
+			if (!data) {
+				failure = error && 'message' in error ? error.message : 'La notation a échoué.';
+				return;
+			}
+			if (data.error) failure = `Notation interrompue : ${data.error}.`;
+			await load();
+		} catch {
+			failure = 'Le serveur ne répond pas. Réessayez.';
+		} finally {
+			rescoring = false;
+		}
+	}
+
+	function inView(offer: ScoredOffer): boolean {
+		const where = standing(offer);
+		if (view === 'all') return true;
+		if (view === 'dismissed') return where === 'dismissed' || where === 'filtered';
+		return where === view;
+	}
+
+	let shown = $derived.by(() => {
+		const kept = (offers ?? []).filter(inView);
+		if (!byScore) return kept;
+		const value = (offer: ScoredOffer) => offer.current_score?.score ?? -1;
+		return [...kept].sort((a, b) => value(b) - value(a));
+	});
 
 	onMount(load);
 
@@ -42,14 +91,15 @@
 				return;
 			}
 			const created = data.offers.length - data.merged_ids.length;
-			notice = [
+			const parts = [
 				created ? `${created} offre${created > 1 ? 's' : ''} ajoutée${created > 1 ? 's' : ''}` : '',
 				data.merged_ids.length
 					? `${data.merged_ids.length} déjà connue${data.merged_ids.length > 1 ? 's' : ''}, complétée${data.merged_ids.length > 1 ? 's' : ''}`
 					: ''
-			]
-				.filter(Boolean)
-				.join(', ');
+			].filter(Boolean);
+			notice = parts.join(', ');
+			if (data.scoring_error)
+				failure = `Offres gardées, mais ${data.unscored_ids.length} non notée${data.unscored_ids.length > 1 ? 's' : ''} : ${data.scoring_error}. Réessayez depuis la liste.`;
 			fresh = new Set(data.offers.map((offer) => offer.id));
 			text = '';
 			await load();
@@ -89,7 +139,9 @@
 			<div class="flex flex-wrap items-center gap-4">
 				<Button type="submit" disabled={!text.trim() || sending}>Extraire les offres</Button>
 				{#if sending}
-					<p role="status" class="text-ink-soft">Lecture du texte, quelques secondes…</p>
+					<p role="status" class="text-ink-soft">
+						Lecture du texte, puis notation de chaque offre, quelques secondes…
+					</p>
 				{:else if notice}
 					<p role="status" class="font-bold text-ink">{notice}.</p>
 				{/if}
@@ -98,9 +150,49 @@
 	</BristolCard>
 
 	<section aria-labelledby="offers-title" class="mt-10">
-		<h2 id="offers-title" class="mb-3 text-2xl font-extrabold text-ink">
-			Offres reçues{#if offers}<span class="ml-2 text-lg text-ink-soft">{offers.length}</span>{/if}
-		</h2>
+		<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+			<h2 id="offers-title" class="text-2xl font-extrabold text-ink">
+				Offres reçues{#if offers}<span class="ml-2 text-lg text-ink-soft">{offers.length}</span
+					>{/if}
+			</h2>
+			{#if stale > 0}
+				<p class="flex flex-wrap items-center gap-3 bg-postit px-3 py-1.5">
+					<span>
+						<span class="font-bold">{stale} offre{stale > 1 ? 's' : ''} à noter</span>
+						: jamais notée{stale > 1 ? 's' : ''}, ou objectifs et CV changés depuis.
+					</span>
+					<Button variant="quiet" disabled={rescoring} onclick={rescore}>
+						{rescoring ? 'Notation…' : 'Noter maintenant'}
+					</Button>
+				</p>
+			{/if}
+		</div>
+
+		{#if offers && offers.length}
+			<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+				<div role="group" aria-label="Offres affichées" class="flex flex-wrap gap-1">
+					{#each VIEWS as [value, label] (value)}
+						<button
+							type="button"
+							aria-pressed={view === value}
+							onclick={() => (view = value)}
+							class="cursor-pointer rounded-sm border border-ink px-3 py-1 font-bold text-ink aria-pressed:bg-ink aria-pressed:text-white"
+						>
+							{label}
+						</button>
+					{/each}
+				</div>
+				<label class="flex items-center gap-2 text-sm">
+					<input
+						type="checkbox"
+						bind:checked={byScore}
+						class="rounded-sm border-ink text-ink focus:ring-ink"
+					/>
+					Trier par score
+				</label>
+			</div>
+		{/if}
+
 		{#if unavailable}
 			<div role="alert">
 				<p class="font-extrabold text-ink">Le serveur ne répond pas.</p>
@@ -110,12 +202,15 @@
 			<p class="text-ink-soft" role="status">Chargement…</p>
 		{:else if offers.length === 0}
 			<p class="text-ink-soft">Aucune offre pour l’instant.</p>
+		{:else if shown.length === 0}
+			<p class="text-ink-soft">Aucune offre dans cette vue.</p>
 		{:else}
 			<div class="overflow-x-auto bg-paper">
-				<table class="w-full min-w-[48rem] text-left">
+				<table class="w-full min-w-[52rem] text-left">
 					<thead>
 						<tr class="border-b-2 border-ink text-sm text-ink-soft">
-							<th class="px-4 py-2 font-bold">Poste</th>
+							<th class="py-2 pr-2 pl-4 font-bold">Score</th>
+							<th class="py-2 pr-4 font-bold">Poste</th>
 							<th class="py-2 pr-4 font-bold">Lieu</th>
 							<th class="py-2 pr-4 font-bold">Contrat</th>
 							<th class="py-2 pr-4 font-bold">Télétravail</th>
@@ -124,16 +219,21 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each offers as offer (offer.id)}
+						{#each shown as offer (offer.id)}
 							<tr class={['border-b border-ink/10', fresh.has(offer.id) && 'bg-bristol-green/40']}>
-								<td class="px-4 py-2">
+								<td class="py-2 pr-2 pl-4"><ScoreBadge {offer} /></td>
+								<td class="py-2 pr-4">
 									<a
 										href={resolve('/offres/[id]', { id: String(offer.id) })}
 										class="font-extrabold text-ink">{offer.title}</a
 									>
-									<span class="block text-sm text-ink-soft"
-										>{offer.company_name || 'Entreprise non nommée'}</span
-									>
+									<span class="block text-sm text-ink-soft">
+										{offer.company_name ||
+											'Entreprise non nommée'}{#if offer.decision === 'shortlisted'}
+											· <span class="font-bold text-ink">retenue</span
+											>{:else if offer.decision === 'dismissed'}
+											· écartée par vous{/if}
+									</span>
 								</td>
 								<td class="py-2 pr-4">{offer.location || '—'}</td>
 								<td class="py-2 pr-4">{offer.contract || '—'}</td>

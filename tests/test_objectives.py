@@ -27,6 +27,8 @@ def _offer(**fields: Any) -> Offer:
         "url": None,
         "description_md": "API en Python.",
         "llm_call_id": None,
+        "state": "new",
+        "decision": None,
         "created_at": NOW,
         "updated_at": NOW,
     }

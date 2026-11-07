@@ -1,0 +1,194 @@
+{
+  "summary": {
+    "suite": "extract_offer",
+    "metric": "champs extraits correctement (contrat et télétravail à l'identique)",
+    "prompt_version": 2,
+    "setup": "claude-haiku-5-5.off-medium",
+    "model": "claude-haiku-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 1.0,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "fields": "103/103",
+      "offer_count_ok": "20/20"
+    },
+    "cases": 20,
+    "spend": {
+      "live_calls": 20,
+      "cached_calls": 0,
+      "input_tokens": 1590,
+      "output_tokens": 2483,
+      "cache_read_tokens": 32851,
+      "cache_write_tokens": 1729,
+      "cost_usd": "0.001945",
+      "latency_p50_ms": 1237,
+      "latency_p95_ms": 1526
+    },
+    "stopped": null,
+    "run_at": "2026-11-07T15:40:19+00:00"
+  },
+  "rows": [
+    {
+      "id": "ext-01",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-02",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-03",
+      "passed": true,
+      "fields_ok": 4,
+      "fields": 4,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-04",
+      "passed": true,
+      "fields_ok": 4,
+      "fields": 4,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-05",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-06",
+      "passed": true,
+      "fields_ok": 12,
+      "fields": 12,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-07",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-08",
+      "passed": true,
+      "fields_ok": 4,
+      "fields": 4,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-09",
+      "passed": true,
+      "fields_ok": 4,
+      "fields": 4,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-10",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-11",
+      "passed": true,
+      "fields_ok": 4,
+      "fields": 4,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-12",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-13",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-14",
+      "passed": true,
+      "fields_ok": 3,
+      "fields": 3,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-15",
+      "passed": true,
+      "fields_ok": 8,
+      "fields": 8,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-16",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-17",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-18",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-19",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    },
+    {
+      "id": "ext-20",
+      "passed": true,
+      "fields_ok": 5,
+      "fields": 5,
+      "count_ok": true,
+      "misses": []
+    }
+  ]
+}

@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 _COLUMNS = """
     id, title, company_name, location, contract, remote, salary_min, salary_max, url,
-    description_md, llm_call_id, created_at, updated_at
+    description_md, llm_call_id, state, decision, created_at, updated_at
 """
 # The columns a merge may fill, named here and never taken from the payload.
 _MERGEABLE = ("contract", "remote", "url", "salary_min", "salary_max", "description_md")
