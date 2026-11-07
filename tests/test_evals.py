@@ -59,6 +59,21 @@ def test_the_eval_key_never_comes_from_the_shell(
         config.api_key()
 
 
+def test_the_example_key_file_lists_every_setting_with_its_default():
+    """The user copies it to set up `make eval`: a setting missing there is one they
+    cannot find."""
+    example = Path(__file__).parent.parent / "evals" / ".env.example"
+    values = dict(
+        line.split("=", 1)
+        for line in example.read_text(encoding="utf-8").splitlines()
+        if line and not line.startswith("#")
+    )
+    assert set(values) == {name.upper() for name in EvalConfig.model_fields}
+    assert values.pop("ANTHROPIC_API_KEY") == ""
+    defaults = EvalConfig(_env_file=None)  # pyright: ignore[reportCallIssue]
+    assert values == {name.upper(): getattr(defaults, name.lower()) for name in values}
+
+
 def test_a_setup_names_the_model_and_its_settings(config: EvalConfig):
     assert config.setup("writing") == "claude-sonnet-5-5.off-medium"
 

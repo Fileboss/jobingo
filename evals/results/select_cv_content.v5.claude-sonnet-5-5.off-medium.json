@@ -1,0 +1,115 @@
+{
+  "summary": {
+    "suite": "select_cv_content",
+    "metric": "cas où toute la sélection attendue est retenue, et rien d'exclu",
+    "prompt_version": 5,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 1.0,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "8/8",
+      "refused_rewrites": 0,
+      "accepted_rewrites": 5
+    },
+    "cases": 8,
+    "spend": {
+      "live_calls": 8,
+      "cached_calls": 0,
+      "input_tokens": 2020,
+      "output_tokens": 2563,
+      "cache_read_tokens": 26453,
+      "cache_write_tokens": 3779,
+      "cost_usd": "0.044410",
+      "latency_p50_ms": 2876,
+      "latency_p95_ms": 3275
+    },
+    "stopped": null,
+    "run_at": "2026-11-07T14:30:43+00:00"
+  },
+  "rows": [
+    {
+      "id": "cv-01",
+      "offer": "Ingénieur data plateforme",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-02",
+      "offer": "Développeur backend Django",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-03",
+      "offer": "Senior Backend Engineer, billing",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-04",
+      "offer": "Tech Lead backend",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-05",
+      "offer": "Ingénieur DevOps / SRE",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-06",
+      "offer": "Ingénieur backend paiement",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-07",
+      "offer": "Développeur Java",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-08",
+      "offer": "Data engineer",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    }
+  ]
+}

@@ -96,7 +96,8 @@ def _print(summary: dict[str, Any]) -> None:
     print(f"  score: {summary['score']}  {summary['detail']}")
     print(
         f"  calls: {spend['live_calls']} live, {spend['cached_calls']} cached | "
-        f"tokens: {spend['input_tokens']} in, {spend['output_tokens']} out | "
+        f"tokens: {spend['input_tokens']} in (+{spend['cache_read_tokens']} cache read, "
+        f"{spend['cache_write_tokens']} cache write), {spend['output_tokens']} out | "
         f"cost: {spend['cost_usd']} $ | latency p50/p95: "
         f"{spend['latency_p50_ms']}/{spend['latency_p95_ms']} ms"
     )
