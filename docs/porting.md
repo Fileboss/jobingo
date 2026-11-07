@@ -13,11 +13,11 @@ Small vertical steps. To adjust as we go:
 1. ~~Backend foundation~~ (done).
 2. ~~Profile and CV editor, in both modes~~ (done).
 3. ~~`panneau-lateral` rendering and PDF preview~~ (done).
-4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring. In four steps:
+4. ~~LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring~~ (done). In four steps:
    1. ~~LLM layer: client interface, Anthropic client, fake client, call journal (`llm_calls`), costs, budget caps, redaction~~ (done).
    2. ~~Application log, and the observability page's Usage, Calls and Logs tabs, on the journal~~ (done).
    3. ~~`select_cv_content`: its prompts, the eval harness and suite, and the Evals tab~~ (done).
-   4. Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen.
+   4. ~~Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen~~ (done).
 5. Offer intake and scoring.
 6. Application tracking and cover letters.
 7. Mail, drafted replies and approval queue.
@@ -55,6 +55,12 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 4.4 changed or left:
+
+- A draft (`cv_drafts`) stores the checked proposal unchanged, as the trail, and the user's choices apart. It replaces the POC's diff state in hidden form fields and its in-memory proposals, so `reuse_or_run_task` is not ported: a proposal is stored once, and a new one is a new draft.
+- The offer is pasted text (`OfferInput`) until step 5 gives offers a table; the draft then gains an `offer_id`.
+- The options come from the CV page and stay editable on the draft. The page-overflow retry, filling the page and developing an item (`elaborate_item`) are not ported: the page count and the download lock already say when the CV is too long.
 
 What step 4.3 changed or left:
 

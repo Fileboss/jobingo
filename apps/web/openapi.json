@@ -404,6 +404,311 @@
         }
       }
     },
+    "/api/cv/{lang}/drafts": {
+      "post": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Create Draft",
+        "description": "Ask the model which parts of the CV serve this offer. One call, journalled.",
+        "operationId": "create_draft",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "const": "fr",
+              "type": "string",
+              "title": "Lang"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing to adapt, or contact details in the CV",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A spending cap is reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The model's answer was unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No API key, or the API is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/drafts": {
+      "get": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "List Drafts",
+        "description": "Newest first.",
+        "operationId": "list_drafts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DraftSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Drafts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/drafts/{draft_id}": {
+      "get": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Get Draft",
+        "operationId": "get_draft",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such draft"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/drafts/{draft_id}/choices": {
+      "put": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Save Draft Choices",
+        "operationId": "save_draft_choices",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftChoices"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An option that cannot be on",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such draft"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cv/drafts/{draft_id}/pdf": {
+      "get": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Get Draft Pdf",
+        "description": "The PDF of the draft as it stands.",
+        "operationId": "get_draft_pdf",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "X-Page-Count": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Missing-Items": {
+                "description": "Selected items cut from the PDF: a panel over its page",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such draft"
+          },
+          "503": {
+            "description": "The PDF could not be produced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/identity": {
       "get": {
         "tags": [
@@ -1665,6 +1970,378 @@
           "personal_url"
         ]
       },
+      "DraftChoices": {
+        "properties": {
+          "kept_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kept Ids"
+          },
+          "texts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Texts"
+          },
+          "options": {
+            "$ref": "#/components/schemas/CvOptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kept_ids",
+          "texts",
+          "options"
+        ],
+        "title": "DraftChoices",
+        "description": "What the user settled: the ids on the page, their own texts, the options."
+      },
+      "DraftExperience": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "original": {
+            "type": "string",
+            "title": "Original"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "kept": {
+            "type": "boolean",
+            "title": "Kept"
+          },
+          "proposed": {
+            "type": "boolean",
+            "title": "Proposed"
+          },
+          "proposed_rewrite": {
+            "type": "string",
+            "title": "Proposed Rewrite"
+          },
+          "rejected_reason": {
+            "type": "string",
+            "title": "Rejected Reason"
+          },
+          "unsourced_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsourced Names"
+          },
+          "discard_reason": {
+            "type": "string",
+            "title": "Discard Reason"
+          },
+          "bullets": {
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            },
+            "type": "array",
+            "title": "Bullets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "original",
+          "text",
+          "kept",
+          "proposed",
+          "proposed_rewrite",
+          "rejected_reason",
+          "unsourced_names",
+          "discard_reason",
+          "bullets"
+        ],
+        "title": "DraftExperience"
+      },
+      "DraftFormation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "original": {
+            "type": "string",
+            "title": "Original"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "kept": {
+            "type": "boolean",
+            "title": "Kept"
+          },
+          "proposed": {
+            "type": "boolean",
+            "title": "Proposed"
+          },
+          "proposed_rewrite": {
+            "type": "string",
+            "title": "Proposed Rewrite"
+          },
+          "rejected_reason": {
+            "type": "string",
+            "title": "Rejected Reason"
+          },
+          "unsourced_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsourced Names"
+          },
+          "discard_reason": {
+            "type": "string",
+            "title": "Discard Reason"
+          },
+          "heading": {
+            "type": "boolean",
+            "title": "Heading"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "original",
+          "text",
+          "kept",
+          "proposed",
+          "proposed_rewrite",
+          "rejected_reason",
+          "unsourced_names",
+          "discard_reason",
+          "heading"
+        ],
+        "title": "DraftFormation"
+      },
+      "DraftItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "original": {
+            "type": "string",
+            "title": "Original"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "kept": {
+            "type": "boolean",
+            "title": "Kept"
+          },
+          "proposed": {
+            "type": "boolean",
+            "title": "Proposed"
+          },
+          "proposed_rewrite": {
+            "type": "string",
+            "title": "Proposed Rewrite"
+          },
+          "rejected_reason": {
+            "type": "string",
+            "title": "Rejected Reason"
+          },
+          "unsourced_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsourced Names"
+          },
+          "discard_reason": {
+            "type": "string",
+            "title": "Discard Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "original",
+          "text",
+          "kept",
+          "proposed",
+          "proposed_rewrite",
+          "rejected_reason",
+          "unsourced_names",
+          "discard_reason"
+        ],
+        "title": "DraftItem"
+      },
+      "DraftSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "offer_title": {
+            "type": "string",
+            "title": "Offer Title"
+          },
+          "offer_company": {
+            "type": "string",
+            "title": "Offer Company"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "offer_title",
+          "offer_company",
+          "llm_call_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DraftSummary"
+      },
+      "DraftView": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "lang": {
+            "type": "string",
+            "title": "Lang"
+          },
+          "offer": {
+            "$ref": "#/components/schemas/OfferInput"
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DraftItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "experiences": {
+            "items": {
+              "$ref": "#/components/schemas/DraftExperience"
+            },
+            "type": "array",
+            "title": "Experiences"
+          },
+          "formation": {
+            "items": {
+              "$ref": "#/components/schemas/DraftFormation"
+            },
+            "type": "array",
+            "title": "Formation"
+          },
+          "competences": {
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            },
+            "type": "array",
+            "title": "Competences"
+          },
+          "loisirs": {
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            },
+            "type": "array",
+            "title": "Loisirs"
+          },
+          "options": {
+            "$ref": "#/components/schemas/CvOptions"
+          },
+          "option_blockers": {
+            "$ref": "#/components/schemas/OptionBlockers"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "gone": {
+            "type": "integer",
+            "title": "Gone"
+          },
+          "max_pages": {
+            "type": "integer",
+            "title": "Max Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lang",
+          "offer",
+          "llm_call_id",
+          "created_at",
+          "updated_at",
+          "resume",
+          "experiences",
+          "formation",
+          "competences",
+          "loisirs",
+          "options",
+          "option_blockers",
+          "warnings",
+          "gone",
+          "max_pages"
+        ],
+        "title": "DraftView"
+      },
       "EvalRun": {
         "properties": {
           "suite": {
@@ -2156,6 +2833,35 @@
           "has_photo"
         ],
         "title": "IdentityDocument"
+      },
+      "OfferInput": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "company": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Company",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description"
+        ],
+        "title": "OfferInput",
+        "description": "An offer pasted by the user, until offers have their own screen."
       },
       "OptionBlockers": {
         "properties": {

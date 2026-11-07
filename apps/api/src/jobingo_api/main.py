@@ -7,9 +7,10 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from jobingo.config import Settings
 from jobingo.db import connect, create_pool, migrate
+from jobingo.llm.factory import create_llm_client
 from jobingo.services import app_log
 from jobingo.services.accounts import ensure_account
-from jobingo_api.routes import cv, cv_page, health, identity, me, observability
+from jobingo_api.routes import cv, cv_drafts, cv_page, health, identity, me, observability
 from jobingo_api.security import LocalRequestsOnlyMiddleware, SecurityHeadersMiddleware
 from jobingo_api.spa import SpaFiles
 
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     pool = create_pool(settings.database_url)
     pool.open(wait=True)
     app.state.pool = pool
+    app.state.llm_client = create_llm_client(settings)
     events = app_log.install(pool)
     try:
         with pool.connection() as conn:
@@ -56,6 +58,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
     app.include_router(me.router, prefix="/api")
+    # Before `cv`: its `/cv/{lang}` would take `/cv/drafts` for a language.
+    app.include_router(cv_drafts.router, prefix="/api")
     app.include_router(cv.router, prefix="/api")
     app.include_router(cv_page.router, prefix="/api")
     app.include_router(identity.router, prefix="/api")

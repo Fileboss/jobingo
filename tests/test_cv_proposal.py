@@ -352,3 +352,28 @@ def test_no_call_without_a_cv_or_with_contact_details_in_it(conn: Conn, user_id:
     with pytest.raises(PersonalDataInCvError):
         propose_cv(conn, client, BUDGET, user_id, "fr", OFFER)
     assert client.prompts == []
+
+
+def test_a_draft_page_keeps_the_models_order_then_what_the_user_added():
+    from jobingo.domain.cv_draft import DraftChoices, draft_selection
+
+    tailored = review_proposal(
+        _proposal(experiences=["batiflux"], competences=["skill-airflow", "skill-python"]),
+        PROFILE,
+        MANIFEST,
+        STYLE,
+    )
+    choices = DraftChoices(
+        kept_ids=["colibri", "batiflux", "nordlys", "skill-java", "skill-python", "skill-airflow"],
+        texts={"skill-java": "Java 21"},
+        options=CvOptions(photo=False, panneau_competences=True, loisirs=False),
+    )
+    selection = draft_selection(PROFILE, tailored, choices, template="panneau-lateral", lang="fr")
+
+    assert [e.id for e in selection.experiences] == ["nordlys", "batiflux", "colibri"]
+    assert [(s.id, s.text) for s in selection.competences] == [
+        ("skill-airflow", "Airflow"),
+        ("skill-python", "Python"),
+        ("skill-java", "Java 21"),
+    ]
+    assert selection.resume is None

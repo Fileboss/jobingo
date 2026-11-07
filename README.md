@@ -2,7 +2,7 @@
 
 An AI job search assistant that keeps the AI on a short leash. It collects and ranks job offers, tracks applications, tailors a CV and a cover letter to each offer, and drafts replies to recruiters. Nothing leaves without a human click.
 
-**Status: work in progress.** The foundation, the CV editor and the CV page work today. The AI features do not exist in this repository yet: see [what works today](#what-works-today) and the [roadmap](#roadmap). The interface is in French.
+**Status: work in progress.** The CV editor, the CV page, the first AI feature (a CV adapted to an offer) and the observability page work today. Its eval suite is ready but no score is measured yet: see [what works today](#what-works-today) and the [roadmap](#roadmap). The interface is in French.
 
 ![The CV page: a selection on the left, the real PDF on the right](docs/images/cv-page.png)
 
@@ -44,6 +44,16 @@ The preview is the actual PDF, rendered on the server with WeasyPrint, not an HT
 
 Identity and photo are entered on their own page and only reach the document at render time.
 
+### A CV adapted to an offer, never invented
+
+Paste an offer: one model call selects what serves it from the whole CV, and may lightly rewrite a line. Code checks the answer before anyone sees it. An id the CV does not have is dropped, the template's limits hold, experiences are ordered by date, and a rewrite that is too long, adds a number or uses a forbidden turn of phrase is refused, with the original kept. A proper noun a rewrite adds is flagged for you to check.
+
+The review screen shows the whole CV with what the model kept, rewrote, had refused or left out and why, next to the real PDF. You tick, untick, adopt a refused rewrite or write your own words. The proposal is stored unchanged as the trail, your choices apart, and the source CV is never written: an architecture test enforces it.
+
+### Measured, on one page
+
+The "Suivi de l'IA" section shows usage and cost per task and per day against the spending caps, every call with its prompts as the model read them, its answer and the events it caused, the eval results per prompt version and model, and the application log. Every figure comes from the call journal or a recorded eval run. Until the user runs `make eval`, the Evals tab says "not measured yet".
+
 ### Engineering foundations
 
 - **A contract that cannot drift.** FastAPI's OpenAPI schema generates the client's TypeScript types, and a test and CI fail on any difference.
@@ -67,7 +77,7 @@ Small vertical steps, each one reviewable and working end to end.
 - [x] Foundation: API, Postgres, migrations, local protections, API contract, CI
 - [x] CV editor, in both modes
 - [x] CV rendering and PDF preview
-- [ ] LLM layer, prompts and evals, with the observability page, then per-offer CV tailoring on a diff screen
+- [x] LLM layer, prompts and evals, with the observability page, then per-offer CV tailoring on a diff screen
 - [ ] Offer intake and scoring
 - [ ] Application tracking and cover letters
 - [ ] Mail, drafted replies and the approval queue
@@ -80,7 +90,8 @@ Hosting and SaaS features (billing, OAuth, a template gallery) are out of scope.
 - **Client:** SvelteKit SPA, Svelte 5 runes, TypeScript, Tailwind 4, Vitest, Playwright
 - **Server:** FastAPI, Pydantic v2, Python 3.12+, uv workspace, WeasyPrint
 - **Database:** PostgreSQL in Docker Compose, psycopg 3
-- **Planned:** Anthropic SDK behind an `LLMClient` interface, Procrastinate, SSE, CodeMirror 6
+- **AI:** Anthropic SDK behind an `LLMClient` interface, strict structured output, a fake client in tests
+- **Planned:** Procrastinate, SSE, CodeMirror 6
 
 ```text
 apps/web/        SvelteKit client

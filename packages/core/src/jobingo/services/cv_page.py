@@ -10,6 +10,7 @@ from jobingo.domain.cv_selection import (
     DEFAULT_OPTIONS,
     CvOptions,
     CvPage,
+    CvSelection,
     OptionBlockers,
     SelectionChoice,
     build_selection,
@@ -118,11 +119,16 @@ def _filename(identity: Identity) -> str:
     return f"cv-{slug}.pdf" if slug else "cv.pdf"
 
 
-def render_page(conn: Conn, user_id: int, lang: CvLang) -> CvPdf:
-    """The PDF of the stored selection. Raises `CvRenderError`.
+def page_options(conn: Conn, user_id: int, lang: CvLang) -> tuple[CvOptions, OptionBlockers]:
+    """The options the user chose on the CV page, as they apply now, and what blocks
+    each one."""
+    profile = _load_profile(conn, user_id, lang)
+    blockers = _blockers(conn, user_id, profile)
+    return _load_choice(conn, user_id, lang).options.clamped_to(blockers), blockers
 
-    Logs carry no message from the render, which could quote the document's content.
-    """
+
+def render_page(conn: Conn, user_id: int, lang: CvLang) -> CvPdf:
+    """The PDF of the stored selection. Raises `CvRenderError`."""
     manifest = load_manifest()
     profile = _load_profile(conn, user_id, lang)
     choice = _load_choice(conn, user_id, lang)
@@ -130,8 +136,16 @@ def render_page(conn: Conn, user_id: int, lang: CvLang) -> CvPdf:
     selection = build_selection(
         profile, set(choice.excluded_ids), options, template=manifest.name, lang=lang
     )
+    return render_selection(conn, user_id, selection)
+
+
+def render_selection(conn: Conn, user_id: int, selection: CvSelection) -> CvPdf:
+    """The PDF of `selection`, with the identity put back. Raises `CvRenderError`.
+
+    Logs carry no message from the render, which could quote the document's content.
+    """
     identity = load_identity(conn, user_id)
-    photo = load_photo(conn, user_id) if options.photo else None
+    photo = load_photo(conn, user_id) if selection.options.photo else None
     try:
         rendered = render_cv(selection, identity, photo=photo)
         problems = verify_cv_pdf(rendered.pdf, selection)

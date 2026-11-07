@@ -120,6 +120,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cv/{lang}/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Draft
+         * @description Ask the model which parts of the CV serve this offer. One call, journalled.
+         */
+        post: operations["create_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Drafts
+         * @description Newest first.
+         */
+        get: operations["list_drafts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/drafts/{draft_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Draft */
+        get: operations["get_draft"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/drafts/{draft_id}/choices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Draft Choices */
+        put: operations["save_draft_choices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cv/drafts/{draft_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Draft Pdf
+         * @description The PDF of the draft as it stands.
+         */
+        get: operations["get_draft_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity": {
         parameters: {
             query?: never;
@@ -543,6 +637,144 @@ export interface components {
         /** @enum {string} */
         DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
         /**
+         * DraftChoices
+         * @description What the user settled: the ids on the page, their own texts, the options.
+         */
+        DraftChoices: {
+            /** Kept Ids */
+            kept_ids: string[];
+            /** Texts */
+            texts: {
+                [key: string]: string;
+            };
+            options: components["schemas"]["CvOptions"];
+        };
+        /** DraftExperience */
+        DraftExperience: {
+            /** Id */
+            id: string;
+            /** Original */
+            original: string;
+            /** Text */
+            text: string;
+            /** Kept */
+            kept: boolean;
+            /** Proposed */
+            proposed: boolean;
+            /** Proposed Rewrite */
+            proposed_rewrite: string;
+            /** Rejected Reason */
+            rejected_reason: string;
+            /** Unsourced Names */
+            unsourced_names: string[];
+            /** Discard Reason */
+            discard_reason: string;
+            /** Bullets */
+            bullets: components["schemas"]["DraftItem"][];
+        };
+        /** DraftFormation */
+        DraftFormation: {
+            /** Id */
+            id: string;
+            /** Original */
+            original: string;
+            /** Text */
+            text: string;
+            /** Kept */
+            kept: boolean;
+            /** Proposed */
+            proposed: boolean;
+            /** Proposed Rewrite */
+            proposed_rewrite: string;
+            /** Rejected Reason */
+            rejected_reason: string;
+            /** Unsourced Names */
+            unsourced_names: string[];
+            /** Discard Reason */
+            discard_reason: string;
+            /** Heading */
+            heading: boolean;
+        };
+        /** DraftItem */
+        DraftItem: {
+            /** Id */
+            id: string;
+            /** Original */
+            original: string;
+            /** Text */
+            text: string;
+            /** Kept */
+            kept: boolean;
+            /** Proposed */
+            proposed: boolean;
+            /** Proposed Rewrite */
+            proposed_rewrite: string;
+            /** Rejected Reason */
+            rejected_reason: string;
+            /** Unsourced Names */
+            unsourced_names: string[];
+            /** Discard Reason */
+            discard_reason: string;
+        };
+        /** DraftSummary */
+        DraftSummary: {
+            /** Id */
+            id: number;
+            /** Offer Title */
+            offer_title: string;
+            /** Offer Company */
+            offer_company: string;
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** DraftView */
+        DraftView: {
+            /** Id */
+            id: number;
+            /** Lang */
+            lang: string;
+            offer: components["schemas"]["OfferInput"];
+            /** Llm Call Id */
+            llm_call_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            resume: components["schemas"]["DraftItem"] | null;
+            /** Experiences */
+            experiences: components["schemas"]["DraftExperience"][];
+            /** Formation */
+            formation: components["schemas"]["DraftFormation"][];
+            /** Competences */
+            competences: components["schemas"]["DraftItem"][];
+            /** Loisirs */
+            loisirs: components["schemas"]["DraftItem"][];
+            options: components["schemas"]["CvOptions"];
+            option_blockers: components["schemas"]["OptionBlockers"];
+            /** Warnings */
+            warnings: string[];
+            /** Gone */
+            gone: number;
+            /** Max Pages */
+            max_pages: number;
+        };
+        /**
          * EvalRun
          * @description One run of a suite, as `evals/run.py` recorded it.
          */
@@ -777,6 +1009,21 @@ export interface components {
             github: string;
             /** Has Photo */
             has_photo: boolean;
+        };
+        /**
+         * OfferInput
+         * @description An offer pasted by the user, until offers have their own screen.
+         */
+        OfferInput: {
+            /** Title */
+            title: string;
+            /**
+             * Company
+             * @default
+             */
+            company: string;
+            /** Description */
+            description: string;
         };
         /**
          * OptionBlockers
@@ -1243,6 +1490,237 @@ export interface operations {
                 content: {
                     "application/pdf": string;
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The PDF could not be produced */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    create_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lang: "fr";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftView"];
+                };
+            };
+            /** @description Nothing to adapt, or contact details in the CV */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description A spending cap is reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model's answer was unusable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No API key, or the API is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    list_drafts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftSummary"][];
+                };
+            };
+        };
+    };
+    get_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftView"];
+                };
+            };
+            /** @description No such draft */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_draft_choices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftChoices"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftView"];
+                };
+            };
+            /** @description An option that cannot be on */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description No such draft */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    "X-Page-Count"?: number;
+                    /** @description Selected items cut from the PDF: a panel over its page */
+                    "X-Missing-Items"?: number;
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description No such draft */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

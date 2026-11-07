@@ -9,6 +9,7 @@
 		{ href: resolve('/cv'), label: 'Mon CV' },
 		{ href: resolve('/identite'), label: 'Identité' },
 		{ href: resolve('/apercu'), label: 'Aperçu' },
+		{ href: resolve('/adapter'), label: 'Adapter' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
 	const upcoming = ['Offres', 'Candidatures', 'Courrier'];
@@ -24,7 +25,8 @@
 						<a
 							href={screen.href}
 							aria-current={page.url.pathname === screen.href ||
-							(screen.href === resolve('/suivi') && page.url.pathname.startsWith(screen.href + '/'))
+							([resolve('/suivi'), resolve('/adapter')].includes(screen.href) &&
+								page.url.pathname.startsWith(screen.href + '/'))
 								? 'page'
 								: undefined}
 							class="font-bold text-ink underline-offset-4 aria-[current=page]:underline"

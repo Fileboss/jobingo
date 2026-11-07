@@ -6,6 +6,9 @@ from fastapi import Depends, Request
 from jobingo.config import Settings
 from jobingo.db import Conn, Pool
 from jobingo.domain.users import User
+from jobingo.llm.client import LLMClient
+from jobingo.llm.factory import budget
+from jobingo.llm.journal import Budget
 from jobingo.services.accounts import get_account
 
 
@@ -34,3 +37,18 @@ def get_current_user(conn: DbConn, settings: Annotated[Settings, Depends(get_set
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_llm_client(request: Request) -> LLMClient | None:
+    """None without an API key. Built once at startup; tests put a fake in its place."""
+    return request.app.state.llm_client
+
+
+LlmClient = Annotated[LLMClient | None, Depends(get_llm_client)]
+
+
+def get_budget(settings: Annotated[Settings, Depends(get_settings)]) -> Budget:
+    return budget(settings)
+
+
+LlmBudget = Annotated[Budget, Depends(get_budget)]
