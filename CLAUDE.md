@@ -12,7 +12,7 @@ It succeeds a Python POC, `../my-job-processor`. Before porting anything from it
 
 ## Status
 
-The foundation is in place: API, Postgres, migrations, the account created at startup, local protections, API contract, CI and Claude Code guardrails. The CV editor is in place, in French: `/api/cv/{lang}` (read, convert, save with a conflict check), the source CV stored as versioned rows and written only by `services/cv_editor.py`, and the client's form and text modes in the "Classeur" direction. Known gap: the text mode is a plain textarea, without the section colours the direction asks for, until CodeMirror is added. The CV page is in place: identity and photo stored apart from the CV (`/api/identity`), a persisted manual selection (`/api/cv/{lang}/selection`), and the real PDF of the `panneau-lateral` template (`/api/cv/{lang}/pdf`). The LLM layer is in place (`llm/`): `run_task` in `llm/journal.py` is the one way to call the model. It renders the prompts, redacts the identity values it is given, checks the daily and monthly caps, and journals every call in `llm_calls` with its cost in USD, failed ones included. The observability page ("Suivi de l'IA", `/suivi`) shows usage, calls and the application log (`app_events`), without the Evals tab yet. No task, prompt or eval exists yet, and nothing calls the model: what this file says beyond that is the target, not the code. Update this section as parts land.
+The foundation is in place: API, Postgres, migrations, the account created at startup, local protections, API contract, CI and Claude Code guardrails. The CV editor is in place, in French: `/api/cv/{lang}` (read, convert, save with a conflict check), the source CV stored as versioned rows and written only by `services/cv_editor.py`, and the client's form and text modes in the "Classeur" direction. Known gap: the text mode is a plain textarea, without the section colours the direction asks for, until CodeMirror is added. The CV page is in place: identity and photo stored apart from the CV (`/api/identity`), a persisted manual selection (`/api/cv/{lang}/selection`), and the real PDF of the `panneau-lateral` template (`/api/cv/{lang}/pdf`). The LLM layer is in place (`llm/`): `run_task` in `llm/journal.py` is the one way to call the model. It renders the prompts, redacts the identity values it is given, checks the daily and monthly caps, and journals every call in `llm_calls` with its cost in USD, failed ones included. The observability page ("Suivi de l'IA", `/suivi`) shows usage, calls, evals and the application log (`app_events`). One task exists, `select_cv_content` (`services/cv_proposal.py`, prompt v5), with its eval suite (`make eval`), but no screen calls it yet and its score is not measured: what this file says beyond that is the target, not the code. Update this section as parts land.
 
 ## Key features
 
@@ -45,7 +45,7 @@ packages/core/   config, db, migrations; domain, services, llm, render, hitl, co
 tests/           backend tests, against a real Postgres
 scripts/         contract export, guardrail checks, session and worktree launchers
 docs/            guides; decisions/ and lessons/, the user's settled choices and corrections
-evals/           suites and fictional cases                      (planned)
+evals/           eval harness, suites, fictional cases and committed results
 data/            local user data, gitignored                     (planned)
 ```
 

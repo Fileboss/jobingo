@@ -2,7 +2,7 @@
 
 A key feature (`docs/decisions/2026-11-05-observability-page.md`). A reviewer should understand from this page what the AI does, what it costs, how well it performs, and be able to trace any result back to its call.
 
-Built: the "Suivi de l'IA" section (`/suivi`), with the Usage, Calls (`/suivi/appels`, and one call at `/suivi/appels/{id}`) and Logs (`/suivi/journal`) tabs, on `/api/observability/*`. The Evals tab comes with step 4.3.
+Built: the "Suivi de l'IA" section (`/suivi`), with the Usage, Calls (`/suivi/appels`, and one call at `/suivi/appels/{id}`), Evals (`/suivi/evals`) and Logs (`/suivi/journal`) tabs, on `/api/observability/*`.
 
 ## What it shows
 
@@ -32,6 +32,7 @@ The links between these areas are the point: from a score or a document to its c
 - **Logs** are structured events only (`jobingo.logs.event`), which `services/app_log.DatabaseEventHandler` writes to `app_events` on its own connection, so an event outlives a request that fails after it. String fields are redacted again before they are stored. Plain log lines stay on the console. An event about an account passes `user_id`; one that passes `llm_call_id` appears on that call's page.
 - **Retention:** at each startup, prompts and answers older than 90 days are erased (`purged_at`), with counts and costs kept, and older events are deleted.
 - **Days** start at local midnight, like the budget caps.
+- **Evals** are the files `evals/run.py` writes to `evals/results/<suite>.v<version>.<model>.<thinking>-<effort>.json`, one per prompt version and setup, read by `services/observability.eval_report`. Every task in `llm.tasks.TASKS` appears, measured or not; its "current" result is the latest run of the prompt version it ships.
 
 ## Design
 

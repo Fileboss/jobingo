@@ -16,7 +16,7 @@ Small vertical steps. To adjust as we go:
 4. LLM layer, prompts and evals, with the observability page (`docs/observability.md`), then per-offer CV tailoring. In four steps:
    1. ~~LLM layer: client interface, Anthropic client, fake client, call journal (`llm_calls`), costs, budget caps, redaction~~ (done).
    2. ~~Application log, and the observability page's Usage, Calls and Logs tabs, on the journal~~ (done).
-   3. `select_cv_content`: its prompts, the eval harness and suite, and the Evals tab.
+   3. ~~`select_cv_content`: its prompts, the eval harness and suite, and the Evals tab~~ (done).
    4. Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen.
 5. Offer intake and scoring.
 6. Application tracking and cover letters.
@@ -55,6 +55,13 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 4.3 changed or left:
+
+- `select_cv_content` ships as **v5**: the POC's v4 without the `options` the model proposed, since the user sets them before the call, and without the page-overflow retry (`OverflowHint`), which 4.4 decides on. Its score is to be measured here: no POC figure carries over.
+- Prompts v1 to v3 of this task stay in the POC: they were superseded, and the decision to port every prompt is applied to the versions in service, each with its task.
+- No style editor yet: the app sends an empty style, the eval sends `evals/fixtures/style.md`. `domain/style.py` is ready for it.
+- The eval harness keeps the POC's design (own key, cache keyed on the exact request, spending cap, re-grade from the cache keeps the measured spend) on a throwaway Postgres database. `--prompt-version`, the LLM judge and the README scores table are not ported: the observability page shows the results.
 
 - `domain/cv_selection.py`: everything serving the model (proposals, `validate_rewrite`, `short_ids`, the trail fields of `SelectedItem`) waits for step 4, as do the manifest's `sections` limits, and `domain/chronology.py`. This repository's `CvSelection` is built from the CV and the ids left out, in CV order.
 - `domain/colors.py` and the manifest's `colors`/`contrast`: no colour customization yet, so the stylesheet's `:root` is the one source of the defaults.

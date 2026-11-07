@@ -117,3 +117,48 @@ class CallDetail(CallSummary):
     purged_at: datetime | None
     # What the app logged about this call: the trail from the call to what it caused.
     events: list[AppEvent]
+
+
+class EvalSpend(BaseModel):
+    live_calls: int
+    cached_calls: int
+    input_tokens: int
+    output_tokens: int
+    cache_read_tokens: int
+    cache_write_tokens: int
+    cost_usd: Decimal
+    latency_p50_ms: int | None
+    latency_p95_ms: int | None
+
+
+class EvalRun(BaseModel):
+    """One run of a suite, as `evals/run.py` recorded it."""
+
+    suite: str
+    metric: str
+    prompt_version: int
+    setup: str
+    model: str
+    thinking: str
+    effort: str
+    score: float | None
+    threshold: float | None
+    passed: bool | None
+    cases: int
+    detail: dict[str, Any]
+    spend: EvalSpend
+    run_at: datetime
+    # Graded again from cached answers: the spend and date are the measured run's.
+    regraded_from_cache: bool = False
+    # The cases that failed, with what the grader found.
+    failing: list[dict[str, Any]] = []
+
+
+class EvalTask(BaseModel):
+    task: str
+    shipped_version: int
+    # The latest run of the shipped prompt version, the one the app runs. None: not
+    # measured yet.
+    current: EvalRun | None
+    # Every recorded run, newest first, to compare versions and models.
+    runs: list[EvalRun]

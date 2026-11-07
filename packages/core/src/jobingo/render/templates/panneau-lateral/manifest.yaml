@@ -2,3 +2,10 @@ name: panneau-lateral
 langs: [fr]
 max_pages: 1
 options: [photo, panneau_competences, loisirs]
+# Limits on what the model proposes for an offer, not on the user's own choices.
+sections:
+  resume: {max_chars: 450}
+  experiences: {max_items: 4, max_bullets_per_item: 4}
+  formation: {max_items: 3}
+  competences: {max_items: 12}
+  loisirs: {max_items: 4}

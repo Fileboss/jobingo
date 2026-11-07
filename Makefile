@@ -5,7 +5,7 @@ API_PORT ?= 8000
 export
 
 .PHONY: db-up db-down api web api-types test lint typecheck check check-guardrails \
-	e2e agent agent-front agent-back pair worktree worktree-rm
+	e2e eval agent agent-front agent-back pair worktree worktree-rm
 
 db-up:
 	docker compose up -d --wait postgres
@@ -46,6 +46,12 @@ check: lint typecheck test check-guardrails
 
 e2e:
 	pnpm --filter @jobingo/web exec playwright test
+
+# Paid: runs the eval suites against the API with the eval-only key in evals/.env,
+# capped at 1 $ unless ARGS says otherwise. ARGS=--task select_cv_content, --max-usd 2,
+# --compare select_cv_content. The database must be up. See evals/run.py.
+eval:
+	uv run python -m evals.run $(ARGS)
 
 # Claude Code sessions, see docs/parallel-work.md. ARGS goes to claude: ARGS=--continue
 agent:

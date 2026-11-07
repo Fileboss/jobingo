@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     api_port: int = 8000
     web_port: int = 5173
     web_build_dir: Path = Path("apps/web/build")
+    # Committed eval results, read by the observability page. Runs are `make eval`.
+    evals_results_dir: Path = Path("evals/results")
 
     # Without a key the app runs, and the AI features say they are not configured.
     anthropic_api_key: SecretStr | None = None

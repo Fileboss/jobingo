@@ -1,8 +1,10 @@
 """The figures of the observability page, read from the call journal."""
 
 import json
+import logging
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, cast
 
 from jobingo.config import Settings
@@ -14,13 +16,19 @@ from jobingo.domain.observability import (
     CallStatus,
     CallSummary,
     DailyCost,
+    EvalRun,
+    EvalTask,
     TaskUsage,
     TierModel,
     UsageFigures,
     UsageReport,
 )
 from jobingo.llm.journal import spent_since
+from jobingo.llm.tasks import TASKS
+from jobingo.logs import event
 from jobingo.services.app_log import list_events
+
+log = logging.getLogger(__name__)
 
 _FIGURES = """
     count(*) AS calls,
@@ -212,3 +220,30 @@ def get_call(conn: Conn, user_id: int, call_id: int) -> CallDetail | None:
         purged_at=row["purged_at"],
         events=list_events(conn, user_id, llm_call_id=call_id, limit=200).events,
     )
+
+
+def _eval_run(path: Path) -> EvalRun | None:
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        failing = [row for row in _dicts(stored.get("rows")) if not row.get("passed")]
+        return EvalRun.model_validate(stored["summary"] | {"failing": failing})
+    except (OSError, ValueError, KeyError, TypeError):
+        # A file this version cannot read is skipped, and said, rather than hiding
+        # every other result.
+        event(log, "evals.unreadable", logging.WARNING, file=path.name)
+        return None
+
+
+def eval_report(results_dir: Path) -> list[EvalTask]:
+    """Every shipped task, with its recorded eval runs. Reads committed files only:
+    nothing here runs an eval or spends anything."""
+    report: list[EvalTask] = []
+    for name, task in sorted(TASKS.items()):
+        paths = sorted(results_dir.glob(f"{name}.v*.json")) if results_dir.is_dir() else []
+        runs = [run for path in paths if (run := _eval_run(path)) is not None]
+        runs.sort(key=lambda run: run.run_at, reverse=True)
+        current = next((r for r in runs if r.prompt_version == task.prompt_version), None)
+        report.append(
+            EvalTask(task=name, shipped_version=task.prompt_version, current=current, runs=runs)
+        )
+    return report

@@ -17,6 +17,11 @@
 			match: (path: string) => path.startsWith(resolve('/suivi/appels'))
 		},
 		{
+			href: resolve('/suivi/evals'),
+			label: 'Evals',
+			match: (path: string) => path.startsWith(resolve('/suivi/evals'))
+		},
+		{
 			href: resolve('/suivi/journal'),
 			label: 'Journal',
 			match: (path: string) => path.startsWith(resolve('/suivi/journal'))
@@ -40,7 +45,7 @@
 						href={tab.href}
 						aria-current={current ? 'page' : undefined}
 						class={[
-							'block rounded-t-md px-5 pt-1 pb-1.5 text-lg font-extrabold no-underline',
+							'block rounded-t-md px-3 pt-1 pb-1.5 font-extrabold no-underline sm:px-5 sm:text-lg',
 							current ? 'bg-paper text-ink' : 'bg-bristol-grey/70 text-ink-soft hover:text-ink'
 						]}
 					>

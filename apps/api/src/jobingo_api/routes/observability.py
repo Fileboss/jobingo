@@ -7,6 +7,7 @@ from jobingo.domain.observability import (
     CallDetail,
     CallPage,
     CallStatus,
+    EvalTask,
     EventLevel,
     EventPage,
     UsageReport,
@@ -72,3 +73,10 @@ def list_events(
         before_id=before_id,
         limit=limit,
     )
+
+
+@router.get("/evals")
+def list_evals(settings: Annotated[Settings, Depends(get_settings)]) -> list[EvalTask]:
+    """Each shipped task with its committed eval runs. Paid runs are `make eval`'s only:
+    no request here spends anything."""
+    return observability.eval_report(settings.evals_results_dir)

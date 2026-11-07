@@ -6,6 +6,7 @@ type UsageReport = Schemas['UsageReport'];
 type CallSummary = Schemas['CallSummary'];
 type CallDetail = Schemas['CallDetail'];
 type AppEvent = Schemas['AppEvent'];
+type EvalTask = Schemas['EvalTask'];
 
 const figures = {
 	calls: 0,
@@ -70,6 +71,7 @@ export class FakeObservabilityApi {
 		event(11, 'offer.scored', 'INFO', 3),
 		event(10, 'llm.call', 'INFO', 3)
 	];
+	evals: EvalTask[] = [{ task: 'select_cv_content', shipped_version: 5, current: null, runs: [] }];
 	usageDays: number[] = [];
 	callQueries: URLSearchParams[] = [];
 	eventQueries: URLSearchParams[] = [];
@@ -155,6 +157,9 @@ export class FakeObservabilityApi {
 			if (!detail) return route.fulfill({ status: 404, json: { detail: 'Appel introuvable' } });
 			await route.fulfill({ json: detail });
 		});
+		await page.route('**/api/observability/evals', async (route) => {
+			await route.fulfill({ json: this.evals });
+		});
 		await page.route('**/api/observability/events*', async (route) => {
 			const query = new URL(route.request().url()).searchParams;
 			this.eventQueries.push(query);
@@ -163,4 +168,36 @@ export class FakeObservabilityApi {
 			await route.fulfill({ json: { events, next_before_id: null } });
 		});
 	}
+}
+
+/** A recorded eval run, fictional, as `evals/run.py` writes it. */
+export function evalRun(score: number, failing: Record<string, unknown>[] = []) {
+	return {
+		suite: 'select_cv_content',
+		metric: 'cas où toute la sélection attendue est retenue',
+		prompt_version: 5,
+		setup: 'claude-sonnet-5-5.off-medium',
+		model: 'claude-sonnet-5-5',
+		thinking: 'off',
+		effort: 'medium',
+		score,
+		threshold: null,
+		passed: null,
+		cases: 8,
+		detail: { cases: `${Math.round(score * 8)}/8`, refused_rewrites: 1 },
+		spend: {
+			live_calls: 8,
+			cached_calls: 0,
+			input_tokens: 52000,
+			output_tokens: 2900,
+			cache_read_tokens: 0,
+			cache_write_tokens: 6000,
+			cost_usd: '0.0412',
+			latency_p50_ms: 4300,
+			latency_p95_ms: 6400
+		},
+		run_at: '2026-11-07T09:00:00Z',
+		regraded_from_cache: false,
+		failing
+	};
 }

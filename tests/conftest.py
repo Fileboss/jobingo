@@ -60,6 +60,7 @@ def settings(database_url: str, tmp_path: Path) -> Settings:
         api_port=8000,  # not a worktree's, which `make test` exports
         web_port=5173,
         web_build_dir=tmp_path / "no-client-build",
+        evals_results_dir=tmp_path / "eval-results",
     )
 
 

@@ -240,6 +240,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/observability/evals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Evals
+         * @description Each shipped task with its committed eval runs. Paid runs are `make eval`'s only:
+         *     no request here spends anything.
+         */
+        get: operations["list_evals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -521,6 +542,87 @@ export interface components {
         };
         /** @enum {string} */
         DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
+        /**
+         * EvalRun
+         * @description One run of a suite, as `evals/run.py` recorded it.
+         */
+        EvalRun: {
+            /** Suite */
+            suite: string;
+            /** Metric */
+            metric: string;
+            /** Prompt Version */
+            prompt_version: number;
+            /** Setup */
+            setup: string;
+            /** Model */
+            model: string;
+            /** Thinking */
+            thinking: string;
+            /** Effort */
+            effort: string;
+            /** Score */
+            score: number | null;
+            /** Threshold */
+            threshold: number | null;
+            /** Passed */
+            passed: boolean | null;
+            /** Cases */
+            cases: number;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            spend: components["schemas"]["EvalSpend"];
+            /**
+             * Run At
+             * Format: date-time
+             */
+            run_at: string;
+            /**
+             * Regraded From Cache
+             * @default false
+             */
+            regraded_from_cache: boolean;
+            /**
+             * Failing
+             * @default []
+             */
+            failing: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** EvalSpend */
+        EvalSpend: {
+            /** Live Calls */
+            live_calls: number;
+            /** Cached Calls */
+            cached_calls: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Cache Read Tokens */
+            cache_read_tokens: number;
+            /** Cache Write Tokens */
+            cache_write_tokens: number;
+            /** Cost Usd */
+            cost_usd: string;
+            /** Latency P50 Ms */
+            latency_p50_ms: number | null;
+            /** Latency P95 Ms */
+            latency_p95_ms: number | null;
+        };
+        /** EvalTask */
+        EvalTask: {
+            /** Task */
+            task: string;
+            /** Shipped Version */
+            shipped_version: number;
+            current: components["schemas"]["EvalRun"] | null;
+            /** Runs */
+            runs: components["schemas"]["EvalRun"][];
+        };
         /** @enum {string} */
         EventLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
         /** EventPage */
@@ -1438,6 +1540,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalTask"][];
                 };
             };
         };

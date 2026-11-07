@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FakeObservabilityApi } from './observability-api.fake.ts';
+import { evalRun, FakeObservabilityApi } from './observability-api.fake.ts';
 
 async function open(page: Page, path: string, api = new FakeObservabilityApi()) {
 	await api.install(page);
@@ -82,7 +82,13 @@ test('the journal search keeps what is typed while it loads', async ({ page }) =
 	);
 });
 
-for (const path of ['/suivi', '/suivi/appels', '/suivi/journal', '/suivi/appels/3']) {
+for (const path of [
+	'/suivi',
+	'/suivi/appels',
+	'/suivi/evals',
+	'/suivi/journal',
+	'/suivi/appels/3'
+]) {
 	test(`${path} fits a phone, with no horizontal scroll`, async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 800 });
 		await open(page, path);
@@ -92,3 +98,23 @@ for (const path of ['/suivi', '/suivi/appels', '/suivi/journal', '/suivi/appels/
 		expect(width).toBeLessThanOrEqual(390);
 	});
 }
+
+test('an unmeasured task says so, and shows no score', async ({ page }) => {
+	await open(page, '/suivi/evals');
+	await expect(page.getByRole('heading', { name: /select_cv_content/ })).toBeVisible();
+	await expect(page.getByText('Pas encore mesuré')).toBeVisible();
+	await expect(page.getByText('%')).toHaveCount(0);
+});
+
+test('a measured task shows its score, its setup and its failed cases', async ({ page }) => {
+	const api = new FakeObservabilityApi();
+	const run = evalRun(0.875, [{ id: 'cv-05', passed: false, missing: ['skill-kubernetes'] }]);
+	api.evals = [{ task: 'select_cv_content', shipped_version: 5, current: run, runs: [run] }];
+	await open(page, '/suivi/evals', api);
+
+	await expect(page.getByText('87,5 %').first()).toBeVisible();
+	await expect(page.getByText('Pas de seuil fixé')).toBeVisible();
+	await expect(page.getByText('0,041 $ pour 8 cas')).toBeVisible();
+	await page.getByText('1 cas échoué').click();
+	await expect(page.getByText('skill-kubernetes')).toBeVisible();
+});

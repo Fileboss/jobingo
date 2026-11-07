@@ -1,0 +1,9 @@
+"""One module per bounded task: its typed input, its validated output, its prompts."""
+
+from typing import Any
+
+from jobingo.llm.client import Task
+from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
+
+# Every task the app ships, with the prompt version it ships.
+TASKS: dict[str, Task[Any, Any]] = {task.name: task for task in (SELECT_CV_CONTENT_TASK,)}

@@ -6,12 +6,18 @@ export type UsageFigures = Schemas['UsageFigures'];
 export type CallSummary = Schemas['CallSummary'];
 export type CallDetail = Schemas['CallDetail'];
 export type AppEvent = Schemas['AppEvent'];
+export type EvalTask = Schemas['EvalTask'];
+export type EvalRun = Schemas['EvalRun'];
 export type CallStatus = CallSummary['status'];
 export type EventLevel = AppEvent['level'];
 
 const integer = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 });
 const percent = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 1 });
+
+/** A score between 0 and 1, as a percentage. */
+export const formatScore = (score: number | null | undefined) =>
+	score === null || score === undefined ? '—' : percent.format(score);
 
 /** Costs travel as decimal strings, so that no figure is rounded on the way. */
 export const usd = (value: string | number) => Number(value);
@@ -67,6 +73,7 @@ const longDay = new Intl.DateTimeFormat('fr-FR', {
 });
 
 export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
+export const formatDate = (iso: string) => longDay.format(new Date(iso));
 export const formatTimestamp = (iso: string) => seconds.format(new Date(iso));
 /** `day` is a calendar date (`2026-11-07`), read as a local date, not as UTC midnight. */
 const localDate = (iso: string) => {
@@ -94,6 +101,11 @@ export const levelLabels: Record<EventLevel, string> = {
 	WARNING: 'Alerte',
 	ERROR: 'Erreur',
 	CRITICAL: 'Critique'
+};
+
+export const thinkingLabels: Record<string, string> = {
+	off: 'réflexion désactivée',
+	adaptive: 'réflexion adaptative'
 };
 
 export const tierLabels = { fast: 'Rapide', writing: 'Rédaction' } as const;

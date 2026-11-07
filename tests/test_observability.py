@@ -1,9 +1,11 @@
 """The observability API: every figure is measured from the journal, per account."""
 
+import json
 import logging
 from collections.abc import Callable
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -19,6 +21,7 @@ from jobingo.llm.client import LLMCallError, LLMUnavailable, LLMValidationError,
 from jobingo.llm.fake import FakeLLMClient
 from jobingo.llm.journal import Budget, run_task
 from jobingo.llm.prompts import prompt_environment
+from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
 from jobingo.logs import event
 from jobingo.services import app_log
 from jobingo.services.accounts import ensure_account, get_account
@@ -302,3 +305,74 @@ def test_prompts_and_events_expire_but_costs_stay(
     assert kept["user_prompt"] is not None
     names = [e["name"] for e in client.get("/api/observability/events").json()["events"]]
     assert "journal.purged" in names
+
+
+def _eval_result(
+    directory: Path,
+    version: int,
+    run_at: str,
+    score: float,
+    setup: str = "claude-sonnet-5-5.off-medium",
+) -> None:
+    directory.mkdir(exist_ok=True)
+    summary = {
+        "suite": "select_cv_content",
+        "metric": "cas réussis",
+        "prompt_version": version,
+        "setup": setup,
+        "model": setup.split(".")[0],
+        "thinking": "off",
+        "effort": "medium",
+        "score": score,
+        "threshold": None,
+        "passed": None,
+        "cases": 2,
+        "detail": {"cases": "1/2"},
+        "spend": {
+            "live_calls": 2,
+            "cached_calls": 0,
+            "input_tokens": 9000,
+            "output_tokens": 600,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "cost_usd": "0.024",
+            "latency_p50_ms": 4100,
+            "latency_p95_ms": 5200,
+        },
+        "stopped": None,
+        "run_at": run_at,
+    }
+    rows = [
+        {"id": "cv-01", "passed": True},
+        {"id": "cv-02", "passed": False, "missing": ["skill-django"]},
+    ]
+    name = f"select_cv_content.v{version}.{setup}.json"
+    (directory / name).write_text(json.dumps({"summary": summary, "rows": rows}), encoding="utf-8")
+
+
+def test_evals_list_every_shipped_task_even_unmeasured(client: TestClient):
+    [task] = client.get("/api/observability/evals").json()
+    assert task == {
+        "task": "select_cv_content",
+        "shipped_version": SELECT_CV_CONTENT_TASK.prompt_version,
+        "current": None,
+        "runs": [],
+    }
+
+
+def test_evals_show_the_shipped_version_and_every_run(client: TestClient, settings: Settings):
+    results = settings.evals_results_dir
+    shipped = SELECT_CV_CONTENT_TASK.prompt_version
+    _eval_result(results, shipped, "2026-11-06T10:00:00+00:00", 0.5)
+    _eval_result(results, shipped - 1, "2026-11-07T10:00:00+00:00", 0.875)
+    (results / "select_cv_content.v9.broken.json").write_text("{", encoding="utf-8")
+
+    [task] = client.get("/api/observability/evals").json()
+
+    assert task["current"]["prompt_version"] == shipped
+    assert task["current"]["score"] == 0.5
+    assert task["current"]["failing"] == [
+        {"id": "cv-02", "passed": False, "missing": ["skill-django"]}
+    ]
+    assert [run["prompt_version"] for run in task["runs"]] == [shipped - 1, shipped]
+    assert Decimal(task["runs"][0]["spend"]["cost_usd"]) == Decimal("0.024")

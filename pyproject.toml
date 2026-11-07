@@ -31,13 +31,13 @@ extend-exclude = ["data"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["jobingo", "jobingo_api"]
+known-first-party = ["jobingo", "jobingo_api", "evals"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]
 
 [tool.pyright]
-include = ["apps/api/src", "packages/core/src", "tests", "scripts"]
+include = ["apps/api/src", "packages/core/src", "tests", "scripts", "evals"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 venvPath = "."
@@ -46,6 +46,8 @@ extraPaths = ["apps/api/src", "packages/core/src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# `evals` is a top-level package, imported by its tests.
+pythonpath = ["."]
 addopts = ["--import-mode=importlib"]
 
 [tool.importlinter]
