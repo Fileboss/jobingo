@@ -20,7 +20,7 @@ Small vertical steps. To adjust as we go:
    4. ~~Per-offer CV tailoring: a server-side draft, code checks on the rewrites, the diff screen~~ (done).
 5. Offer intake and scoring. In three steps:
    1. ~~Offer intake: pasted text, `extract_offer`, the `offers` table with merging, the Offers screens, its eval suite, adapting the CV from an offer~~ (done).
-   2. The objectives: hard filters, weights and preferences, with their editor.
+   2. ~~The objectives: hard filters, weights and preferences, with their editor~~ (done).
    3. Scoring: hard filters in code, `score_offer` per criterion, the global score in code, its eval suite.
 6. Application tracking and cover letters.
 7. Mail, drafted replies and approval queue.
@@ -58,6 +58,12 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 5.2 changed or left:
+
+- The POC's `objectifs.md` (YAML front matter and a free-text body) becomes an `objectives` row edited in a form: filters and weights are structured and validated, the preferences stay free text.
+- `apply_hard_filters` keeps the POC's rules: a known value that fails eliminates, an unknown one is only flagged, comparisons ignore case (and now accents). The Objectives screen previews them on the offers received.
+- Weights go from 0 to 5; the POC's were unbounded floats.
 
 What step 5.1 changed or left:
 

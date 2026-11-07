@@ -1425,6 +1425,68 @@
           }
         }
       }
+    },
+    "/api/objectives": {
+      "get": {
+        "tags": [
+          "objectives"
+        ],
+        "summary": "Get Objectives",
+        "description": "Never saved is the defaults, which filter nothing.",
+        "operationId": "get_objectives",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectivesView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "objectives"
+        ],
+        "summary": "Save Objectives",
+        "description": "The whole document; the offers come back through the saved filters.",
+        "operationId": "save_objectives",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Objectives"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectivesView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2936,6 +2998,50 @@
         ],
         "title": "ExperienceFields"
       },
+      "FilteredOffer": {
+        "properties": {
+          "offer_id": {
+            "type": "integer",
+            "title": "Offer Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "eliminated_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Eliminated By"
+          },
+          "unknown": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "offer_id",
+          "title",
+          "company_name",
+          "passed",
+          "eliminated_by",
+          "unknown"
+        ],
+        "title": "FilteredOffer"
+      },
       "FormDraft": {
         "properties": {
           "mode": {
@@ -2986,6 +3092,77 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HardFilters": {
+        "properties": {
+          "contracts": {
+            "items": {
+              "$ref": "#/components/schemas/Contract"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Contracts",
+            "default": []
+          },
+          "remote": {
+            "items": {
+              "$ref": "#/components/schemas/Remote"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Remote",
+            "default": []
+          },
+          "locations": {
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Locations",
+            "default": []
+          },
+          "salary_min_eur": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min Eur"
+          },
+          "excluded_keywords": {
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Excluded Keywords",
+            "default": []
+          },
+          "excluded_companies": {
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Excluded Companies",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "HardFilters",
+        "description": "An empty list or a None filters nothing."
       },
       "Health": {
         "properties": {
@@ -3138,6 +3315,70 @@
         ],
         "title": "IntakeResult",
         "description": "The offers the text held: new ones, and known ones completed by it."
+      },
+      "Objectives": {
+        "properties": {
+          "hard_filters": {
+            "$ref": "#/components/schemas/HardFilters",
+            "default": {
+              "contracts": [],
+              "remote": [],
+              "locations": [],
+              "excluded_keywords": [],
+              "excluded_companies": []
+            }
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights",
+            "default": {
+              "mission": 1.0,
+              "stack": 1.0,
+              "salary": 1.0,
+              "culture": 1.0
+            }
+          },
+          "preferences": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Preferences",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Objectives"
+      },
+      "ObjectivesView": {
+        "properties": {
+          "objectives": {
+            "$ref": "#/components/schemas/Objectives"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/FilteredOffer"
+            },
+            "type": "array",
+            "title": "Offers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "objectives",
+          "updated_at",
+          "offers"
+        ],
+        "title": "ObjectivesView"
       },
       "Offer": {
         "properties": {
@@ -3938,6 +4179,41 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Weights": {
+        "properties": {
+          "mission": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Mission",
+            "default": 1
+          },
+          "stack": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Stack",
+            "default": 1
+          },
+          "salary": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Salary",
+            "default": 1
+          },
+          "culture": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Culture",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "Weights",
+        "description": "How much each of the model's ratings counts in the global score."
       }
     }
   }

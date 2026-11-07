@@ -10,6 +10,7 @@
 		{ href: resolve('/identite'), label: 'Identité' },
 		{ href: resolve('/apercu'), label: 'Aperçu' },
 		{ href: resolve('/offres'), label: 'Offres' },
+		{ href: resolve('/objectifs'), label: 'Objectifs' },
 		{ href: resolve('/adapter'), label: 'Adapter' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];

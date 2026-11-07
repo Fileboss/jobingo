@@ -17,6 +17,7 @@ from jobingo_api.routes import (
     health,
     identity,
     me,
+    objectives,
     observability,
     offers,
 )
@@ -74,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(identity.router, prefix="/api")
     app.include_router(observability.router, prefix="/api")
     app.include_router(offers.router, prefix="/api")
+    app.include_router(objectives.router, prefix="/api")
 
     # Absent in development, where the Vite dev server serves the client.
     if (settings.web_build_dir / "index.html").is_file():

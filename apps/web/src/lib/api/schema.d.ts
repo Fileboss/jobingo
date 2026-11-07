@@ -433,6 +433,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/objectives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Objectives
+         * @description Never saved is the defaults, which filter nothing.
+         */
+        get: operations["get_objectives"];
+        /**
+         * Save Objectives
+         * @description The whole document; the offers come back through the saved filters.
+         */
+        put: operations["save_objectives"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -991,6 +1015,21 @@ export interface components {
              */
             bullets: string[];
         };
+        /** FilteredOffer */
+        FilteredOffer: {
+            /** Offer Id */
+            offer_id: number;
+            /** Title */
+            title: string;
+            /** Company Name */
+            company_name: string;
+            /** Passed */
+            passed: boolean;
+            /** Eliminated By */
+            eliminated_by: string[];
+            /** Unknown */
+            unknown: string[];
+        };
         /** FormDraft */
         FormDraft: {
             /**
@@ -1017,6 +1056,39 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HardFilters
+         * @description An empty list or a None filters nothing.
+         */
+        HardFilters: {
+            /**
+             * Contracts
+             * @default []
+             */
+            contracts: components["schemas"]["Contract"][];
+            /**
+             * Remote
+             * @default []
+             */
+            remote: components["schemas"]["Remote"][];
+            /**
+             * Locations
+             * @default []
+             */
+            locations: string[];
+            /** Salary Min Eur */
+            salary_min_eur?: number | null;
+            /**
+             * Excluded Keywords
+             * @default []
+             */
+            excluded_keywords: string[];
+            /**
+             * Excluded Companies
+             * @default []
+             */
+            excluded_companies: string[];
         };
         /** Health */
         Health: {
@@ -1105,6 +1177,41 @@ export interface components {
             merged_ids: number[];
             /** Llm Call Id */
             llm_call_id: number;
+        };
+        /** Objectives */
+        Objectives: {
+            /**
+             * @default {
+             *       "contracts": [],
+             *       "remote": [],
+             *       "locations": [],
+             *       "excluded_keywords": [],
+             *       "excluded_companies": []
+             *     }
+             */
+            hard_filters: components["schemas"]["HardFilters"];
+            /**
+             * @default {
+             *       "mission": 1,
+             *       "stack": 1,
+             *       "salary": 1,
+             *       "culture": 1
+             *     }
+             */
+            weights: components["schemas"]["Weights"];
+            /**
+             * Preferences
+             * @default
+             */
+            preferences: string;
+        };
+        /** ObjectivesView */
+        ObjectivesView: {
+            objectives: components["schemas"]["Objectives"];
+            /** Updated At */
+            updated_at: string | null;
+            /** Offers */
+            offers: components["schemas"]["FilteredOffer"][];
         };
         /** Offer */
         Offer: {
@@ -1385,6 +1492,32 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * Weights
+         * @description How much each of the model's ratings counts in the global score.
+         */
+        Weights: {
+            /**
+             * Mission
+             * @default 1
+             */
+            mission: number;
+            /**
+             * Stack
+             * @default 1
+             */
+            stack: number;
+            /**
+             * Salary
+             * @default 1
+             */
+            salary: number;
+            /**
+             * Culture
+             * @default 1
+             */
+            culture: number;
         };
     };
     responses: never;
@@ -2402,6 +2535,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_objectives: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectivesView"];
+                };
+            };
+        };
+    };
+    save_objectives: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Objectives"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectivesView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
