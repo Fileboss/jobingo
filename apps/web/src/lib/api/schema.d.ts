@@ -929,10 +929,214 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Actions
+         * @description Waiting for a decision first, then newest first.
+         */
+        get: operations["list_actions"];
+        put?: never;
+        /**
+         * Propose Email
+         * @description Freeze a message to send, its attachments rendered and archived. Nothing leaves:
+         *     it waits in the queue for an approval.
+         */
+        post: operations["propose_email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/actions/{action_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Action */
+        get: operations["get_action"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/actions/{action_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve
+         * @description Approve the payload shown, by its hash, and hand it to the executor. A failed
+         *     send comes back as `failed` with its reason, not as an error.
+         */
+        post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/actions/{action_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry
+         * @description Send a failed action again, as approved: same content, same Message-ID.
+         */
+        post: operations["retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/actions/{action_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject
+         * @description Turn down a proposal, or give up a failed send. It stays in the record.
+         */
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/actions/{action_id}/eml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Eml
+         * @description The message as it left, or would have left in a dry run, byte for byte.
+         */
+        get: operations["get_eml"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document
+         * @description An archived attachment, exactly as it was sent.
+         */
+        get: operations["get_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        ActionStatus: "proposed" | "approved" | "sending" | "sent" | "failed" | "rejected";
+        /** ActionSummary */
+        ActionSummary: {
+            /** Id */
+            id: number;
+            status: components["schemas"]["ActionStatus"];
+            /** To */
+            to: string[];
+            /** Subject */
+            subject: string;
+            /** Application Id */
+            application_id: number | null;
+            /** Application Title */
+            application_title: string | null;
+            /** Attachments */
+            attachments: number;
+            /** Dry Run */
+            dry_run: boolean | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+        };
+        /** ActionView */
+        ActionView: {
+            /** Id */
+            id: number;
+            status: components["schemas"]["ActionStatus"];
+            /** To */
+            to: string[];
+            /** Subject */
+            subject: string;
+            /** Application Id */
+            application_id: number | null;
+            /** Application Title */
+            application_title: string | null;
+            /** Attachments */
+            attachments: number;
+            /** Dry Run */
+            dry_run: boolean | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+            payload: components["schemas"]["SendEmailPayload"];
+            /** Payload Hash */
+            payload_hash: string;
+            /** Message Id */
+            message_id: number | null;
+            /** Error */
+            error: string | null;
+            /** Decided At */
+            decided_at: string | null;
+        };
         /** AppEvent */
         AppEvent: {
             /** Id */
@@ -971,6 +1175,8 @@ export interface components {
             created_at: string;
             /** Message Id */
             message_id?: number | null;
+            /** Action Id */
+            action_id?: number | null;
         };
         /** ApplicationSummary */
         ApplicationSummary: {
@@ -1020,6 +1226,30 @@ export interface components {
             events: components["schemas"]["ApplicationEvent"][];
             /** Messages */
             messages: components["schemas"]["LinkedMessage"][];
+        };
+        /** Approval */
+        Approval: {
+            /** Payload Hash */
+            payload_hash: string;
+        };
+        /** Attachment */
+        Attachment: {
+            /** Document Id */
+            document_id: number;
+            /** Filename */
+            filename: string;
+            /** Sha256 */
+            sha256: string;
+        };
+        /**
+         * AttachmentRequest
+         * @description A letter of the application, or the CV: adapted to its offer when there is a
+         *     draft for it, else the CV page as it stands.
+         */
+        AttachmentRequest: {
+            kind: components["schemas"]["DocumentKind"];
+            /** Letter Id */
+            letter_id?: number | null;
         };
         /** BudgetUse */
         BudgetUse: {
@@ -1325,6 +1555,8 @@ export interface components {
         };
         /** @enum {string} */
         DiagnosticCode: "duplicate_id" | "invalid_front_matter" | "unknown_section" | "unrecognized_line" | "heading_outside" | "orphan_bullet" | "title_line" | "outside_section" | "missing_title" | "invalid_tag" | "personal_email" | "personal_phone" | "personal_url";
+        /** @enum {string} */
+        DocumentKind: "cv" | "letter";
         /**
          * DraftChoices
          * @description What the user settled: the ids on the page, their own texts, the options.
@@ -1466,6 +1698,29 @@ export interface components {
             gone: number;
             /** Max Pages */
             max_pages: number;
+        };
+        /** EmailProposal */
+        EmailProposal: {
+            /** Application Id */
+            application_id?: number | null;
+            /** Message Id */
+            message_id?: number | null;
+            /** To */
+            to: string[];
+            /**
+             * Cc
+             * @default []
+             */
+            cc: string[];
+            /** Subject */
+            subject: string;
+            /** Body */
+            body: string;
+            /**
+             * Attachments
+             * @default []
+             */
+            attachments: components["schemas"]["AttachmentRequest"][];
         };
         /**
          * EvalRun
@@ -2289,6 +2544,46 @@ export interface components {
             /** Excluded Ids */
             excluded_ids: string[];
             options: components["schemas"]["CvOptions"];
+        };
+        /**
+         * SendEmailPayload
+         * @description Everything that leaves, frozen at proposal. The sender's name is the identity's,
+         *     put in by code: this payload never reaches the model. `message_id` is generated
+         *     once, so a retry sends the same Message-ID.
+         */
+        SendEmailPayload: {
+            /** From Name */
+            from_name: string;
+            /** From Addr */
+            from_addr: string;
+            /** To */
+            to: string[];
+            /**
+             * Cc
+             * @default []
+             */
+            cc: string[];
+            /** Subject */
+            subject: string;
+            /** Body Text */
+            body_text: string;
+            /**
+             * In Reply To
+             * @default
+             */
+            in_reply_to: string;
+            /**
+             * References
+             * @default []
+             */
+            references: string[];
+            /**
+             * Attachments
+             * @default []
+             */
+            attachments: components["schemas"]["Attachment"][];
+            /** Message Id */
+            message_id: string;
         };
         /** SlotView */
         SlotView: {
@@ -4655,6 +4950,318 @@ export interface operations {
                 };
             };
             /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_actions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionSummary"][];
+                };
+            };
+        };
+    };
+    propose_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailProposal"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description The proposal cannot be sent as it is */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_action: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description No such action */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Approval"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description No such action */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The action is not in a state for this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description No such action */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The action is not in a state for this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description No such action */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The action is not in a state for this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_eml: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "message/rfc822": string;
+                };
+            };
+            /** @description Nothing built for this action yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description No such document */
             404: {
                 headers: {
                     [name: string]: unknown;

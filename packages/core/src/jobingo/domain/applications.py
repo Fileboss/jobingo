@@ -47,6 +47,8 @@ class ApplicationEvent(BaseModel):
     created_at: datetime
     # The message it came from: received, or a suggestion accepted.
     message_id: int | None = None
+    # The send it records.
+    action_id: int | None = None
 
 
 class NewEvent(BaseModel):

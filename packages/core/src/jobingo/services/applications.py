@@ -34,7 +34,8 @@ _COLUMNS = """
 def _events(conn: Conn, user_id: int, application_id: int) -> list[ApplicationEvent]:
     rows = conn.execute(
         """
-        SELECT id, type, occurred_at, note, created_at, message_id FROM application_events
+        SELECT id, type, occurred_at, note, created_at, message_id, action_id
+        FROM application_events
         WHERE user_id = %s AND application_id = %s ORDER BY occurred_at DESC, id DESC
         """,
         (user_id, application_id),
@@ -189,15 +190,25 @@ def add_message_event(
     type: EventType,
     occurred_at: date,
     note: str,
-    message_id: int,
+    message_id: int | None = None,
+    action_id: int | None = None,
 ) -> None:
-    """An event a message brought: received, or a suggestion the user accepted."""
+    """An event mail brought: a message received, a suggestion the user accepted, or a
+    message the executor sent."""
     with conn.transaction():
         conn.execute(
             "INSERT INTO application_events"
-            " (user_id, application_id, type, occurred_at, note, message_id)"
-            " VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, application_id, type, occurred_at, note.strip()[:2000], message_id),
+            " (user_id, application_id, type, occurred_at, note, message_id, action_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (
+                user_id,
+                application_id,
+                type,
+                occurred_at,
+                note.strip()[:2000],
+                message_id,
+                action_id,
+            ),
         )
         refresh_status(conn, user_id, application_id)
 

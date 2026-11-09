@@ -14,6 +14,7 @@
 		{ href: resolve('/adapter'), label: 'Adapter' },
 		{ href: resolve('/candidatures'), label: 'Candidatures' },
 		{ href: resolve('/courrier'), label: 'Courrier' },
+		{ href: resolve('/envois'), label: 'Envois' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
 </script>
@@ -33,7 +34,8 @@
 								resolve('/adapter'),
 								resolve('/offres'),
 								resolve('/candidatures'),
-								resolve('/courrier')
+								resolve('/courrier'),
+								resolve('/envois')
 							].includes(screen.href) &&
 								page.url.pathname.startsWith(screen.href + '/'))
 								? 'page'

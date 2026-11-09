@@ -37,7 +37,7 @@ paths:
 - A task is a module in `llm/tasks/`, listed in `llm.tasks.TASKS`, with versioned prompts in `llm/prompts/<task>.v<N>[.system].md`, and an eval suite in `evals/suites.py`. Changing a prompt means a new version, adopted only once its eval is at least as good. Prompt examples are fictional and never an eval case: a test checks it.
 - Strict structured output forbids free-form mappings: a `dict` field travels as a list of pairs through `Task.schema_model`.
 
-The layer contracts are in `pyproject.toml`. Add the SMTP contract when that module lands.
+The layer contracts, the SMTP one included, are in `pyproject.toml`.
 
 ## Rendering
 

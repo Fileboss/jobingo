@@ -28,7 +28,7 @@ Small vertical steps. To adjust as we go:
 7. Mail, drafted replies and approval queue. In four steps:
    1. ~~Reading mail: IMAP connector, stored messages, LinkedIn alerts read in code, the Courrier screen~~ (done).
    2. ~~`classify_message` and its eval suite, linking a message to an application, suggestions confirmed by a click~~ (done).
-   3. The approval queue and its one executor, the SMTP connector, dry run by default.
+   3. ~~The approval queue and its one executor, the SMTP connector, dry run by default~~ (done).
    4. `draft_reply` and its injection eval suite.
 8. Demo: fictional seed, screenshots, README.
 
@@ -64,6 +64,15 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 7.3 changed or left:
+
+- The queue keeps the POC's design: a payload frozen at proposal with its SHA-256, approval of the hash on screen, an atomic claim (`approved` to `sending`) so a double click sends once, the hash checked again by the executor, a failed send retried as approved with the same Message-ID. Postgres triggers forbid changing a payload and deleting an action.
+- Approving sends at once, in the same request: one click, « Valider et envoyer ». There is no worker yet.
+- Attachments are rendered once at proposal and archived in `documents` (bytes in Postgres, not files under `data/`), never changed nor deleted; the executor checks each one against its SHA-256. The CV attached is the latest draft adapted to the application's offer, else the CV page; a CV over one page or a letter that could not be downloaded is refused.
+- A dry run (`SMTP_DRY_RUN=1`, the default) builds the message, keeps its exact bytes (`pending_actions.eml`, downloadable) and sends nothing; it records no `message_sent` event, since nothing left. A real send to the local Mailpit is safe for a demo: set `SMTP_DRY_RUN=0` with the default mail settings.
+- The sender's name comes from the identity, put in by code at proposal: the payload never reaches the model. Plain SMTP is refused beyond loopback, like IMAP.
+- Not ported: the POC's expiry of old proposals (no scheduler), the stand-in message for writing to a contact, the signature (`Identity` has none yet), and the placeholder check on drafts, which comes with `draft_reply` (7.4). Sent messages are not stored in `messages`: the action is the record.
 
 What step 7.2 changed or left:
 

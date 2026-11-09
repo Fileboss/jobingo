@@ -12,6 +12,7 @@
 		type EventType
 	} from '#lib/applications/format.ts';
 	import StatusPill from '#lib/applications/StatusPill.svelte';
+	import Composer from '#lib/actions/Composer.svelte';
 	import { categoryLabels, senderName } from '#lib/mail/format.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
@@ -34,6 +35,7 @@
 	let notes = $state('');
 	let notesSaved = $state(false);
 	let letters = $state.raw<{ id: number; created_at: string }[]>([]);
+	let writing_to = $state(false);
 	let writing = $state(false);
 	let letterFailure = $state<string | null>(null);
 
@@ -204,6 +206,18 @@
 
 		<div class="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
 			<section aria-labelledby="timeline-title">
+				{#if writing_to}
+					<div class="mb-8">
+						<h2 class="mb-2 text-2xl font-extrabold text-ink">Message au contact</h2>
+						<Composer
+							applicationId={application.id}
+							to={application.contact.email}
+							subject={application.title}
+							{letters}
+							oncancel={() => (writing_to = false)}
+						/>
+					</div>
+				{/if}
 				<h2 id="timeline-title" class="mb-3 text-2xl font-extrabold text-ink">Chronologie</h2>
 				<form
 					class="mb-5 grid gap-3 bg-paper px-4 py-4 sm:grid-cols-[minmax(0,1fr)_10rem]"
@@ -313,6 +327,11 @@
 				</BristolCard>
 
 				<BristolCard title="Courrier" colour="yellow">
+					<div class="mb-3">
+						<Button onclick={() => (writing_to = true)} disabled={writing_to}>
+							Écrire au contact
+						</Button>
+					</div>
 					{#if application.messages.length}
 						<ul class="grid gap-2">
 							{#each application.messages as message (message.id)}

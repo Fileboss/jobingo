@@ -2831,10 +2831,630 @@
           }
         }
       }
+    },
+    "/api/actions": {
+      "get": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "List Actions",
+        "description": "Waiting for a decision first, then newest first.",
+        "operationId": "list_actions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActionSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Actions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Propose Email",
+        "description": "Freeze a message to send, its attachments rendered and archived. Nothing leaves:\nit waits in the queue for an approval.",
+        "operationId": "propose_email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailProposal"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The proposal cannot be sent as it is",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/actions/{action_id}": {
+      "get": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Get Action",
+        "operationId": "get_action",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such action"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/actions/{action_id}/approve": {
+      "post": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Approve",
+        "description": "Approve the payload shown, by its hash, and hand it to the executor. A failed\nsend comes back as `failed` with its reason, not as an error.",
+        "operationId": "approve",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Approval"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such action"
+          },
+          "409": {
+            "description": "The action is not in a state for this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/actions/{action_id}/retry": {
+      "post": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Retry",
+        "description": "Send a failed action again, as approved: same content, same Message-ID.",
+        "operationId": "retry",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such action"
+          },
+          "409": {
+            "description": "The action is not in a state for this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/actions/{action_id}/reject": {
+      "post": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Reject",
+        "description": "Turn down a proposal, or give up a failed send. It stays in the record.",
+        "operationId": "reject",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such action"
+          },
+          "409": {
+            "description": "The action is not in a state for this",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/actions/{action_id}/eml": {
+      "get": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Get Eml",
+        "description": "The message as it left, or would have left in a dry run, byte for byte.",
+        "operationId": "get_eml",
+        "parameters": [
+          {
+            "name": "action_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "message/rfc822": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nothing built for this action yet"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/documents/{document_id}/pdf": {
+      "get": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Get Document",
+        "description": "An archived attachment, exactly as it was sent.",
+        "operationId": "get_document",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such document"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActionStatus": {
+        "type": "string",
+        "enum": [
+          "proposed",
+          "approved",
+          "sending",
+          "sent",
+          "failed",
+          "rejected"
+        ]
+      },
+      "ActionSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ActionStatus"
+          },
+          "to": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "To"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Title"
+          },
+          "attachments": {
+            "type": "integer",
+            "title": "Attachments"
+          },
+          "dry_run": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dry Run"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "to",
+          "subject",
+          "application_id",
+          "application_title",
+          "attachments",
+          "dry_run",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "ActionSummary"
+      },
+      "ActionView": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ActionStatus"
+          },
+          "to": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "To"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Title"
+          },
+          "attachments": {
+            "type": "integer",
+            "title": "Attachments"
+          },
+          "dry_run": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dry Run"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/SendEmailPayload"
+          },
+          "payload_hash": {
+            "type": "string",
+            "title": "Payload Hash"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "to",
+          "subject",
+          "application_id",
+          "application_title",
+          "attachments",
+          "dry_run",
+          "created_at",
+          "sent_at",
+          "payload",
+          "payload_hash",
+          "message_id",
+          "error",
+          "decided_at"
+        ],
+        "title": "ActionView"
+      },
       "AppEvent": {
         "properties": {
           "id": {
@@ -2914,6 +3534,17 @@
               }
             ],
             "title": "Message Id"
+          },
+          "action_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Id"
           }
         },
         "type": "object",
@@ -3096,6 +3727,66 @@
           "messages"
         ],
         "title": "ApplicationView"
+      },
+      "Approval": {
+        "properties": {
+          "payload_hash": {
+            "type": "string",
+            "title": "Payload Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payload_hash"
+        ],
+        "title": "Approval"
+      },
+      "Attachment": {
+        "properties": {
+          "document_id": {
+            "type": "integer",
+            "title": "Document Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "filename",
+          "sha256"
+        ],
+        "title": "Attachment"
+      },
+      "AttachmentRequest": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DocumentKind"
+          },
+          "letter_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "AttachmentRequest",
+        "description": "A letter of the application, or the CV: adapted to its offer when there is a\ndraft for it, else the CV page as it stands."
       },
       "BudgetUse": {
         "properties": {
@@ -3948,6 +4639,13 @@
           "personal_url"
         ]
       },
+      "DocumentKind": {
+        "type": "string",
+        "enum": [
+          "cv",
+          "letter"
+        ]
+      },
       "DraftChoices": {
         "properties": {
           "kept_ids": {
@@ -4343,6 +5041,80 @@
           "max_pages"
         ],
         "title": "DraftView"
+      },
+      "EmailProposal": {
+        "properties": {
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "to": {
+            "items": {
+              "type": "string",
+              "maxLength": 254
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "To"
+          },
+          "cc": {
+            "items": {
+              "type": "string",
+              "maxLength": 254
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Cc",
+            "default": []
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Subject"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Body"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/AttachmentRequest"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Attachments",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "to",
+          "subject",
+          "body"
+        ],
+        "title": "EmailProposal"
       },
       "EvalRun": {
         "properties": {
@@ -6609,6 +7381,77 @@
           "options"
         ],
         "title": "SelectionChoice"
+      },
+      "SendEmailPayload": {
+        "properties": {
+          "from_name": {
+            "type": "string",
+            "title": "From Name"
+          },
+          "from_addr": {
+            "type": "string",
+            "title": "From Addr"
+          },
+          "to": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "To"
+          },
+          "cc": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cc",
+            "default": []
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "body_text": {
+            "type": "string",
+            "title": "Body Text"
+          },
+          "in_reply_to": {
+            "type": "string",
+            "title": "In Reply To",
+            "default": ""
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References",
+            "default": []
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            },
+            "type": "array",
+            "title": "Attachments",
+            "default": []
+          },
+          "message_id": {
+            "type": "string",
+            "title": "Message Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_name",
+          "from_addr",
+          "to",
+          "subject",
+          "body_text",
+          "message_id"
+        ],
+        "title": "SendEmailPayload",
+        "description": "Everything that leaves, frozen at proposal. The sender's name is the identity's,\nput in by code: this payload never reaches the model. `message_id` is generated\nonce, so a retry sends the same Message-ID."
       },
       "SlotView": {
         "properties": {

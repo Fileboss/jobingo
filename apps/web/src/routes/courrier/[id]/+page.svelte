@@ -3,6 +3,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { api } from '#lib/api/client.ts';
+	import { bareAddress, replySubject } from '#lib/actions/format.ts';
+	import Composer from '#lib/actions/Composer.svelte';
 	import { formatDate, type ApplicationSummary } from '#lib/applications/format.ts';
 	import {
 		categoryLabels,
@@ -24,6 +26,19 @@
 	let chosen = $state<number | null>(null);
 	let busy = $state(false);
 	let failure = $state<string | null>(null);
+	let replying = $state(false);
+	let letters = $state.raw<{ id: number; created_at: string }[]>([]);
+
+	async function startReply() {
+		letters = [];
+		if (message?.application_id) {
+			const { data } = await api.GET('/api/applications/{application_id}/letters', {
+				params: { path: { application_id: message.application_id } }
+			});
+			letters = data ?? [];
+		}
+		replying = true;
+	}
 
 	async function load() {
 		try {
@@ -242,10 +257,29 @@
 							: 'Restaurer'}
 					</Button>
 				{:else}
+					{#if !replying}
+						<Button onclick={startReply}>Répondre</Button>
+					{/if}
 					<Button variant="quiet" onclick={() => setHidden(true)} disabled={busy}>Masquer</Button>
 					<Button variant="quiet" onclick={block} disabled={busy}>Bloquer l’expéditeur</Button>
 				{/if}
 			</div>
+		{/if}
+
+		{#if replying}
+			<section aria-labelledby="reply-title" class="mt-6">
+				<h2 id="reply-title" class="mb-2 text-2xl font-extrabold text-ink">Réponse</h2>
+				{#key message.application_id}
+					<Composer
+						applicationId={message.application_id}
+						messageId={message.id}
+						to={bareAddress(message.from_addr)}
+						subject={replySubject(message.subject)}
+						{letters}
+						oncancel={() => (replying = false)}
+					/>
+				{/key}
+			</section>
 		{/if}
 
 		{#if message.kind === 'alert' || message.offer_ids.length}
