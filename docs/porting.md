@@ -27,7 +27,7 @@ Small vertical steps. To adjust as we go:
    2. ~~Cover letters: a letter template, `draft_letter`, code checks per slot, a review screen, the PDF, its eval suite~~ (done).
 7. Mail, drafted replies and approval queue. In four steps:
    1. ~~Reading mail: IMAP connector, stored messages, LinkedIn alerts read in code, the Courrier screen~~ (done).
-   2. `classify_message` and its eval suite, linking a message to an application, suggestions confirmed by a click.
+   2. ~~`classify_message` and its eval suite, linking a message to an application, suggestions confirmed by a click~~ (done).
    3. The approval queue and its one executor, the SMTP connector, dry run by default.
    4. `draft_reply` and its injection eval suite.
 8. Demo: fictional seed, screenshots, README.
@@ -65,12 +65,21 @@ What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
 
+What step 7.2 changed or left:
+
+- `classify_message` ships as the POC's v2, the version in service (its v3, with examples, scored lower). Its 50 fictional cases are ported, every domain rewritten to `.example`, and the POC's 0.90 threshold is kept as a policy. Measured on 2026-11-09: 49/50 messages, 11/11 interview dates, 0.0036 $ for the run. The one miss, `int-10` (a client wanting a call, with no time set), went to `recruiter_other`: the user can still tie it and add the interview by hand.
+- Rules come before the model: a message with `List-Unsubscribe` (a newsletter) or from a blocked sender is hidden without a call, so less mail reaches the model. The cost: another sender's alert in the inbox is hidden as a newsletter; a dedicated alert folder avoids it, and restoring a hidden message sends it to the model at the next sync.
+- The category is the model's verdict alone: a message a rule hid has none. `other` is hidden; `offer` goes through `extract_offer`, its offers pointing to the message; the three others are matched to an application.
+- Matching, in code and in this order: the thread of a message already tied to an application, the application's contact address (there is no `companies` table, so no website domain), then a company name above 90 % similarity. An offer is never matched: it is a new job, not news of an application.
+- Being tied records `message_received`, the one event added without a click. A refusal or an interview is a suggestion, stored on the message, that becomes an event only when the user confirms it; dismissing it is logged with the call id. Events carry their `message_id` and move with the message; untying removes them, and an accepted suggestion goes back to pending.
+- The POC's `handled` and `read_at` flags are not ported: « À traiter » is computed on the client from the suggestion, the category and the link.
+
 What step 7.1 changed or left:
 
 - The IMAP connector uses the standard library's `imaplib`, not `imap-tools`: EXAMINE and BODY.PEEK make it read-only, and plain IMAP is refused beyond loopback, so a password never crosses the network in clear. Tests read a real GreenMail mailbox per test, not a fake source.
 - The cursor is kept per mailbox and folder (`mail_folders`), so switching from the local server to Gmail starts fresh. The first sync reads the last 30 days only, then at most 200 messages per folder and per sync.
 - Alerts: a LinkedIn sender whose HTML holds job cards is read in code, in any folder; any other message in a dedicated alert folder waits for `extract_offer`. With the alert folder equal to the inbox, other senders' alerts are only found once classification lands (7.2).
-- The POC's thread and in-memory sync status are not ported: the request waits for the sync. Classification, blocked senders, the newsletter rule and matching to applications come with 7.2.
+- The POC's thread and in-memory sync status are not ported: the request waits for the sync. Classification, blocked senders, the newsletter rule and matching to applications came with 7.2.
 - The HTML part is stored for the alert reader and never sent to the client: the screen shows the text only.
 
 What step 6.2 changed or left:

@@ -269,3 +269,33 @@ def test_the_letter_suite_fails_a_case_with_a_refused_slot(
 
     assert summary["detail"]["cases"] == f"{len(cases) - 1}/{len(cases)}"
     assert summary["detail"]["refused_slots"] == 1
+
+
+def test_the_classification_suite_counts_categories_and_dates(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from jobingo.llm.tasks.classify_message import ClassifyMessageOutput
+
+    cases = load_cases("classify_message")
+    fake = FakeLLMClient(usage=Usage(input_tokens=600, output_tokens=80, attempts=1))
+    for case in cases:
+        # Every interview answered with a date the code cannot read.
+        fake.queue(
+            "classify_message",
+            ClassifyMessageOutput(category=case["expected"]["category"], interview_date="mardi"),
+        )
+
+    summary = run_suite(
+        SUITES["classify_message"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    stored = json.loads(next((tmp_path / "results").iterdir()).read_text(encoding="utf-8"))
+    rows = {row["id"]: row for row in stored["rows"]}
+    assert rows["offer-01"]["passed"]
+    assert rows["int-02"]["passed"]  # no date expected, none read
+    assert not rows["int-01"]["passed"]  # a date expected, none read
+    assert summary["score"] == 1.0  # the score counts categories; dates are in the detail
+    assert stored["summary"]["detail"]["interview_dates"] == "5/11"

@@ -12,6 +12,7 @@
 		type EventType
 	} from '#lib/applications/format.ts';
 	import StatusPill from '#lib/applications/StatusPill.svelte';
+	import { categoryLabels, senderName } from '#lib/mail/format.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
@@ -266,6 +267,12 @@
 									</button>
 								</div>
 								{#if entry.note}<p class="mt-0.5">{entry.note}</p>{/if}
+								{#if entry.message_id}
+									<a
+										href={resolve('/courrier/[id]', { id: String(entry.message_id) })}
+										class="text-sm font-bold text-ink">Voir le message</a
+									>
+								{/if}
 							</li>
 						{/each}
 					</ol>
@@ -303,6 +310,33 @@
 						Appuyée sur le CV adapté à l’offre s’il existe, sinon sur tout votre CV, et sur vos
 						notes ci-dessous.
 					</p>
+				</BristolCard>
+
+				<BristolCard title="Courrier" colour="yellow">
+					{#if application.messages.length}
+						<ul class="grid gap-2">
+							{#each application.messages as message (message.id)}
+								<li>
+									<a
+										href={resolve('/courrier/[id]', { id: String(message.id) })}
+										class="block font-bold break-words text-ink"
+										>{message.subject || '(sans objet)'}</a
+									>
+									<span class="text-sm"
+										>{senderName(message.from_addr)} · {formatDateTime(
+											message.received_at
+										)}{#if message.category}
+											· {categoryLabels[message.category]}{/if}</span
+									>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<p class="text-sm">
+							Aucun message rattaché. Le Courrier les rattache par le fil, l’adresse du contact ou
+							le nom de l’entreprise.
+						</p>
+					{/if}
 				</BristolCard>
 
 				<BristolCard title="Notes sur l’entreprise" colour="lilac">

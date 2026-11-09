@@ -1,0 +1,448 @@
+{
+  "summary": {
+    "suite": "classify_message",
+    "metric": "messages classés dans la catégorie attendue",
+    "prompt_version": 2,
+    "setup": "claude-haiku-5-5.off-medium",
+    "model": "claude-haiku-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 0.98,
+    "threshold": 0.9,
+    "passed": true,
+    "detail": {
+      "correct": "49/50",
+      "interview_dates": "11/11",
+      "confusions": {
+        "interview -> recruiter_other": 1
+      }
+    },
+    "cases": 50,
+    "spend": {
+      "live_calls": 50,
+      "cached_calls": 0,
+      "input_tokens": 6311,
+      "output_tokens": 4375,
+      "cache_read_tokens": 65562,
+      "cache_write_tokens": 1338,
+      "cost_usd": "0.003641",
+      "latency_p50_ms": 1421,
+      "latency_p95_ms": 2051
+    },
+    "stopped": null,
+    "run_at": "2026-11-09T18:24:15+00:00"
+  },
+  "rows": [
+    {
+      "id": "offer-01",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Une recruteuse de TalentFinder propose un poste d'ingénieur data en CDI à Lyon chez un éditeur SaaS (Python, Airflow, PostgreSQL), salaire 58-65 k€ avec télétravail deux jours par semaine."
+    },
+    {
+      "id": "offer-02",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Alerte d'emploi proposant un poste de développeur backend Python H/F en CDI à Villeurbanne chez Kiosque Numérique, avec un salaire de 50 à 60 k€."
+    },
+    {
+      "id": "offer-03",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Marc Olivier de Hexaflow propose un poste de Staff Engineer sur le moteur d'ingestion (Go et Python), full remote en France à 75 k€, et demande si la personne est intéressée."
+    },
+    {
+      "id": "offer-04",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Maison Verte annonce un poste d'ingénieur logiciel backend (CDI, Lyon, démarrage janvier) suite à une candidature spontanée."
+    },
+    {
+      "id": "offer-05",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Un cabinet de recrutement propose une mission freelance de six mois de data engineer chez un assureur à Lyon, démarrage en novembre, TJM de 550 €."
+    },
+    {
+      "id": "offer-06",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Alerte e-mail listant trois nouveaux postes d'ingénieur backend (Stratus, Agrimetrics, Voltéo)."
+    },
+    {
+      "id": "offer-07",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Thomas Girard de Lumen Analytics propose un CDI de premier ingénieur plateforme data à Lyon ou en remote, pour 60-70 k€ plus BSPCE."
+    },
+    {
+      "id": "offer-08",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "La Banque Rhône propose le poste de Développeur Java/Python (réf. 2026-114) en CDI à Lyon Part-Dieu, à pourvoir avant le 15 octobre."
+    },
+    {
+      "id": "offer-09",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Octant Conseil recherche un développeur Python confirmé en CDI, 48 k€, en régie chez un grand compte industriel."
+    },
+    {
+      "id": "offer-10",
+      "expected": "offer",
+      "passed": true,
+      "got": "offer",
+      "interview_date": null,
+      "summary": "Récapitulatif de recrutement proposant un poste de Data Engineer en CDI à Lyon chez Plume Énergie (55-62 k€)."
+    },
+    {
+      "id": "rej-01",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Stratus informe la personne qu'elle ne donne pas suite à sa candidature au poste d'ingénieur backend senior."
+    },
+    {
+      "id": "rej-02",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Claire Dumas informe que l'équipe a retenu un autre profil, plus orienté front-end, après l'entretien de mardi."
+    },
+    {
+      "id": "rej-03",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Voltéo informe que le poste d'ingénieur plateforme auquel la personne avait postulé a été pourvu et que sa candidature n'est pas retenue."
+    },
+    {
+      "id": "rej-04",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "L'entreprise Agrimetrics refuse la candidature au poste de Développeur Python, le profil ne correspondant pas aux besoins actuels de l'équipe."
+    },
+    {
+      "id": "rej-05",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Le recruteur Paul Bernard informe que la candidature n'est pas retenue après le test technique, le poste exigeant plus d'expérience en Go."
+    },
+    {
+      "id": "rej-06",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Le poste d'ingénieur plateforme est gelé jusqu'à l'année prochaine faute de budget, et la candidature est clôturée."
+    },
+    {
+      "id": "rej-07",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "La banque Rhône vous informe que votre candidature (réf. 2026-114) n'a pas été retenue."
+    },
+    {
+      "id": "rej-08",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Emma Roux informe la candidature qu'un autre candidat a été retenu après l'entretien et l'encourage à postuler de nouveau à l'avenir."
+    },
+    {
+      "id": "rej-09",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Nordvik a décidé de ne pas donner suite à la candidature au poste de Backend Engineer, au profit d'autres candidats dont l'expérience correspond mieux."
+    },
+    {
+      "id": "rej-10",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Luc Martin informe le candidat que le poste d'ingénieur logiciel a été attribué à une promotion interne, tout en saluant la qualité de sa candidature."
+    },
+    {
+      "id": "rej-11",
+      "expected": "rejection",
+      "passed": true,
+      "got": "rejection",
+      "interview_date": null,
+      "summary": "Stratus refuse la candidature car le poste exige une présence cinq jours par semaine sur site à Paris, incompatible avec les attentes du candidat."
+    },
+    {
+      "id": "int-01",
+      "expected": "interview",
+      "expected_date": "2026-10-06",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-06",
+      "summary": "Claire Dumas propose un entretien en visio pour le poste de développeur backend le mardi 6 octobre 2026 à 14 h."
+    },
+    {
+      "id": "int-02",
+      "expected": "interview",
+      "expected_date": null,
+      "passed": true,
+      "got": "interview",
+      "interview_date": null,
+      "summary": "Paul Bernard d'Hexaflow propose un entretien technique de 90 minutes avec deux ingénieurs et demande les disponibilités pour la semaine prochaine."
+    },
+    {
+      "id": "int-03",
+      "expected": "interview",
+      "expected_date": "2026-10-08",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-08",
+      "summary": "Un entretien RH avec Plume Énergie est confirmé pour le jeudi 8 octobre 2026 à 10h00, en visioconférence Google Meet."
+    },
+    {
+      "id": "int-04",
+      "expected": "interview",
+      "expected_date": "2026-10-09",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-09",
+      "summary": "Julie Perrin propose une rencontre avec son client dans ses locaux de la Part-Dieu le vendredi 9 octobre 2026 à 9 h 30 et demande si ce créneau convient."
+    },
+    {
+      "id": "int-05",
+      "expected": "interview",
+      "expected_date": null,
+      "passed": true,
+      "got": "interview",
+      "interview_date": null,
+      "summary": "Lumen Analytics propose un premier appel de découverte de 30 minutes suite à la candidature et invite à réserver un créneau."
+    },
+    {
+      "id": "int-06",
+      "expected": "interview",
+      "expected_date": "2026-10-05",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-05",
+      "summary": "Invitation à un dernier entretien avec la CTO le lundi 5 octobre 2026 à 17 h dans les locaux de Plume Énergie, avec demande de confirmation de présence."
+    },
+    {
+      "id": "int-07",
+      "expected": "interview",
+      "expected_date": null,
+      "passed": true,
+      "got": "interview",
+      "interview_date": null,
+      "summary": "Stratus propose une étape de test technique suivie d'un entretien de restitution avec l'équipe, et demande les disponibilités du candidat."
+    },
+    {
+      "id": "int-08",
+      "expected": "interview",
+      "expected_date": null,
+      "passed": true,
+      "got": "interview",
+      "interview_date": null,
+      "summary": "Luc Martin confirme un rendez-vous fixé mercredi prochain à 11 h pour le poste d'ingénieur logiciel."
+    },
+    {
+      "id": "int-09",
+      "expected": "interview",
+      "expected_date": "2026-10-13",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-13",
+      "summary": "Marc Olivier de Hexaflow invite à un entretien d'équipe en visioconférence le mardi 13 octobre 2026 de 15 h à 16 h."
+    },
+    {
+      "id": "int-10",
+      "expected": "interview",
+      "expected_date": null,
+      "passed": false,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Une recruteuse indique que le client a validé le profil et souhaite un échange rapide, probablement en fin de semaine, avec un horaire à confirmer."
+    },
+    {
+      "id": "int-11",
+      "expected": "interview",
+      "expected_date": "2026-10-07",
+      "passed": true,
+      "got": "interview",
+      "interview_date": "2026-10-07",
+      "summary": "L'entretien avec Voltéo, initialement prévu le 1er octobre, est reporté au mercredi 7 octobre 2026 à 16 h."
+    },
+    {
+      "id": "rec-01",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "La recruteuse Julie Perrin demande les prétentions salariales et le préavis actuel avant de proposer des postes."
+    },
+    {
+      "id": "rec-02",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Le recruteur demande une copie du diplôme et deux références professionnelles pour finaliser le dossier de candidature."
+    },
+    {
+      "id": "rec-03",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Une consultante d'Octant Conseil prend contact sans poste précis et propose un café la semaine prochaine pour mieux connaître le projet."
+    },
+    {
+      "id": "rec-04",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Paul Bernard demande confirmation de disponibilité pour des astreintes une semaine sur six avant de fixer l'entretien."
+    },
+    {
+      "id": "rec-05",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Accusé de réception d'une candidature au poste d'ingénieur plateforme, avec un retour de l'équipe prévu sous deux semaines."
+    },
+    {
+      "id": "rec-06",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Proposition salariale de 62 k€ brut annuel avec deux jours de télétravail et un démarrage au 1er décembre, suite aux entretiens pour une candidature déjà en cours."
+    },
+    {
+      "id": "rec-07",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Claire Dumas remercie pour l'entretien de la veille et indique qu'elle reviendra vers le candidat d'ici vendredi après avoir rencontré encore deux candidats."
+    },
+    {
+      "id": "rec-08",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Le service RH demande de compléter un questionnaire de pré-qualification en ligne (environ 15 minutes) pour poursuivre l'étude de la candidature."
+    },
+    {
+      "id": "rec-09",
+      "expected": "recruiter_other",
+      "passed": true,
+      "got": "recruiter_other",
+      "interview_date": null,
+      "summary": "Une recruteuse demande une version à jour du CV au format Word pour son client."
+    },
+    {
+      "id": "oth-01",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Newsletter hebdomadaire sur les langages de programmation les plus demandés, sans poste précis ni candidature en cours."
+    },
+    {
+      "id": "oth-02",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Un message personnel de la mère invitant à déjeuner dimanche, avec la présence du frère."
+    },
+    {
+      "id": "oth-03",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Notification de sécurité indiquant qu'une nouvelle clé SSH a été ajoutée au compte."
+    },
+    {
+      "id": "oth-04",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Notification de la disponibilité de la facture mobile de septembre, d'un montant de 19,99 €, dans l'espace client."
+    },
+    {
+      "id": "oth-05",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Annonce d'un meetup Python Lyon le 14 octobre à 19 h chez Stratus, sur le typage et la performance."
+    },
+    {
+      "id": "oth-06",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Notification LinkedIn indiquant que le profil a été consulté par des personnes d'autres entreprises, avec une incitation à passer à Premium."
+    },
+    {
+      "id": "oth-07",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Invitation de l'école à la soirée annuelle des anciens le 20 novembre, avec demande de confirmation avant le 1er novembre."
+    },
+    {
+      "id": "oth-08",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Rappel automatique de France Travail demandant d'actualiser sa situation avant le 15 du mois."
+    },
+    {
+      "id": "oth-09",
+      "expected": "other",
+      "passed": true,
+      "got": "other",
+      "interview_date": null,
+      "summary": "Un ancien collègue propose de prendre une bière lors de son passage à Lyon le mois prochain et mentionne avoir quitté Batiflux, sans lien avec une candidature."
+    }
+  ]
+}

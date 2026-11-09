@@ -1,6 +1,7 @@
 """Applications: created from an offer or by hand, followed through their events."""
 
 import logging
+from datetime import date
 from typing import Any
 
 from psycopg import errors
@@ -11,6 +12,8 @@ from jobingo.domain.applications import (
     ApplicationSummary,
     ApplicationView,
     Contact,
+    EventType,
+    LinkedMessage,
     NewApplication,
     NewEvent,
     derive_status,
@@ -31,7 +34,7 @@ _COLUMNS = """
 def _events(conn: Conn, user_id: int, application_id: int) -> list[ApplicationEvent]:
     rows = conn.execute(
         """
-        SELECT id, type, occurred_at, note, created_at FROM application_events
+        SELECT id, type, occurred_at, note, created_at, message_id FROM application_events
         WHERE user_id = %s AND application_id = %s ORDER BY occurred_at DESC, id DESC
         """,
         (user_id, application_id),
@@ -78,9 +81,22 @@ def get_application(conn: Conn, user_id: int, application_id: int) -> Applicatio
     contact = Contact(
         name=row["contact_name"], email=row["contact_email"], phone=row["contact_phone"]
     )
+    messages = [
+        LinkedMessage.model_validate(message)
+        for message in conn.execute(
+            "SELECT id, from_addr, subject, received_at, category FROM messages"
+            " WHERE user_id = %s AND application_id = %s ORDER BY received_at DESC, id DESC",
+            (user_id, application_id),
+        )
+    ]
     return ApplicationView.model_validate(
         _summary(row, events)
-        | {"contact": contact, "events": events, "company_notes": row["company_notes"]}
+        | {
+            "contact": contact,
+            "events": events,
+            "messages": messages,
+            "company_notes": row["company_notes"],
+        }
     )
 
 
@@ -136,7 +152,7 @@ def apply_to_offer(conn: Conn, user_id: int, offer_id: int) -> ApplicationView |
     return get_application(conn, user_id, existing)
 
 
-def _refresh_status(conn: Conn, user_id: int, application_id: int) -> None:
+def refresh_status(conn: Conn, user_id: int, application_id: int) -> None:
     status = derive_status(_events(conn, user_id, application_id))
     conn.execute(
         "UPDATE applications SET status = %s, updated_at = now() WHERE user_id = %s AND id = %s",
@@ -155,7 +171,7 @@ def add_event(
             " VALUES (%s, %s, %s, %s, %s)",
             (user_id, application_id, new.type, new.occurred_at, new.note.strip()),
         )
-        _refresh_status(conn, user_id, application_id)
+        refresh_status(conn, user_id, application_id)
     event(
         log,
         "application.event_added",
@@ -164,6 +180,26 @@ def add_event(
         type=new.type,
     )
     return get_application(conn, user_id, application_id)
+
+
+def add_message_event(
+    conn: Conn,
+    user_id: int,
+    application_id: int,
+    type: EventType,
+    occurred_at: date,
+    note: str,
+    message_id: int,
+) -> None:
+    """An event a message brought: received, or a suggestion the user accepted."""
+    with conn.transaction():
+        conn.execute(
+            "INSERT INTO application_events"
+            " (user_id, application_id, type, occurred_at, note, message_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s)",
+            (user_id, application_id, type, occurred_at, note.strip()[:2000], message_id),
+        )
+        refresh_status(conn, user_id, application_id)
 
 
 def remove_event(
@@ -176,7 +212,7 @@ def remove_event(
         ).rowcount
         if not deleted:
             return None
-        _refresh_status(conn, user_id, application_id)
+        refresh_status(conn, user_id, application_id)
     return get_application(conn, user_id, application_id)
 
 

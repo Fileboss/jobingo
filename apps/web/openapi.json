@@ -2460,7 +2460,7 @@
           "mail"
         ],
         "summary": "List Messages",
-        "description": "Newest first.",
+        "description": "Newest first: the messages shown, or with `hidden` those a rule, the model or the\nuser put aside.",
         "operationId": "list_messages",
         "parameters": [
           {
@@ -2477,6 +2477,16 @@
                 }
               ],
               "title": "Kind"
+            }
+          },
+          {
+            "name": "hidden",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Hidden"
             }
           }
         ],
@@ -2515,6 +2525,275 @@
         ],
         "summary": "Get Message",
         "operationId": "get_message",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}/application": {
+      "put": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Link Application",
+        "description": "Tie the message to an application by hand. Its events move with it.",
+        "operationId": "link_application",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message or application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}/suggestion/accept": {
+      "post": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Accept Suggestion",
+        "description": "Record the refusal or the interview the message announces, on its application.",
+        "operationId": "accept_suggestion",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "409": {
+            "description": "Nothing to decide, or no application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}/suggestion/dismiss": {
+      "post": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Dismiss Suggestion",
+        "operationId": "dismiss_suggestion",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "409": {
+            "description": "Nothing to decide, or no application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}/hidden": {
+      "put": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Set Hidden",
+        "description": "Hide or restore. A restored message a rule hid goes to the model at the next sync;\nrestoring a blocked sender's message unblocks the sender.",
+        "operationId": "set_hidden",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HiddenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mail/messages/{message_id}/block-sender": {
+      "post": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Block Sender",
+        "description": "Hide every message from this sender, now and at each sync, without the model.",
+        "operationId": "block_sender",
         "parameters": [
           {
             "name": "message_id",
@@ -2624,6 +2903,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
           }
         },
         "type": "object",
@@ -2780,6 +3070,13 @@
             },
             "type": "array",
             "title": "Events"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedMessage"
+            },
+            "type": "array",
+            "title": "Messages"
           }
         },
         "type": "object",
@@ -2795,7 +3092,8 @@
           "created_at",
           "contact",
           "company_notes",
-          "events"
+          "events",
+          "messages"
         ],
         "title": "ApplicationView"
       },
@@ -3115,6 +3413,16 @@
           "latency_ms"
         ],
         "title": "CallSummary"
+      },
+      "Category": {
+        "type": "string",
+        "enum": [
+          "offer",
+          "rejection",
+          "interview",
+          "recruiter_other",
+          "other"
+        ]
       },
       "CompanyNotes": {
         "properties": {
@@ -4578,6 +4886,28 @@
         ],
         "title": "Health"
       },
+      "HiddenReason": {
+        "type": "string",
+        "enum": [
+          "newsletter",
+          "blocked_sender",
+          "other",
+          "user"
+        ]
+      },
+      "HiddenRequest": {
+        "properties": {
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hidden"
+        ],
+        "title": "HiddenRequest"
+      },
       "Identity": {
         "properties": {
           "name": {
@@ -4890,6 +5220,73 @@
         ],
         "title": "LetterView"
       },
+      "LinkRequest": {
+        "properties": {
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id"
+        ],
+        "title": "LinkRequest"
+      },
+      "LinkedBy": {
+        "type": "string",
+        "enum": [
+          "match",
+          "user"
+        ]
+      },
+      "LinkedMessage": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "from_addr": {
+            "type": "string",
+            "title": "From Addr"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "from_addr",
+          "subject",
+          "received_at",
+          "category"
+        ],
+        "title": "LinkedMessage"
+      },
       "MailboxStatus": {
         "properties": {
           "address": {
@@ -4918,6 +5315,10 @@
           "waiting": {
             "type": "integer",
             "title": "Waiting"
+          },
+          "suggestions": {
+            "type": "integer",
+            "title": "Suggestions"
           }
         },
         "type": "object",
@@ -4927,7 +5328,8 @@
           "local",
           "dry_run",
           "folders",
-          "waiting"
+          "waiting",
+          "suggestions"
         ],
         "title": "MailboxStatus"
       },
@@ -4972,6 +5374,62 @@
             "type": "string",
             "title": "Excerpt"
           },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "hidden_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HiddenReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Title"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Suggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "to_addrs": {
             "type": "string",
             "title": "To Addrs"
@@ -4998,6 +5456,31 @@
               }
             ],
             "title": "Processed At"
+          },
+          "company_hint": {
+            "type": "string",
+            "title": "Company Hint"
+          },
+          "linked_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedBy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
           }
         },
         "type": "object",
@@ -5010,10 +5493,19 @@
           "kind",
           "offer_count",
           "excerpt",
+          "category",
+          "summary",
+          "hidden_reason",
+          "application_id",
+          "application_title",
+          "suggestion",
           "to_addrs",
           "body_text",
           "offer_ids",
-          "processed_at"
+          "processed_at",
+          "company_hint",
+          "linked_by",
+          "llm_call_id"
         ],
         "title": "Message"
       },
@@ -5064,6 +5556,62 @@
           "excerpt": {
             "type": "string",
             "title": "Excerpt"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "hidden_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HiddenReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Title"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Suggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -5075,7 +5623,13 @@
           "received_at",
           "kind",
           "offer_count",
-          "excerpt"
+          "excerpt",
+          "category",
+          "summary",
+          "hidden_reason",
+          "application_id",
+          "application_title",
+          "suggestion"
         ],
         "title": "MessageSummary"
       },
@@ -6126,6 +6680,50 @@
           "cloture"
         ]
       },
+      "Suggestion": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/SuggestionType"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SuggestionStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "date",
+          "status"
+        ],
+        "title": "Suggestion"
+      },
+      "SuggestionStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "accepted",
+          "dismissed"
+        ]
+      },
+      "SuggestionType": {
+        "type": "string",
+        "enum": [
+          "rejected",
+          "interview_scheduled"
+        ]
+      },
       "SyncReport": {
         "properties": {
           "fetched": {
@@ -6141,6 +6739,21 @@
           "alerts": {
             "type": "integer",
             "title": "Alerts",
+            "default": 0
+          },
+          "classified": {
+            "type": "integer",
+            "title": "Classified",
+            "default": 0
+          },
+          "hidden": {
+            "type": "integer",
+            "title": "Hidden",
+            "default": 0
+          },
+          "linked": {
+            "type": "integer",
+            "title": "Linked",
             "default": 0
           },
           "offer_ids": {

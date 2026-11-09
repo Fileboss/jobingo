@@ -9,15 +9,18 @@ would see.
 
 import json
 import uuid
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from evals.harness import NO_BUDGET, Workspace
+from jobingo.domain.mail import parse_iso_date
 from jobingo.domain.text import fold
 from jobingo.llm.client import LLMCallError, LLMClient, Tier
 from jobingo.llm.journal import run_task
+from jobingo.llm.tasks.classify_message import CLASSIFY_MESSAGE_TASK, ClassifyMessageInput
 from jobingo.llm.tasks.draft_letter import DRAFT_LETTER_TASK
 from jobingo.llm.tasks.extract_offer import EXTRACT_OFFER_TASK, ExtractOfferInput
 from jobingo.llm.tasks.score_offer import SCORE_OFFER_TASK
@@ -327,7 +330,80 @@ def grade_letter(rows: list[Row]) -> dict[str, Any]:
     }
 
 
+# --- classify_message -------------------------------------------------------------------
+
+# Inherited from the POC as a policy, not as a score.
+CLASSIFY_THRESHOLD = 0.90
+
+
+def run_classify(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> list[Row]:
+    """The model alone: what the sync does next (rules, matching) is code, tested apart."""
+    rows: list[Row] = []
+    for case in cases:
+        expected = case["expected"]
+        row: Row = {"id": case["id"], "expected": expected["category"]}
+        if "interview_date" in expected:
+            row["expected_date"] = expected["interview_date"]
+        try:
+            output, _ = run_task(
+                ws.conn,
+                client,
+                NO_BUDGET,
+                ws.user_id,
+                CLASSIFY_MESSAGE_TASK,
+                ClassifyMessageInput(
+                    from_addr=case["from_addr"],
+                    subject=case["subject"],
+                    body_text=case["body_text"],
+                ),
+                redaction_values=[],
+            )
+        except LLMCallError as exc:
+            rows.append(row | {"passed": False, "got": None, "error": str(exc)})
+            continue
+        # The date as the app keeps it: parsed by code, anything else dropped.
+        on = parse_iso_date(output.interview_date)
+        got_date = on.isoformat() if on else None
+        rows.append(
+            row
+            | {
+                "passed": output.category == expected["category"]
+                and ("expected_date" not in row or got_date == row["expected_date"]),
+                "got": output.category,
+                "interview_date": got_date,
+                "summary": output.summary,
+            }
+        )
+    return rows
+
+
+def grade_classify(rows: list[Row]) -> dict[str, Any]:
+    correct = sum(row["got"] == row["expected"] for row in rows)
+    dated = [row for row in rows if "expected_date" in row]
+    dates_ok = sum(row.get("interview_date") == row["expected_date"] for row in dated)
+    confusions = Counter(
+        f"{row['expected']} -> {row['got']}" for row in rows if row["got"] != row["expected"]
+    )
+    return {
+        "score": round(correct / len(rows), 3) if rows else None,
+        "detail": {
+            "correct": f"{correct}/{len(rows)}",
+            "interview_dates": f"{dates_ok}/{len(dated)}",
+            "confusions": dict(confusions.most_common()),
+        },
+    }
+
+
 SUITES: dict[str, Suite] = {
+    "classify_message": Suite(
+        name="classify_message",
+        metric="messages classés dans la catégorie attendue",
+        tier="fast",
+        prompt_version=CLASSIFY_MESSAGE_TASK.prompt_version,
+        threshold=CLASSIFY_THRESHOLD,
+        run=run_classify,
+        grade=grade_classify,
+    ),
     "draft_letter": Suite(
         name="draft_letter",
         metric="lettres dont aucun emplacement n'est refusé ni vide",

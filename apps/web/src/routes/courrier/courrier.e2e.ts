@@ -16,13 +16,13 @@ test('a sync reads the mailbox and an alert leads to its offers', async ({ page 
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
 
 	await expect(page.getByRole('status')).toHaveText(
-		'2 nouveaux messages · 2 offres lues, dont 1 notée.'
+		'3 nouveaux messages · 1 classé · 1 masqué · 2 offres lues, dont 1 notée.'
 	);
 	await expect(page.getByText(/Dernière lecture le/)).toBeVisible();
 	expect(api.syncRequests).toBe(1);
 
 	await page.getByRole('button', { name: 'Alertes' }).click();
-	await expect(page.getByRole('link', { name: 'Votre profil nous intéresse' })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Votre candidature chez Voltéo' })).toHaveCount(0);
 	await page.getByRole('link', { name: 'Nouvelles offres pour « python »' }).click();
 
 	await expect(page.getByRole('heading', { name: 'Offres lues' })).toBeVisible();
@@ -40,15 +40,46 @@ test('an unreachable mailbox is said', async ({ page }) => {
 	await expect(page.getByRole('alert')).toContainText('injoignable');
 });
 
-test('a message shows its text, never its HTML', async ({ page }) => {
+test('a refusal is tied to its application, then confirmed by a click', async ({ page }) => {
 	const api = new FakeMailApi();
-	api.messages = [];
 	await api.install(page);
 	await page.goto('/courrier');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
-	await page.getByRole('link', { name: 'Votre profil nous intéresse' }).click();
-	await expect(page.getByTestId('message-body')).toContainText('seriez-vous disponible');
-	await expect(page.getByText('pas encore trié')).toBeVisible();
+
+	await page.getByRole('button', { name: /À traiter/ }).click();
+	await expect(page.getByText('À confirmer')).toBeVisible();
+	await page.getByRole('link', { name: 'Votre candidature chez Voltéo' }).click();
+
+	await expect(page.getByTestId('message-body')).toContainText('ne donnerons pas suite');
+	await expect(page.getByText('Voltéo ne donne pas suite')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Suggestion : Refus' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Confirmer' })).toBeDisabled();
+
+	await page.getByLabel('Rattacher à').selectOption({ label: 'Data engineer · Voltéo' });
+	await page.getByRole('button', { name: 'Enregistrer' }).click();
+	await expect(page.getByRole('link', { name: 'Data engineer' })).toBeVisible();
+	await expect(page.getByText('Rattaché par vous.')).toBeVisible();
+
+	await page.getByRole('button', { name: 'Confirmer' }).click();
+	await expect(page.getByText('Confirmée : ajoutée à la chronologie.')).toBeVisible();
+	expect(api.decisions).toEqual(['PUT application', 'POST suggestion/accept']);
+});
+
+test('a newsletter is hidden without the model, and can be restored', async ({ page }) => {
+	const api = new FakeMailApi();
+	await api.install(page);
+	await page.goto('/courrier');
+	await page.getByRole('button', { name: 'Synchroniser' }).click();
+	await expect(page.getByRole('link', { name: 'Les nouvelles de la semaine' })).toHaveCount(0);
+
+	await page.getByRole('button', { name: /Masqués/ }).click();
+	await page.getByRole('link', { name: 'Les nouvelles de la semaine' }).click();
+
+	await expect(
+		page.getByText('Lettre d’information : masquée sans passer par l’IA.')
+	).toBeVisible();
+	await page.getByRole('button', { name: 'Restaurer' }).click();
+	await expect(page.getByRole('button', { name: 'Bloquer l’expéditeur' })).toBeVisible();
 });
 
 test('an unknown message says so', async ({ page }) => {
@@ -62,7 +93,7 @@ test('/courrier fits a phone, with no horizontal scroll', async ({ page }) => {
 	await new FakeMailApi().install(page);
 	await page.goto('/courrier');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
-	await expect(page.getByRole('link', { name: 'Votre profil nous intéresse' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Votre candidature chez Voltéo' })).toBeVisible();
 	const width = await page.evaluate(() => document.documentElement.scrollWidth);
 	expect(width).toBeLessThanOrEqual(390);
 });

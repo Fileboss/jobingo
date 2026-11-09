@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 
+from jobingo.domain.mail import Category
+
 type EventType = Literal[
     "applied",
     "message_received",
@@ -43,6 +45,8 @@ class ApplicationEvent(BaseModel):
     occurred_at: date
     note: str
     created_at: datetime
+    # The message it came from: received, or a suggestion accepted.
+    message_id: int | None = None
 
 
 class NewEvent(BaseModel):
@@ -123,8 +127,17 @@ class ApplicationSummary(BaseModel):
     created_at: datetime
 
 
+class LinkedMessage(BaseModel):
+    id: int
+    from_addr: str
+    subject: str
+    received_at: datetime
+    category: Category | None
+
+
 class ApplicationView(ApplicationSummary):
     contact: Contact
     # What the user knows about the company: a source for the letter's facts.
     company_notes: str
     events: list[ApplicationEvent]  # newest first
+    messages: list[LinkedMessage]  # newest first

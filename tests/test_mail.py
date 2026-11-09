@@ -363,3 +363,298 @@ def test_the_status_says_which_mailbox_is_read(
 
 def test_an_unknown_message_is_not_found(client: TestClient):
     assert client.get("/api/mail/messages/999999").status_code == 404
+
+
+# --- classifying and matching ----------------------------------------------------
+
+from jobingo.llm.client import LLMValidationError, Usage  # noqa: E402
+from jobingo.llm.tasks.classify_message import ClassifyMessageOutput  # noqa: E402
+
+
+@pytest.fixture
+def fake(client: TestClient) -> FakeLLMClient:
+    model = FakeLLMClient()
+    client.app.state.llm_client = model  # type: ignore[attr-defined]
+    return model
+
+
+def _classified(category: str, company: str = "", on: str | None = None) -> ClassifyMessageOutput:
+    return ClassifyMessageOutput(
+        category=category,  # type: ignore[arg-type]
+        company_name=company,
+        interview_date=on,
+        summary="Une phrase.",
+    )
+
+
+def _from(sender: str, subject: str, body: str = "Bonjour.", **headers: str) -> EmailMessage:
+    message = _mail(From=sender, Subject=subject, **headers)
+    message.set_content(body)
+    return message
+
+
+def _application(client: TestClient, company: str = "Voltéo", contact: str = "") -> int:
+    app_id = client.post(
+        "/api/applications", json={"title": "Data engineer", "company_name": company}
+    ).json()["id"]
+    if contact:
+        client.put(f"/api/applications/{app_id}/contact", json={"email": contact})
+    return app_id
+
+
+def _only(client: TestClient, hidden: bool = False) -> Any:
+    [message] = client.get("/api/mail/messages", params={"hidden": hidden}).json()
+    return client.get(f"/api/mail/messages/{message['id']}").json()
+
+
+def test_a_newsletter_is_hidden_without_the_model(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(
+        _from("Lettre <news@reseau.test>", "Les nouvelles", List_Unsubscribe="<https://x.test>")
+    )
+
+    report = _sync(client)
+
+    assert (report["hidden"], report["classified"], report["waiting"]) == (1, 0, 0)
+    assert fake.prompts == []
+    assert client.get("/api/mail/messages").json() == []
+    hidden = _only(client, hidden=True)
+    assert (hidden["hidden_reason"], hidden["category"]) == ("newsletter", None)
+
+
+def test_a_restored_newsletter_goes_to_the_model_at_the_next_sync(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(
+        _from("Alertes <alertes@emplois.test>", "Offres", List_Unsubscribe="<https://x.test>")
+    )
+    _sync(client)
+    message_id = _only(client, hidden=True)["id"]
+
+    restored = client.put(f"/api/mail/messages/{message_id}/hidden", json={"hidden": False})
+    assert restored.json()["hidden_reason"] is None
+    fake.queue("classify_message", _classified("recruiter_other"))
+    report = _sync(client)
+
+    assert report["classified"] == 1
+    assert _only(client)["category"] == "recruiter_other"
+
+
+def test_a_rejection_is_tied_to_its_application_and_suggests_closing_it(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    app_id = _application(client, "Voltéo SAS")
+    mailbox.deliver(_from("rh@volteo.test", "Votre candidature", "Nous ne donnerons pas suite."))
+    fake.queue("classify_message", _classified("rejection", company="Voltéo"))
+
+    report = _sync(client)
+
+    assert (report["classified"], report["linked"]) == (1, 1)
+    message = _only(client)
+    assert (message["application_id"], message["linked_by"]) == (app_id, "match")
+    assert message["suggestion"]["type"] == "rejected"
+    assert message["suggestion"]["status"] == "pending"
+    assert message["llm_call_id"] is not None
+    application = client.get(f"/api/applications/{app_id}").json()
+    # Tied, the message records itself; the refusal waits for a click.
+    assert application["status"] == "en_echange"
+    assert [m["id"] for m in application["messages"]] == [message["id"]]
+    assert client.get("/api/mail/status").json()["suggestions"] == 1
+
+    accepted = client.post(f"/api/mail/messages/{message['id']}/suggestion/accept")
+
+    assert accepted.json()["suggestion"]["status"] == "accepted"
+    application = client.get(f"/api/applications/{app_id}").json()
+    assert application["status"] == "cloture"
+    assert {e["message_id"] for e in application["events"]} == {message["id"]}
+    again = client.post(f"/api/mail/messages/{message['id']}/suggestion/accept")
+    assert again.status_code == 409
+
+
+def test_an_interview_is_dated_from_the_message(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    app_id = _application(client, contact="camille@volteo.test")
+    mailbox.deliver(_from("Camille Roux <camille@volteo.test>", "Entretien"))
+    fake.queue("classify_message", _classified("interview", on="2026-11-20"))
+
+    _sync(client)
+    message = _only(client)
+    assert message["application_id"] == app_id  # by the contact's address
+    client.post(f"/api/mail/messages/{message['id']}/suggestion/accept")
+
+    events = client.get(f"/api/applications/{app_id}").json()["events"]
+    assert [(e["type"], e["occurred_at"]) for e in events][0] == (
+        "interview_scheduled",
+        "2026-11-20",
+    )
+
+
+def test_a_reply_in_a_thread_follows_the_first_message(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    app_id = _application(client)
+    first = _from("rh@inconnu.test", "Votre candidature", Message_ID="<t1@inconnu.test>")
+    mailbox.deliver(first)
+    fake.queue("classify_message", _classified("recruiter_other"))
+    _sync(client)
+    [message] = client.get("/api/mail/messages").json()
+    client.put(f"/api/mail/messages/{message['id']}/application", json={"application_id": app_id})
+
+    mailbox.deliver(
+        _from(
+            "rh@inconnu.test",
+            "Re: Votre candidature",
+            Message_ID="<t2@inconnu.test>",
+            In_Reply_To="<t1@inconnu.test>",
+            References="<t1@inconnu.test>",
+        )
+    )
+    fake.queue("classify_message", _classified("recruiter_other"))
+    report = _sync(client)
+
+    assert report["linked"] == 1
+    linked = client.get(f"/api/applications/{app_id}").json()["messages"]
+    assert len(linked) == 2
+
+
+def test_an_unmatched_suggestion_needs_an_application_first(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(_from("rh@inconnu.test", "Votre candidature"))
+    fake.queue("classify_message", _classified("rejection", company="Inconnue"))
+    _sync(client)
+    message = _only(client)
+    assert message["application_id"] is None
+
+    refused = client.post(f"/api/mail/messages/{message['id']}/suggestion/accept")
+    assert refused.status_code == 409
+    assert "Rattachez" in refused.json()["message"]
+    dismissed = client.post(f"/api/mail/messages/{message['id']}/suggestion/dismiss")
+    assert dismissed.json()["suggestion"]["status"] == "dismissed"
+
+
+def test_moving_a_message_moves_its_events_and_untying_removes_them(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    first, second = _application(client, "Voltéo"), _application(client, "Plume Énergie")
+    mailbox.deliver(_from("rh@volteo.test", "Votre candidature"))
+    fake.queue("classify_message", _classified("rejection", company="Voltéo"))
+    _sync(client)
+    message_id = _only(client)["id"]
+    client.post(f"/api/mail/messages/{message_id}/suggestion/accept")
+    url = f"/api/mail/messages/{message_id}/application"
+
+    moved = client.put(url, json={"application_id": second}).json()
+
+    assert (moved["application_id"], moved["linked_by"]) == (second, "user")
+    assert client.get(f"/api/applications/{first}").json()["status"] == "a_postuler"
+    assert client.get(f"/api/applications/{second}").json()["status"] == "cloture"
+
+    untied = client.put(url, json={"application_id": None}).json()
+
+    assert untied["suggestion"]["status"] == "pending"  # to decide again, once tied
+    assert client.get(f"/api/applications/{second}").json()["events"] == []
+    assert client.put(url, json={"application_id": 999999}).status_code == 404
+
+
+def test_a_job_described_in_a_message_becomes_an_offer(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(
+        _from("Camille Roux <camille@cabinet.test>", "Poste", "Je recrute un Tech Lead.")
+    )
+    fake.queue("classify_message", _classified("offer"))
+    fake.queue(
+        "extract_offer",
+        ExtractOfferOutput(offers=[ExtractedOffer(title="Tech Lead", company_name="Voltéo")]),
+    )
+    fake.queue(
+        "score_offer",
+        ScoreOfferOutput(mission=7, stack=8, salary=5, culture=6, strengths=[], summary="Bien."),
+    )
+
+    report = _sync(client)
+
+    assert len(report["offer_ids"]) == 1
+    message = _only(client)
+    assert message["offer_ids"] == report["offer_ids"]
+    assert message["application_id"] is None  # a new job, not news of an application
+
+
+def test_what_the_model_files_as_other_is_hidden(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(_from("ami@exemple.test", "Dimanche"))
+    fake.queue("classify_message", _classified("other"))
+
+    _sync(client)
+
+    assert client.get("/api/mail/messages").json() == []
+    assert _only(client, hidden=True)["hidden_reason"] == "other"
+
+
+def test_a_blocked_sender_never_reaches_the_model_again(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(_from("Promo <promo@boutique.test>", "Soldes"))
+    fake.queue("classify_message", _classified("recruiter_other"))
+    _sync(client)
+    message_id = _only(client)["id"]
+
+    blocked = client.post(f"/api/mail/messages/{message_id}/block-sender").json()
+    assert blocked["hidden_reason"] == "blocked_sender"
+    mailbox.deliver(_from("promo@boutique.test", "Encore des soldes"))
+    report = _sync(client)
+
+    assert (report["hidden"], report["classified"]) == (1, 0)
+    assert len(fake.prompts) == 1
+    client.put(f"/api/mail/messages/{message_id}/hidden", json={"hidden": False})
+    mailbox.deliver(_from("promo@boutique.test", "Dernières soldes"))
+    fake.queue("classify_message", _classified("other"))
+    assert _sync(client)["classified"] == 1  # restoring unblocked the sender
+
+
+def test_a_failed_classification_waits_for_the_next_sync(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    mailbox.deliver(_from("rh@volteo.test", "Votre candidature"))
+    fake.queue(
+        "classify_message",
+        LLMValidationError("bad", model=fake.model, usage=Usage(attempts=1), request={}),
+    )
+
+    report = _sync(client)
+
+    assert report["waiting"] == 1
+    assert "classer" in report["error"]
+    assert _only(client)["category"] is None
+    fake.queue("classify_message", _classified("recruiter_other"))
+    assert _sync(client)["classified"] == 1
+    assert client.get("/api/mail/status").json()["waiting"] == 0
+
+
+def test_the_candidate_is_redacted_from_the_message(
+    client: TestClient, mailbox: Mailbox, fake: FakeLLMClient
+):
+    client.put(
+        "/api/identity",
+        json={
+            "name": "Alex Moreau",
+            "email": "alex@example.org",
+            "phone": "",
+            "address": "",
+            "linkedin": "",
+            "github": "",
+        },
+    )
+    mailbox.deliver(_from("rh@volteo.test", "Entretien", "Bonjour Alex Moreau, êtes-vous libre ?"))
+    fake.queue("classify_message", _classified("interview"))
+
+    _sync(client)
+
+    [(task, prompt)] = fake.prompts
+    assert task == "classify_message"
+    assert "Alex" not in prompt.user
+    assert "[CANDIDAT]" in prompt.user

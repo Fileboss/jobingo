@@ -802,7 +802,8 @@ export interface paths {
         };
         /**
          * List Messages
-         * @description Newest first.
+         * @description Newest first: the messages shown, or with `hidden` those a rule, the model or the
+         *     user put aside.
          */
         get: operations["list_messages"];
         put?: never;
@@ -824,6 +825,104 @@ export interface paths {
         get: operations["get_message"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}/application": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Link Application
+         * @description Tie the message to an application by hand. Its events move with it.
+         */
+        put: operations["link_application"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}/suggestion/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Suggestion
+         * @description Record the refusal or the interview the message announces, on its application.
+         */
+        post: operations["accept_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}/suggestion/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss Suggestion */
+        post: operations["dismiss_suggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Hidden
+         * @description Hide or restore. A restored message a rule hid goes to the model at the next sync;
+         *     restoring a blocked sender's message unblocks the sender.
+         */
+        put: operations["set_hidden"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mail/messages/{message_id}/block-sender": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Block Sender
+         * @description Hide every message from this sender, now and at each sync, without the model.
+         */
+        post: operations["block_sender"];
         delete?: never;
         options?: never;
         head?: never;
@@ -870,6 +969,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Message Id */
+            message_id?: number | null;
         };
         /** ApplicationSummary */
         ApplicationSummary: {
@@ -917,6 +1018,8 @@ export interface components {
             company_notes: string;
             /** Events */
             events: components["schemas"]["ApplicationEvent"][];
+            /** Messages */
+            messages: components["schemas"]["LinkedMessage"][];
         };
         /** BudgetUse */
         BudgetUse: {
@@ -1024,6 +1127,8 @@ export interface components {
             /** Latency Ms */
             latency_ms: number;
         };
+        /** @enum {string} */
+        Category: "offer" | "rejection" | "interview" | "recruiter_other" | "other";
         /** CompanyNotes */
         CompanyNotes: {
             /** Notes */
@@ -1587,6 +1692,13 @@ export interface components {
              */
             database: "ok" | "unavailable";
         };
+        /** @enum {string} */
+        HiddenReason: "newsletter" | "blocked_sender" | "other" | "user";
+        /** HiddenRequest */
+        HiddenRequest: {
+            /** Hidden */
+            hidden: boolean;
+        };
         /** Identity */
         Identity: {
             /**
@@ -1740,6 +1852,28 @@ export interface components {
             /** Max Pages */
             max_pages: number;
         };
+        /** LinkRequest */
+        LinkRequest: {
+            /** Application Id */
+            application_id: number | null;
+        };
+        /** @enum {string} */
+        LinkedBy: "match" | "user";
+        /** LinkedMessage */
+        LinkedMessage: {
+            /** Id */
+            id: number;
+            /** From Addr */
+            from_addr: string;
+            /** Subject */
+            subject: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            category: components["schemas"]["Category"] | null;
+        };
         /** MailboxStatus */
         MailboxStatus: {
             /** Address */
@@ -1754,6 +1888,8 @@ export interface components {
             folders: components["schemas"]["FolderState"][];
             /** Waiting */
             waiting: number;
+            /** Suggestions */
+            suggestions: number;
         };
         /** Message */
         Message: {
@@ -1775,6 +1911,15 @@ export interface components {
             offer_count: number;
             /** Excerpt */
             excerpt: string;
+            category: components["schemas"]["Category"] | null;
+            /** Summary */
+            summary: string;
+            hidden_reason: components["schemas"]["HiddenReason"] | null;
+            /** Application Id */
+            application_id: number | null;
+            /** Application Title */
+            application_title: string | null;
+            suggestion: components["schemas"]["Suggestion"] | null;
             /** To Addrs */
             to_addrs: string;
             /** Body Text */
@@ -1783,6 +1928,11 @@ export interface components {
             offer_ids: number[];
             /** Processed At */
             processed_at: string | null;
+            /** Company Hint */
+            company_hint: string;
+            linked_by: components["schemas"]["LinkedBy"] | null;
+            /** Llm Call Id */
+            llm_call_id: number | null;
         };
         /** @enum {string} */
         MessageKind: "alert" | "message";
@@ -1806,6 +1956,15 @@ export interface components {
             offer_count: number;
             /** Excerpt */
             excerpt: string;
+            category: components["schemas"]["Category"] | null;
+            /** Summary */
+            summary: string;
+            hidden_reason: components["schemas"]["HiddenReason"] | null;
+            /** Application Id */
+            application_id: number | null;
+            /** Application Title */
+            application_title: string | null;
+            suggestion: components["schemas"]["Suggestion"] | null;
         };
         /** NewApplication */
         NewApplication: {
@@ -2155,6 +2314,17 @@ export interface components {
         };
         /** @enum {string} */
         Status: "a_postuler" | "postule" | "en_echange" | "entretien" | "offre" | "cloture";
+        /** Suggestion */
+        Suggestion: {
+            type: components["schemas"]["SuggestionType"];
+            /** Date */
+            date: string | null;
+            status: components["schemas"]["SuggestionStatus"];
+        };
+        /** @enum {string} */
+        SuggestionStatus: "pending" | "accepted" | "dismissed";
+        /** @enum {string} */
+        SuggestionType: "rejected" | "interview_scheduled";
         /** SyncReport */
         SyncReport: {
             /**
@@ -2172,6 +2342,21 @@ export interface components {
              * @default 0
              */
             alerts: number;
+            /**
+             * Classified
+             * @default 0
+             */
+            classified: number;
+            /**
+             * Hidden
+             * @default 0
+             */
+            hidden: number;
+            /**
+             * Linked
+             * @default 0
+             */
+            linked: number;
             /**
              * Offer Ids
              * @default []
@@ -4205,6 +4390,7 @@ export interface operations {
         parameters: {
             query?: {
                 kind?: components["schemas"]["MessageKind"] | null;
+                hidden?: boolean;
             };
             header?: never;
             path?: never;
@@ -4233,6 +4419,222 @@ export interface operations {
         };
     };
     get_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message or application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_suggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nothing to decide, or no application */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_suggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nothing to decide, or no application */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_hidden: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HiddenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_sender: {
         parameters: {
             query?: never;
             header?: never;

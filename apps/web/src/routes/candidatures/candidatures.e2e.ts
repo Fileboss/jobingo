@@ -21,7 +21,8 @@ class FakeApplicationsApi {
 		created_at: '2026-11-01T09:00:00Z',
 		contact: { name: '', email: '', phone: '' },
 		company_notes: '',
-		events: []
+		events: [],
+		messages: []
 	};
 	created: Schemas['NewApplication'][] = [];
 
