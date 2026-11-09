@@ -10,6 +10,7 @@ export class FakeActionsApi {
 	actions: ActionView[] = [];
 	proposals: EmailProposal[] = [];
 	approvals: string[] = [];
+	draftIntents: string[] = [];
 	/** What the next approval does: a dry run, or a send the server refuses. */
 	outcome: 'dry_run' | 'failed' = 'dry_run';
 
@@ -46,6 +47,7 @@ export class FakeActionsApi {
 			},
 			payload_hash: `${id}`.padStart(64, 'c'),
 			message_id: proposal.message_id ?? null,
+			llm_call_id: proposal.llm_call_id ?? null,
 			error: null,
 			decided_at: null
 		};
@@ -54,6 +56,19 @@ export class FakeActionsApi {
 	}
 
 	async install(page: Page) {
+		await page.route(/\/api\/mail\/messages\/\d+\/reply-draft$/, (route) => {
+			const { intent } = route.request().postDataJSON() as { intent: string };
+			this.draftIntents.push(intent);
+			return route.fulfill({
+				json: {
+					subject: 'Re : Votre candidature chez Voltéo',
+					body: 'Bonjour,\n\nJe suis disponible [À COMPLÉTER : disponibilités].\n\nCordialement,',
+					notes: 'Indiquez vos disponibilités avant d’envoyer.',
+					warnings: ['à compléter avant l’envoi : « [À COMPLÉTER : disponibilités] »'],
+					llm_call_id: 42
+				}
+			});
+		});
 		await page.route('**/api/actions', (route) => {
 			if (route.request().method() === 'POST') {
 				const proposal = route.request().postDataJSON() as EmailProposal;

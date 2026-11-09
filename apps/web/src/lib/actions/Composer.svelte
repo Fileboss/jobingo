@@ -4,7 +4,13 @@
 	import { api } from '#lib/api/client.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
 	import Button from '#lib/ui/Button.svelte';
-	import { splitAddresses, type EmailProposal } from './format.ts';
+	import {
+		intentLabels,
+		splitAddresses,
+		type EmailProposal,
+		type Intent,
+		type ReplyDraft
+	} from './format.ts';
 
 	type Props = {
 		/** The application it concerns: attachments come from it. */
@@ -35,6 +41,35 @@
 	let busy = $state(false);
 	let failure = $state<string | null>(null);
 
+	// A draft by the model, for a reply only: the user edits it, the queue checks it.
+	let intent = $state<Intent>('accepter_entretien');
+	let instruction = $state('');
+	let drafting = $state(false);
+	let draft = $state.raw<ReplyDraft | null>(null);
+
+	async function askDraft() {
+		if (messageId === null) return;
+		drafting = true;
+		failure = null;
+		try {
+			const { data, error } = await api.POST('/api/mail/messages/{message_id}/reply-draft', {
+				params: { path: { message_id: messageId } },
+				body: { intent, instruction }
+			});
+			if (data) {
+				draft = data;
+				subject = data.subject;
+				body = data.body;
+			} else {
+				failure = error && 'message' in error ? error.message : 'Le brouillon a échoué.';
+			}
+		} catch {
+			failure = 'Le serveur ne répond pas. Réessayez.';
+		} finally {
+			drafting = false;
+		}
+	}
+
 	async function propose(event: SubmitEvent) {
 		event.preventDefault();
 		busy = true;
@@ -49,7 +84,8 @@
 			attachments: [
 				...(withCv ? [{ kind: 'cv' as const }] : []),
 				...letterIds.map((id) => ({ kind: 'letter' as const, letter_id: id }))
-			]
+			],
+			llm_call_id: draft?.llm_call_id ?? null
 		};
 		try {
 			const { data, error } = await api.POST('/api/actions', { body: proposal });
@@ -62,6 +98,50 @@
 		}
 	}
 </script>
+
+{#if messageId !== null}
+	<div
+		class="mb-3 grid gap-3 bg-bristol-lilac px-4 py-4 sm:grid-cols-[14rem_minmax(0,1fr)_auto] sm:items-end sm:px-6"
+	>
+		<label class="grid gap-1">
+			<span class="text-sm font-bold">Intention</span>
+			<select
+				bind:value={intent}
+				class="w-full min-w-0 rounded-sm border-ink/40 bg-paper focus:border-ink focus:ring-ink"
+			>
+				{#each Object.entries(intentLabels) as [value, label] (value)}
+					<option {value}>{label}</option>
+				{/each}
+			</select>
+		</label>
+		<label class="grid gap-1">
+			<span class="text-sm font-bold">Consigne</span>
+			<input
+				bind:value={instruction}
+				maxlength="2000"
+				placeholder="Ce que vous voulez dire : vos disponibilités, une raison…"
+				class="rounded-sm border-ink/40 bg-paper focus:border-ink focus:ring-ink"
+			/>
+		</label>
+		<Button onclick={askDraft} disabled={drafting}>
+			{drafting ? 'Rédaction…' : draft ? 'Rédiger à nouveau' : 'Rédiger avec l’IA'}
+		</Button>
+		<p class="text-sm sm:col-span-3">
+			L’IA lit ce message sans votre nom ni vos coordonnées, et ne fait qu’un brouillon : vous le
+			relisez et le modifiez ci-dessous.
+		</p>
+	</div>
+	{#if draft && (draft.notes || draft.warnings.length)}
+		<div class="mb-3 bg-postit px-4 py-3 sm:px-6" role="status">
+			{#if draft.notes}<p><span class="font-bold">Note de l’IA :</span> {draft.notes}</p>{/if}
+			{#if draft.warnings.length}
+				<ul class="mt-1 list-disc pl-5 text-sm">
+					{#each draft.warnings as warning (warning)}<li>{warning}</li>{/each}
+				</ul>
+			{/if}
+		</div>
+	{/if}
+{/if}
 
 <form class="grid gap-3 bg-paper px-4 py-4 sm:px-6" onsubmit={propose}>
 	<label class="grid gap-1">

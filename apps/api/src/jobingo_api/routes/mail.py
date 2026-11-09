@@ -7,9 +7,10 @@ from pydantic import BaseModel
 from jobingo.config import Settings
 from jobingo.connectors.mail import MailboxError
 from jobingo.domain.mail import MailboxStatus, Message, MessageKind, MessageSummary, SyncReport
-from jobingo.services import mail
+from jobingo.domain.reply import ReplyDraft, ReplyRequest
+from jobingo.services import mail, replies
 from jobingo_api.deps import CurrentUser, DbConn, LlmBudget, LlmClient, get_settings
-from jobingo_api.llm_errors import refused
+from jobingo_api.llm_errors import llm_refusal, not_configured, refused
 from jobingo_api.schemas import Refused
 
 router = APIRouter(prefix="/mail", tags=["mail"])
@@ -126,3 +127,37 @@ def set_hidden(message_id: int, body: HiddenRequest, user: CurrentUser, conn: Db
 def block_sender(message_id: int, user: CurrentUser, conn: DbConn) -> Message:
     """Hide every message from this sender, now and at each sync, without the model."""
     return _found(mail.block_sender(conn, user.id, message_id))
+
+
+@router.post(
+    "/messages/{message_id}/reply-draft",
+    response_model=ReplyDraft,
+    responses={
+        404: {"description": "No such message"},
+        429: {"model": Refused, "description": "A spending cap is reached"},
+        502: {"model": Refused, "description": "The model's answer was unusable"},
+        503: {"model": Refused, "description": "The model is not configured or unavailable"},
+    },
+)
+def draft_reply(
+    message_id: int,
+    body: ReplyRequest,
+    user: CurrentUser,
+    conn: DbConn,
+    client: LlmClient,
+    budget: LlmBudget,
+) -> ReplyDraft | JSONResponse:
+    """A draft for the user to edit, with what to check beside it. Nothing is queued:
+    the edited text goes to `/actions`, which refuses a gap left in it."""
+    if client is None:
+        return not_configured()
+    try:
+        draft = replies.draft_reply(conn, client, budget, user.id, message_id, body)
+    except Exception as error:
+        answer = llm_refusal(error)
+        if answer is None:
+            raise
+        return answer
+    if draft is None:
+        raise HTTPException(status_code=404, detail="Message introuvable")
+    return draft

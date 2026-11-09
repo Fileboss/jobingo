@@ -929,6 +929,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mail/messages/{message_id}/reply-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft Reply
+         * @description A draft for the user to edit, with what to check beside it. Nothing is queued:
+         *     the edited text goes to `/actions`, which refuses a gap left in it.
+         */
+        post: operations["draft_reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/actions": {
         parameters: {
             query?: never;
@@ -1132,6 +1153,8 @@ export interface components {
             payload_hash: string;
             /** Message Id */
             message_id: number | null;
+            /** Llm Call Id */
+            llm_call_id: number | null;
             /** Error */
             error: string | null;
             /** Decided At */
@@ -1721,6 +1744,8 @@ export interface components {
              * @default []
              */
             attachments: components["schemas"]["AttachmentRequest"][];
+            /** Llm Call Id */
+            llm_call_id?: number | null;
         };
         /**
          * EvalRun
@@ -2041,6 +2066,8 @@ export interface components {
             /** Scoring Error */
             scoring_error?: string | null;
         };
+        /** @enum {string} */
+        Intent: "decliner" | "accepter_entretien" | "demander_precisions" | "relancer" | "remercier" | "candidater";
         /** LetterSummary */
         LetterSummary: {
             /** Id */
@@ -2482,6 +2509,28 @@ export interface components {
         };
         /** @enum {string} */
         Remote: "sur site" | "hybride" | "remote" | "";
+        /** ReplyDraft */
+        ReplyDraft: {
+            /** Subject */
+            subject: string;
+            /** Body */
+            body: string;
+            /** Notes */
+            notes: string;
+            /** Warnings */
+            warnings: string[];
+            /** Llm Call Id */
+            llm_call_id: number;
+        };
+        /** ReplyRequest */
+        ReplyRequest: {
+            intent: components["schemas"]["Intent"];
+            /**
+             * Instruction
+             * @default
+             */
+            instruction: string;
+        };
         /** SaveRequest */
         SaveRequest: {
             draft: components["schemas"]["CvDraft"];
@@ -4963,6 +5012,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    draft_reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplyDraft"];
+                };
+            };
+            /** @description No such message */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description A spending cap is reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model's answer was unusable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
+                };
+            };
+            /** @description The model is not configured or unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refused"];
                 };
             };
         };

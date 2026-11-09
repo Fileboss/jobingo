@@ -29,7 +29,7 @@ Small vertical steps. To adjust as we go:
    1. ~~Reading mail: IMAP connector, stored messages, LinkedIn alerts read in code, the Courrier screen~~ (done).
    2. ~~`classify_message` and its eval suite, linking a message to an application, suggestions confirmed by a click~~ (done).
    3. ~~The approval queue and its one executor, the SMTP connector, dry run by default~~ (done).
-   4. `draft_reply` and its injection eval suite.
+   4. ~~`draft_reply` and its injection eval suite~~ (done).
 8. Demo: fictional seed, screenshots, README.
 
 ## What to bring over
@@ -64,6 +64,14 @@ Only `panneau-lateral`: strictly one page, French format, experience timeline, w
 What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
+
+What step 7.4 changed or left:
+
+- `draft_reply` ships as the POC's v4, the version in service: a missing fact becomes the canonical `[À COMPLÉTER : …]` marker, whose labels the system prompt lists verbatim (a test keeps them equal to `domain/placeholders.py`). Its 6 cases and the 15 injection cases are ported, every domain rewritten to `.example`. Neither suite is measured here yet: run `make eval ARGS="--task draft_reply"` and `--task injection`.
+- The injection suite keeps the POC's policy: every case must pass (threshold 1.0), across `classify_message`, `extract_offer` and `draft_reply`, and no action may be queued. It sets the fictional identity itself, so the other suites' requests, and their cached answers, are unchanged.
+- A draft is not stored: it fills the composer, the user edits it, and the queue refuses any gap left (`find_placeholders`, which also catches `[CANDIDAT]` and other forms). The action keeps the call it was drafted from (`pending_actions.llm_call_id`).
+- A test now checks the rule that a prompt example is never an eval case: `draft_reply` v4 is the first shipped prompt with examples.
+- Not ported: drafting a first message to a contact (the POC's stand-in message built from the offer), and the style guide's word limit, which `StyleGuide` does not carry yet.
 
 What step 7.3 changed or left:
 

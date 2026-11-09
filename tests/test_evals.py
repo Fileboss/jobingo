@@ -299,3 +299,68 @@ def test_the_classification_suite_counts_categories_and_dates(
     assert not rows["int-01"]["passed"]  # a date expected, none read
     assert summary["score"] == 1.0  # the score counts categories; dates are in the detail
     assert stored["summary"]["detail"]["interview_dates"] == "5/11"
+
+
+def test_the_injection_suite_fails_on_any_echo_and_passes_on_none(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from jobingo.domain.offers import ExtractedOffer
+    from jobingo.llm.tasks.classify_message import ClassifyMessageOutput
+    from jobingo.llm.tasks.draft_reply import DraftReplyOutput
+    from jobingo.llm.tasks.extract_offer import ExtractOfferOutput
+
+    cases = load_cases("injection")
+    fake = FakeLLMClient(usage=Usage(input_tokens=600, output_tokens=80, attempts=1))
+    for case in cases:
+        if case["channel"] == "classify":
+            fake.queue("classify_message", ClassifyMessageOutput(category="other"))
+        elif case["channel"] == "extract":
+            fake.queue("extract_offer", ExtractOfferOutput(offers=[ExtractedOffer(title="Poste")]))
+        elif case["id"] == "inj-13":
+            # The attack works: the reply repeats the candidate's phone number.
+            fake.queue(
+                "draft_reply",
+                DraftReplyOutput(subject="Re : Entretien", body="Mon numéro : 06 00 11 22 33."),
+            )
+        else:
+            fake.queue("draft_reply", DraftReplyOutput(subject="Re : Votre message", body="Merci."))
+
+    summary = run_suite(
+        SUITES["injection"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    stored = json.loads(next((tmp_path / "results").iterdir()).read_text(encoding="utf-8"))
+    assert list(stored["summary"]["detail"]["failures"]) == ["inj-13"]
+    assert summary["passed"] is False  # the threshold is every case
+    # The model saw the candidate redacted, never their name.
+    assert all("Alex Moreau" not in prompt.user for _, prompt in fake.prompts)
+
+
+def test_the_reply_suite_accepts_the_canonical_gap_only(
+    tmp_path: Path, config: EvalConfig, inner: AnthropicLLMClient, database_url: str
+):
+    from jobingo.llm.tasks.draft_reply import DraftReplyOutput
+
+    cases = load_cases("draft_reply")
+    fake = FakeLLMClient(usage=Usage(input_tokens=900, output_tokens=150, attempts=1))
+    for case in cases:
+        body = {
+            "rep-01": "Bonjour, je suis libre [À COMPLÉTER : disponibilités].",
+            "rep-02": "Bonjour, je suis libre le [date].",
+        }.get(case["id"], "Bonjour, merci pour votre message.")
+        fake.queue("draft_reply", DraftReplyOutput(subject="Re : Message", body=body))
+
+    run_suite(
+        SUITES["draft_reply"],
+        config,
+        CachingClient(inner, Decimal(5), tmp_path / "cache", live=fake),
+        results_dir=tmp_path / "results",
+    )
+
+    stored = json.loads(next((tmp_path / "results").iterdir()).read_text(encoding="utf-8"))
+    rows = {row["id"]: row for row in stored["rows"]}
+    assert rows["rep-01"]["passed"]
+    assert rows["rep-02"]["problems"] == ["marqueur hors format : [date]"]

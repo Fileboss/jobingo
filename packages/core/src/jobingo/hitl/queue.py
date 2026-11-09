@@ -18,6 +18,7 @@ from jobingo.domain.actions import (
     is_valid_address,
     payload_hash,
 )
+from jobingo.domain.placeholders import find_placeholders, placeholders_message
 from jobingo.logs import event
 from jobingo.services import documents
 from jobingo.services.applications import get_application
@@ -35,7 +36,8 @@ class NotApprovable(Exception):
 
 
 _COLUMNS = """
-    p.id, p.status, p.payload, p.payload_hash, p.application_id, p.message_id, p.dry_run,
+    p.id, p.status, p.payload, p.payload_hash, p.application_id, p.message_id, p.llm_call_id,
+    p.dry_run,
     p.error, p.created_at, p.decided_at, p.sent_at, a.title AS application_title
 """
 _FROM = """
@@ -100,6 +102,20 @@ def propose_email(
         raise InvalidAction("Aucun destinataire.")
     if not proposal.subject.strip() or not proposal.body.strip():
         raise InvalidAction("L'objet et le message ne peuvent pas être vides.")
+    # A gap the model left must not leave the machine, and this is the one place a
+    # text becomes something that can be sent.
+    gaps = find_placeholders(f"{proposal.subject}\n{proposal.body}")
+    if gaps:
+        message = placeholders_message(gaps)
+        raise InvalidAction(message[0].upper() + message[1:] + ".")
+    if (
+        proposal.llm_call_id is not None
+        and not conn.execute(
+            "SELECT 1 FROM llm_calls WHERE user_id = %s AND id = %s",
+            (user_id, proposal.llm_call_id),
+        ).fetchone()
+    ):
+        raise InvalidAction("Appel au modèle introuvable.")
 
     application_id = proposal.application_id
     in_reply_to, references = "", []
@@ -143,14 +159,15 @@ def propose_email(
         )
         row = conn.execute(
             "INSERT INTO pending_actions"
-            " (user_id, kind, payload, payload_hash, application_id, message_id)"
-            " VALUES (%s, 'send_email', %s::jsonb, %s, %s, %s) RETURNING id",
+            " (user_id, kind, payload, payload_hash, application_id, message_id, llm_call_id)"
+            " VALUES (%s, 'send_email', %s::jsonb, %s, %s, %s, %s) RETURNING id",
             (
                 user_id,
                 canonical_json(payload),
                 payload_hash(payload),
                 application_id,
                 proposal.message_id,
+                proposal.llm_call_id,
             ),
         ).fetchone()
     assert row is not None
@@ -161,6 +178,7 @@ def propose_email(
         action_id=row["id"],
         application_id=application_id,
         message_id=proposal.message_id,
+        llm_call_id=proposal.llm_call_id,
         recipients=len(to) + len(cc),
         attachments=len(attachments),
     )

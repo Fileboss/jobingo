@@ -30,6 +30,31 @@ test('a reply is prepared, previewed, then approved by a click', async ({ page }
 	expect(actions.approvals).toEqual(['1'.padStart(64, 'c')]);
 });
 
+test('the model drafts a reply, the user fills its gap, the trail stays', async ({ page }) => {
+	const mail = new FakeMailApi();
+	const actions = new FakeActionsApi();
+	await mail.install(page);
+	await actions.install(page);
+	await page.goto('/courrier');
+	await page.getByRole('button', { name: 'Synchroniser' }).click();
+	await page.getByRole('link', { name: 'Votre candidature chez Voltéo' }).click();
+	await page.getByRole('button', { name: 'Répondre' }).click();
+
+	await page.getByLabel('Intention').selectOption({ label: 'Demander des précisions' });
+	await page.getByRole('button', { name: 'Rédiger avec l’IA' }).click();
+
+	expect(actions.draftIntents).toEqual(['demander_precisions']);
+	await expect(page.getByText('Note de l’IA')).toBeVisible();
+	const body = page.getByLabel('Message', { exact: true });
+	await expect(body).toHaveValue(/\[À COMPLÉTER : disponibilités\]/);
+	await body.fill('Bonjour,\n\nJe suis disponible jeudi matin.\n\nCordialement,');
+	await page.getByRole('button', { name: 'Préparer l’envoi' }).click();
+
+	await expect(page).toHaveURL(/\/envois\/1$/);
+	expect(actions.proposals[0].llm_call_id).toBe(42);
+	await expect(page.getByText('Texte rédigé avec l’IA puis relu par vous')).toBeVisible();
+});
+
 test('a failed send says why and can be retried as it was', async ({ page }) => {
 	const actions = new FakeActionsApi();
 	actions.outcome = 'failed';

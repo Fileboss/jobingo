@@ -74,6 +74,8 @@ class EmailProposal(BaseModel):
     subject: str = Field(min_length=1, max_length=300)
     body: str = Field(min_length=1, max_length=20_000)
     attachments: list[AttachmentRequest] = Field(default=[], max_length=5)
+    # The model call the text was drafted from, when it was.
+    llm_call_id: int | None = None
 
 
 class Approval(BaseModel):
@@ -98,5 +100,6 @@ class ActionView(ActionSummary):
     payload: SendEmailPayload
     payload_hash: str
     message_id: int | None
+    llm_call_id: int | None
     error: str | None
     decided_at: datetime | None

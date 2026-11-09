@@ -5,6 +5,17 @@ export type ActionSummary = Schemas['ActionSummary'];
 export type ActionView = Schemas['ActionView'];
 export type ActionStatus = ActionSummary['status'];
 export type EmailProposal = Schemas['EmailProposal'];
+export type ReplyDraft = Schemas['ReplyDraft'];
+export type Intent = Schemas['ReplyRequest']['intent'];
+
+export const intentLabels: Record<Intent, string> = {
+	accepter_entretien: 'Accepter un entretien',
+	demander_precisions: 'Demander des précisions',
+	decliner: 'Décliner poliment',
+	relancer: 'Relancer',
+	remercier: 'Remercier après un entretien',
+	candidater: 'Envoyer ma candidature'
+};
 
 export const statusLabels: Record<ActionStatus, string> = {
 	proposed: 'À valider',

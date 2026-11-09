@@ -111,6 +111,15 @@
 				>{statusLabel(action)}</span
 			>
 		</div>
+		{#if action.llm_call_id}
+			<p class="mt-1 text-sm">
+				Texte rédigé avec l’IA puis relu par vous ·
+				<a
+					href={resolve('/suivi/appels/[id]', { id: String(action.llm_call_id) })}
+					class="font-bold text-ink">voir l’appel au modèle</a
+				>
+			</p>
+		{/if}
 		{#if action.application_id && action.application_title}
 			<a
 				href={resolve('/candidatures/[id]', { id: String(action.application_id) })}

@@ -2832,6 +2832,92 @@
         }
       }
     },
+    "/api/mail/messages/{message_id}/reply-draft": {
+      "post": {
+        "tags": [
+          "mail"
+        ],
+        "summary": "Draft Reply",
+        "description": "A draft for the user to edit, with what to check beside it. Nothing is queued:\nthe edited text goes to `/actions`, which refuses a gap left in it.",
+        "operationId": "draft_reply",
+        "parameters": [
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyDraft"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such message"
+          },
+          "429": {
+            "description": "A spending cap is reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The model's answer was unusable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The model is not configured or unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refused"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/actions": {
       "get": {
         "tags": [
@@ -3411,6 +3497,17 @@
             ],
             "title": "Message Id"
           },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
+          },
           "error": {
             "anyOf": [
               {
@@ -3450,6 +3547,7 @@
           "payload",
           "payload_hash",
           "message_id",
+          "llm_call_id",
           "error",
           "decided_at"
         ],
@@ -5106,6 +5204,17 @@
             "maxItems": 5,
             "title": "Attachments",
             "default": []
+          },
+          "llm_call_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Call Id"
           }
         },
         "type": "object",
@@ -5833,6 +5942,17 @@
         ],
         "title": "IntakeResult",
         "description": "The offers the text held: new ones, and known ones completed by it."
+      },
+      "Intent": {
+        "type": "string",
+        "enum": [
+          "decliner",
+          "accepter_entretien",
+          "demander_precisions",
+          "relancer",
+          "remercier",
+          "candidater"
+        ]
       },
       "LetterSummary": {
         "properties": {
@@ -7161,6 +7281,60 @@
           "remote",
           ""
         ]
+      },
+      "ReplyDraft": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "llm_call_id": {
+            "type": "integer",
+            "title": "Llm Call Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "body",
+          "notes",
+          "warnings",
+          "llm_call_id"
+        ],
+        "title": "ReplyDraft"
+      },
+      "ReplyRequest": {
+        "properties": {
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Instruction",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "intent"
+        ],
+        "title": "ReplyRequest"
       },
       "SaveRequest": {
         "properties": {
