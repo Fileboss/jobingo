@@ -38,7 +38,7 @@ from jobingo.domain.mail import (
     excerpt,
     parse_iso_date,
 )
-from jobingo.llm.client import LLMCallError, LLMClient
+from jobingo.llm.client import LLMCallError, LLMClient, LLMUnavailable
 from jobingo.llm.journal import Budget, LLMBudgetExceeded, run_task
 from jobingo.llm.tasks.classify_message import CLASSIFY_MESSAGE_TASK, ClassifyMessageInput
 from jobingo.logs import event
@@ -285,7 +285,9 @@ def _extract_waiting_alerts(
 
 
 def _stopped(error: LLMCallError | LLMBudgetExceeded, failed: str) -> str:
-    return str(error) if isinstance(error, LLMBudgetExceeded) else failed
+    if isinstance(error, LLMBudgetExceeded):
+        return str(error)
+    return error.reason if isinstance(error, LLMUnavailable) else failed
 
 
 # --- classifying and matching ----------------------------------------------------

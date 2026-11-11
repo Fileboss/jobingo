@@ -17,8 +17,8 @@ EXTRACT_OFFER_TASK: Task[ExtractOfferInput, ExtractOfferOutput] = Task(
     tier="fast",
     input_model=ExtractOfferInput,
     output_model=ExtractOfferOutput,
-    user_template="extract_offer.v2.md",
-    system_template="extract_offer.v2.system.md",
-    prompt_version=2,
+    user_template="extract_offer.v3.md",
+    system_template="extract_offer.v3.system.md",
+    prompt_version=3,
     max_tokens=8192,
 )

@@ -16,11 +16,10 @@ from jobingo.domain.scoring import (
     ScoredOffer,
     ScoringRun,
     fit_score,
-    global_score,
     objectives_hash,
     salary_score,
 )
-from jobingo.llm.client import LLMCallError, LLMClient
+from jobingo.llm.client import LLMCallError, LLMClient, LLMUnavailable
 from jobingo.llm.journal import Budget, LLMBudgetExceeded, run_task
 from jobingo.llm.tasks.score_offer import SCORE_OFFER_TASK, ScoreOfferInput
 from jobingo.logs import event
@@ -32,7 +31,7 @@ from jobingo.services.offers import get_offer, list_offers
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, offer_id, passed_filters, eliminated_by, unknown, criteria, score, fit_score,
+    id, offer_id, passed_filters, eliminated_by, unknown, criteria, fit_score,
     salary_score, summary, strengths, gaps, weights, llm_call_id, created_at,
     objectives_hash, cv_version
 """
@@ -93,7 +92,7 @@ def score_offer(
     filtered = apply_hard_filters(offer, objectives.hard_filters)
 
     criteria: Criteria | None = None
-    scores: tuple[int | None, int | None, int | None] = (None, None, None)
+    scores: tuple[int | None, int | None] = (None, None)
     summary, strengths, gaps, call_id = "", [], [], None
     if filtered.passed:
         profile = parse_cv_markdown(stored.content if stored else "")
@@ -107,7 +106,7 @@ def score_offer(
             ScoreOfferInput(
                 title=offer.title,
                 company_name=offer.company_name,
-                location=offer.location,
+                location=", ".join(offer.locations),
                 contract=offer.contract,
                 remote=offer.remote,
                 salary_min=offer.salary_min,
@@ -122,7 +121,6 @@ def score_offer(
             mission=output.mission, stack=output.stack, salary=output.salary, culture=output.culture
         )
         scores = (
-            global_score(criteria, objectives.weights),
             fit_score(criteria, objectives.weights),
             salary_score(criteria, offer),
         )
@@ -132,9 +130,9 @@ def score_offer(
         row = conn.execute(
             f"""
             INSERT INTO offer_scores (user_id, offer_id, passed_filters, eliminated_by, unknown,
-                criteria, score, fit_score, salary_score, summary, strengths, gaps, weights,
+                criteria, fit_score, salary_score, summary, strengths, gaps, weights,
                 objectives_hash, cv_version, llm_call_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING {_COLUMNS}
             """,
             (
@@ -186,10 +184,22 @@ def set_decision(conn: Conn, user_id: int, offer_id: int, decision: OfferDecisio
 
 
 def scored_offers(conn: Conn, user_id: int) -> list[ScoredOffer]:
-    """Every offer with its current score, newest first."""
+    """Every offer with its current score and its application, newest first."""
     scores = latest_scores(conn, user_id)
+    applied = {
+        row["offer_id"]: row["id"]
+        for row in conn.execute(
+            "SELECT id, offer_id FROM applications"
+            " WHERE user_id = %s AND deleted_at IS NULL AND offer_id IS NOT NULL",
+            (user_id,),
+        )
+    }
     return [
-        ScoredOffer(**offer.model_dump(), current_score=scores.get(offer.id))
+        ScoredOffer(
+            **offer.model_dump(),
+            current_score=scores.get(offer.id),
+            application_id=applied.get(offer.id),
+        )
         for offer in list_offers(conn, user_id)
     ]
 
@@ -203,11 +213,12 @@ def score_many(
         try:
             score_offer(conn, client, budget, user_id, offer_id)
         except (LLMCallError, LLMBudgetExceeded) as error:
-            reason = (
-                str(error)
-                if isinstance(error, LLMBudgetExceeded)
-                else "le modèle n'a pas pu noter l'offre"
-            )
+            if isinstance(error, LLMBudgetExceeded):
+                reason = str(error)
+            elif isinstance(error, LLMUnavailable):
+                reason = error.reason
+            else:
+                reason = "le modèle n'a pas pu noter l'offre"
             return ScoringRun(scored_ids=scored, unscored_ids=offer_ids[index:], error=reason)
         scored.append(offer_id)
     return ScoringRun(scored_ids=scored, unscored_ids=[], error=None)

@@ -8,7 +8,6 @@
 	const CRITERIA = [
 		['mission', 'Mission'],
 		['stack', 'Stack technique'],
-		['salary', 'Salaire'],
 		['culture', 'Culture']
 	] as const;
 </script>
@@ -20,27 +19,21 @@
 	</ul>
 {:else if score.criteria}
 	{@const criteria = score.criteria}
-	<div class="flex flex-wrap items-end gap-x-8 gap-y-2">
+	<dl class="flex flex-wrap items-end gap-x-12 gap-y-3 tabular-nums">
 		<div>
-			<p class="text-sm font-bold text-ink-soft">Score</p>
-			<p class="text-6xl leading-none font-extrabold text-ink tabular-nums">
-				{score.score}<span class="text-2xl text-ink-soft">/100</span>
-			</p>
+			<dt class="text-sm font-bold text-ink-soft">Adéquation</dt>
+			<dd class="text-6xl leading-none font-extrabold text-ink">
+				{score.fit_score}<span class="text-2xl text-ink-soft">/100</span>
+			</dd>
 		</div>
-		<dl class="flex gap-6 tabular-nums">
-			<div>
-				<dt class="text-sm font-bold text-ink-soft">Adéquation</dt>
-				<dd class="text-2xl font-extrabold text-ink">{score.fit_score}</dd>
-			</div>
-			<div>
-				<dt class="text-sm font-bold text-ink-soft">Salaire</dt>
-				<dd class="text-2xl font-extrabold text-ink">
-					{#if score.salary_score === null}<span class="text-base text-ink-soft">non indiqué</span
-						>{:else}{score.salary_score}{/if}
-				</dd>
-			</div>
-		</dl>
-	</div>
+		<div>
+			<dt class="text-sm font-bold text-ink-soft">Salaire</dt>
+			<dd class="text-6xl leading-none font-extrabold text-ink">
+				{#if score.salary_score === null}<span class="text-2xl text-ink-soft">non indiqué</span
+					>{:else}{score.salary_score}<span class="text-2xl text-ink-soft">/100</span>{/if}
+			</dd>
+		</div>
+	</dl>
 	<p class="mt-3 max-w-2xl">{score.summary}</p>
 
 	<dl class="mt-4 grid gap-2.5">
@@ -59,8 +52,9 @@
 		{/each}
 	</dl>
 	<p class="mt-2 text-sm text-ink-soft">
-		Le modèle note chaque critère ; le score est leur moyenne, pondérée par vos objectifs et
-		calculée par le code.
+		Le modèle note chaque critère ; l’adéquation est leur moyenne, pondérée par vos objectifs et
+		calculée par le code. Le salaire est noté à part : une offre qui n’en indique pas n’est pas
+		pénalisée.
 	</p>
 
 	<div class="mt-4 grid gap-4 sm:grid-cols-2">

@@ -20,7 +20,8 @@ class ExtractedOffer(BaseModel):
 
     title: str
     company_name: str = ""
-    location: str = ""
+    # Every city the role can be based in: « Paris ou Toulouse » is two.
+    locations: list[str] = []
     contract: Contract = ""
     remote: Remote = ""
     salary_min: int | None = None
@@ -37,7 +38,7 @@ class Offer(BaseModel):
     id: int
     title: str
     company_name: str
-    location: str
+    locations: list[str]
     contract: Contract
     remote: Remote
     salary_min: int | None
@@ -96,12 +97,16 @@ def web_url(url: str | None) -> str | None:
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
-def dedup_key(company_name: str, title: str, location: str) -> str:
-    """The same offer received twice, or through two channels, is one row."""
-    normalized = "|".join(
-        _SLUG_RE.sub("-", value.strip().lower()).strip("-")
-        for value in (company_name, title, location)
-    )
+def _fold(value: str) -> str:
+    return _SLUG_RE.sub("-", value.strip().lower()).strip("-")
+
+
+def dedup_key(company_name: str, title: str, locations: list[str]) -> str:
+    """The same offer received twice, or through two channels, is one row. Only the first
+    city counts: an alert that names one city and the full text that names two are the
+    same offer."""
+    location = locations[0] if locations else ""
+    normalized = "|".join(_fold(value) for value in (company_name, title, location))
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
 
 
@@ -112,20 +117,24 @@ def unescaped(extracted: ExtractedOffer) -> ExtractedOffer:
     def plain(value: str) -> str:
         return value.replace("&lt;", "<").replace("&gt;", ">")
 
-    return extracted.model_copy(
-        update={
-            name: plain(getattr(extracted, name))
-            for name in ("title", "company_name", "location", "description_md")
-        }
-    )
+    updates: dict[str, object] = {
+        name: plain(getattr(extracted, name))
+        for name in ("title", "company_name", "description_md")
+    }
+    updates["locations"] = [plain(place) for place in extracted.locations]
+    return extracted.model_copy(update=updates)
 
 
 def merged_fields(existing: Offer, incoming: ExtractedOffer) -> dict[str, object]:
     """What a second source adds to a known offer. Fields are filled when empty, never
     overwritten, so a thin alert cannot erase a richer source. The description is the
     exception: the longer one wins, since pasting the full text is how a title-only
-    alert gets completed."""
+    alert gets completed. Cities are added, never removed."""
     updates: dict[str, object] = {}
+    known = {_fold(place) for place in existing.locations}
+    added = [place for place in incoming.locations if place.strip() and _fold(place) not in known]
+    if added:
+        updates["locations"] = [*existing.locations, *added]
     if not existing.contract and incoming.contract:
         updates["contract"] = incoming.contract
     if not existing.remote and incoming.remote:

@@ -26,7 +26,7 @@ export const eventLabels: Record<EventType, string> = {
 	offer_received: 'Offre reçue',
 	rejected: 'Refus',
 	withdrawn: 'Candidature retirée',
-	note: 'Note'
+	note: 'Commentaire'
 };
 
 /** The bristol colour of a status: yellow to do, blue running, green at the end, red lost. */

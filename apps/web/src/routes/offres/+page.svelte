@@ -8,16 +8,16 @@
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
-	type View = 'open' | 'shortlisted' | 'dismissed' | 'all';
-	const VIEWS: [View, string][] = [
-		['open', 'À examiner'],
-		['shortlisted', 'Retenues'],
-		['dismissed', 'Écartées'],
-		['all', 'Toutes']
-	];
+	type Standing = ReturnType<typeof standing>;
+	const STATUS: Record<Standing, { label: string; colour: string }> = {
+		applied: { label: 'Candidature', colour: 'bg-bristol-blue' },
+		open: { label: 'À examiner', colour: 'bg-postit' },
+		shortlisted: { label: 'Retenue', colour: 'bg-bristol-green' },
+		dismissed: { label: 'Écartée', colour: 'bg-bristol-grey' },
+		filtered: { label: 'Filtrée', colour: 'bg-bristol-salmon' }
+	};
 
 	let offers = $state.raw<ScoredOffer[] | null>(null);
-	let view = $state<View>('open');
 	let byScore = $state(true);
 	let stale = $state(0);
 	let rescoring = $state(false);
@@ -61,18 +61,11 @@
 		}
 	}
 
-	function inView(offer: ScoredOffer): boolean {
-		const where = standing(offer);
-		if (view === 'all') return true;
-		if (view === 'dismissed') return where === 'dismissed' || where === 'filtered';
-		return where === view;
-	}
-
 	let shown = $derived.by(() => {
-		const kept = (offers ?? []).filter(inView);
-		if (!byScore) return kept;
-		const value = (offer: ScoredOffer) => offer.current_score?.score ?? -1;
-		return [...kept].sort((a, b) => value(b) - value(a));
+		const all = offers ?? [];
+		if (!byScore) return all;
+		const value = (offer: ScoredOffer) => offer.current_score?.fit_score ?? -1;
+		return [...all].sort((a, b) => value(b) - value(a));
 	});
 
 	onMount(load);
@@ -169,19 +162,7 @@
 		</div>
 
 		{#if offers && offers.length}
-			<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-				<div role="group" aria-label="Offres affichées" class="flex flex-wrap gap-1">
-					{#each VIEWS as [value, label] (value)}
-						<button
-							type="button"
-							aria-pressed={view === value}
-							onclick={() => (view = value)}
-							class="cursor-pointer rounded-sm border border-ink px-3 py-1 font-bold text-ink aria-pressed:bg-ink aria-pressed:text-white"
-						>
-							{label}
-						</button>
-					{/each}
-				</div>
+			<div class="mb-3 flex flex-wrap items-center justify-end gap-3">
 				<label class="flex items-center gap-2 text-sm">
 					<input
 						type="checkbox"
@@ -202,14 +183,13 @@
 			<p class="text-ink-soft" role="status">Chargement…</p>
 		{:else if offers.length === 0}
 			<p class="text-ink-soft">Aucune offre pour l’instant.</p>
-		{:else if shown.length === 0}
-			<p class="text-ink-soft">Aucune offre dans cette vue.</p>
 		{:else}
 			<div class="overflow-x-auto bg-paper">
 				<table class="w-full min-w-[52rem] text-left">
 					<thead>
 						<tr class="border-b-2 border-ink text-sm text-ink-soft">
-							<th class="py-2 pr-2 pl-4 font-bold">Score</th>
+							<th class="py-2 pr-2 pl-4 font-bold">Adéquation</th>
+							<th class="py-2 pr-4 font-bold">Statut</th>
 							<th class="py-2 pr-4 font-bold">Poste</th>
 							<th class="py-2 pr-4 font-bold">Lieu</th>
 							<th class="py-2 pr-4 font-bold">Contrat</th>
@@ -220,22 +200,42 @@
 					</thead>
 					<tbody>
 						{#each shown as offer (offer.id)}
-							<tr class={['border-b border-ink/10', fresh.has(offer.id) && 'bg-bristol-green/40']}>
+							{@const status = STATUS[standing(offer)]}
+							{@const aside = standing(offer) === 'dismissed' || standing(offer) === 'filtered'}
+							<tr
+								class={[
+									'border-b border-ink/10',
+									fresh.has(offer.id) && 'bg-bristol-green/40',
+									aside && 'text-ink-soft'
+								]}
+							>
 								<td class="py-2 pr-2 pl-4"><ScoreBadge {offer} /></td>
+								<td class="py-2 pr-4">
+									{#if offer.application_id}
+										<a
+											href={resolve('/candidatures/[id]', { id: String(offer.application_id) })}
+											title="Voir la candidature"
+											class={[
+												'px-2 py-0.5 text-sm font-bold whitespace-nowrap text-ink underline-offset-4 hover:underline',
+												status.colour
+											]}>{status.label} →</a
+										>
+									{:else}
+										<span class={['px-2 py-0.5 text-sm font-bold whitespace-nowrap', status.colour]}
+											>{status.label}</span
+										>
+									{/if}
+								</td>
 								<td class="py-2 pr-4">
 									<a
 										href={resolve('/offres/[id]', { id: String(offer.id) })}
 										class="font-extrabold text-ink">{offer.title}</a
 									>
 									<span class="block text-sm text-ink-soft">
-										{offer.company_name ||
-											'Entreprise non nommée'}{#if offer.decision === 'shortlisted'}
-											· <span class="font-bold text-ink">retenue</span
-											>{:else if offer.decision === 'dismissed'}
-											· écartée par vous{/if}
+										{offer.company_name || 'Entreprise non nommée'}
 									</span>
 								</td>
-								<td class="py-2 pr-4">{offer.location || '—'}</td>
+								<td class="py-2 pr-4">{offer.locations.join(', ') || '—'}</td>
 								<td class="py-2 pr-4">{offer.contract || '—'}</td>
 								<td class="py-2 pr-4">{remoteLabels[offer.remote]}</td>
 								<td class="py-2 pr-4 whitespace-nowrap tabular-nums">{salaryLabel(offer)}</td>

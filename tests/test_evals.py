@@ -139,7 +139,7 @@ def test_a_suite_grades_each_case_and_records_the_run(
     assert summary["passed"] is None  # no threshold yet
     assert summary["spend"]["live_calls"] == 8
     [path] = results.iterdir()
-    assert path.name == "select_cv_content.v5.claude-sonnet-5-5.off-medium.json"
+    assert path.name == "select_cv_content.v6.claude-sonnet-5-5.off-medium.json"
     stored = json.loads(path.read_text(encoding="utf-8"))
     first = stored["rows"][0]
     assert (first["id"], first["passed"], first["missing"]) == ("cv-01", True, [])
@@ -148,6 +148,7 @@ def test_a_suite_grades_each_case_and_records_the_run(
         "batiflux-01",
         "batiflux-02",
         "skill-django",
+        "project-01",
     ]
 
     # Re-graded from the cache: nothing paid, and the measured spend stays.
@@ -181,7 +182,7 @@ def test_the_extraction_suite_compares_fields_case_by_case(
     first = ExtractedOffer(
         title="Ingénieur backend Python",
         company_name="Stratus",
-        location="Lyon 3e",
+        locations=["Lyon 3e"],
         contract="CDI",
         remote="hybride",
     )
@@ -199,6 +200,8 @@ def test_the_extraction_suite_compares_fields_case_by_case(
     rows = {row["id"]: row for row in stored["rows"]}
     assert rows["ext-01"]["passed"] and rows["ext-01"]["misses"] == []
     assert not rows["ext-06"]["count_ok"]  # three offers in that digest
+    assert not rows["ext-23"]["passed"]  # two cities expected, one given
+    assert any(miss.startswith("locations") for miss in rows["ext-23"]["misses"])
     assert summary["cases"] == len(cases)
     assert 0 < summary["score"] < 1
 

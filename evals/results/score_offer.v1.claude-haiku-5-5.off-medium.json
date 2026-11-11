@@ -1,7 +1,7 @@
 {
   "summary": {
     "suite": "score_offer",
-    "metric": "corrélation de rang avec le classement fait à la main",
+    "metric": "corrélation de rang de l'adéquation avec le classement fait à la main",
     "prompt_version": 1,
     "setup": "claude-haiku-5-5.off-medium",
     "model": "claude-haiku-5-5",
@@ -12,7 +12,7 @@
     "passed": true,
     "detail": {
       "scored": "15/15",
-      "by_expected_rank": "1:80 2:70 3:72 4:80 5:58 6:67 7:48 8:58 9:32 10:38 11:40 12:22 13:23 14:18 15:20"
+      "by_expected_rank": "1:80 2:66 3:74 4:78 5:62 6:70 7:54 8:54 9:32 10:34 11:46 12:26 13:26 14:18 15:20"
     },
     "cases": 15,
     "spend": {
@@ -27,7 +27,8 @@
       "latency_p95_ms": 2192
     },
     "stopped": null,
-    "run_at": "2026-11-07T15:41:06+00:00"
+    "run_at": "2026-11-07T15:41:06+00:00",
+    "regraded_from_cache": true
   },
   "rows": [
     {
@@ -35,6 +36,7 @@
       "expected_rank": 1,
       "passed": true,
       "score": 80,
+      "salary_score": 80,
       "criteria": {
         "mission": 8.0,
         "stack": 8.0,
@@ -47,7 +49,8 @@
       "id": "sc-02",
       "expected_rank": 2,
       "passed": true,
-      "score": 70,
+      "score": 66,
+      "salary_score": 90,
       "criteria": {
         "mission": 8.0,
         "stack": 5.0,
@@ -60,7 +63,8 @@
       "id": "sc-03",
       "expected_rank": 5,
       "passed": true,
-      "score": 58,
+      "score": 62,
+      "salary_score": 40,
       "criteria": {
         "mission": 6.0,
         "stack": 7.0,
@@ -73,7 +77,8 @@
       "id": "sc-04",
       "expected_rank": 3,
       "passed": true,
-      "score": 72,
+      "score": 74,
+      "salary_score": 60,
       "criteria": {
         "mission": 8.0,
         "stack": 8.0,
@@ -86,7 +91,8 @@
       "id": "sc-05",
       "expected_rank": 13,
       "passed": true,
-      "score": 23,
+      "score": 26,
+      "salary_score": 10,
       "criteria": {
         "mission": 2.0,
         "stack": 4.0,
@@ -100,6 +106,7 @@
       "expected_rank": 14,
       "passed": true,
       "score": 18,
+      "salary_score": 20,
       "criteria": {
         "mission": 2.0,
         "stack": 1.0,
@@ -112,7 +119,8 @@
       "id": "sc-07",
       "expected_rank": 4,
       "passed": true,
-      "score": 80,
+      "score": 78,
+      "salary_score": 90,
       "criteria": {
         "mission": 8.0,
         "stack": 8.0,
@@ -125,7 +133,8 @@
       "id": "sc-08",
       "expected_rank": 7,
       "passed": true,
-      "score": 48,
+      "score": 54,
+      "salary_score": 20,
       "criteria": {
         "mission": 5.0,
         "stack": 7.0,
@@ -138,7 +147,8 @@
       "id": "sc-09",
       "expected_rank": 8,
       "passed": true,
-      "score": 58,
+      "score": 54,
+      "salary_score": 80,
       "criteria": {
         "mission": 5.0,
         "stack": 6.0,
@@ -152,6 +162,7 @@
       "expected_rank": 9,
       "passed": true,
       "score": 32,
+      "salary_score": 30,
       "criteria": {
         "mission": 3.0,
         "stack": 3.0,
@@ -165,6 +176,7 @@
       "expected_rank": 15,
       "passed": true,
       "score": 20,
+      "salary_score": 20,
       "criteria": {
         "mission": 2.0,
         "stack": 1.0,
@@ -177,7 +189,8 @@
       "id": "sc-12",
       "expected_rank": 12,
       "passed": true,
-      "score": 22,
+      "score": 26,
+      "salary_score": 0,
       "criteria": {
         "mission": 3.0,
         "stack": 2.0,
@@ -190,7 +203,8 @@
       "id": "sc-13",
       "expected_rank": 6,
       "passed": true,
-      "score": 67,
+      "score": 70,
+      "salary_score": 50,
       "criteria": {
         "mission": 7.0,
         "stack": 8.0,
@@ -203,7 +217,8 @@
       "id": "sc-14",
       "expected_rank": 11,
       "passed": true,
-      "score": 40,
+      "score": 46,
+      "salary_score": 10,
       "criteria": {
         "mission": 4.0,
         "stack": 6.0,
@@ -216,7 +231,8 @@
       "id": "sc-15",
       "expected_rank": 10,
       "passed": true,
-      "score": 38,
+      "score": 34,
+      "salary_score": 60,
       "criteria": {
         "mission": 4.0,
         "stack": 2.0,

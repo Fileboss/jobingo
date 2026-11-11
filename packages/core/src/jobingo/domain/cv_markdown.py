@@ -38,13 +38,19 @@ from jobingo.domain.text import fold
 _FRONT_RE = re.compile(r"\A---[ \t]*\n.*?\n---[ \t]*(?:\n|\Z)", re.S)
 TRAILING_TAGS_RE = re.compile(r"(?:\s+#[^\W\d_][\w.+-]*)+\s*$")
 _SIMILARITY = 0.6
-_ID_PREFIX = {"formation": "edu", "skill": "skill", "hobby": "hobby", "resume": "resume"}
+_ID_PREFIX = {
+    "formation": "edu",
+    "skill": "skill",
+    "hobby": "hobby",
+    "project": "project",
+    "resume": "resume",
+}
 
 
 @dataclass(eq=False)
 class _Entry:
     line: int
-    kind: str  # resume | experience | formation | bullet | skill | hobby
+    kind: str  # resume | experience | formation | bullet | skill | hobby | project
     prefix: str
     text: str
     tags: list[str]

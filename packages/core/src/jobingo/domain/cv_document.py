@@ -36,6 +36,9 @@ class CvDocument(CvView):
     sha256: str | None  # of the stored content; None until the first save
     version: int  # 0 until the first save
     updated_at: datetime | None
+    # A save would change what is stored with no edit: lines of a section the app has
+    # learned since, waiting for their ids. One click carries them forward.
+    needs_save: bool = False
 
 
 def draft_markdown(draft: TextDraft | FormDraft, lang: CvLang) -> str:

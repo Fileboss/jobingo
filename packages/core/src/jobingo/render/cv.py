@@ -18,6 +18,7 @@ TEMPLATE_DIR = Path(__file__).parent / "templates" / "panneau-lateral"
 SECTION_LABELS = {
     "resume": "Résumé",
     "experiences": "Expérience",
+    "projets": "Projets personnels",
     "formation": "Formation",
     "competences": "Compétences",
     "loisirs": "Loisirs",
@@ -61,7 +62,7 @@ def render_cv(
     embedded = photo if photo and selection.options.photo else None
     html = environment.get_template("template.html").render(
         identity=identity,
-        contact=identity.contact_values(),
+        contact=identity.contact_entries(),
         selection=selection,
         labels=SECTION_LABELS,
         lang=selection.lang,

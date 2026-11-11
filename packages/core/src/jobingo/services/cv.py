@@ -6,7 +6,7 @@ from datetime import datetime
 
 from jobingo.db import Conn
 from jobingo.domain.cv_document import CvDocument, CvLang, view_of_stored
-from jobingo.domain.cv_fields import CvFields
+from jobingo.domain.cv_fields import CvFields, canonical_stored
 
 
 @dataclass(frozen=True)
@@ -47,9 +47,11 @@ def document_of(stored: StoredCv | None, lang: CvLang) -> CvDocument:
             version=0,
             updated_at=None,
         )
+    view = view_of_stored(stored.content, lang)
     return CvDocument(
-        **dict(view_of_stored(stored.content, lang)),
+        **dict(view),
         sha256=stored.sha256,
         version=stored.version,
         updated_at=stored.updated_at,
+        needs_save=canonical_stored(view.text, stored.content, lang) != stored.content,
     )

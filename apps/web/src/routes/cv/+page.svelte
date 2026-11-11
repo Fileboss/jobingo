@@ -34,6 +34,8 @@
 	let status = $derived.by(() => {
 		if (editor.busy === 'save') return 'Enregistrement…';
 		if (editor.dirty) return 'Modifications non enregistrées';
+		if (editor.stored?.needs_save)
+			return 'Une section que l’app reconnaît désormais attend un enregistrement';
 		if (editor.stored?.version) {
 			return `Version ${editor.stored.version}, enregistrée ${savedOn(editor.stored.updated_at)}`;
 		}
@@ -164,7 +166,9 @@
 	>
 		<p role="status">{status}</p>
 		<Button
-			disabled={!editor.dirty || editor.busy !== null || editor.conflict !== null}
+			disabled={!(editor.dirty || editor.stored?.needs_save) ||
+				editor.busy !== null ||
+				editor.conflict !== null}
 			onclick={() => editor.save()}
 		>
 			Enregistrer

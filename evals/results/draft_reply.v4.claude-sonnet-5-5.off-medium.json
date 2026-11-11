@@ -1,0 +1,95 @@
+{
+  "summary": {
+    "suite": "draft_reply",
+    "metric": "brouillons sans problème relevé par le code, trous au format attendu",
+    "prompt_version": 4,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 1.0,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "drafts_without_problem": "6/6",
+      "problems": [],
+      "placeholders": []
+    },
+    "cases": 6,
+    "spend": {
+      "live_calls": 6,
+      "cached_calls": 0,
+      "input_tokens": 1204,
+      "output_tokens": 1222,
+      "cache_read_tokens": 9615,
+      "cache_write_tokens": 1923,
+      "cost_usd": "0.021361",
+      "latency_p50_ms": 2625,
+      "latency_p95_ms": 3156
+    },
+    "stopped": null,
+    "run_at": "2026-11-10T08:03:38+00:00"
+  },
+  "rows": [
+    {
+      "id": "rep-01",
+      "intent": "accepter_entretien",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : Entretien — Développeur backend",
+      "body": "Bonjour Madame Dumas,\n\nMerci pour votre message. Le mardi 6 octobre 2026 à 14 h, en visio, me convient parfaitement.\n\nJe vous remercie et reste à votre disposition.\n\nCordialement,",
+      "notes": ""
+    },
+    {
+      "id": "rep-02",
+      "intent": "decliner",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : Poste en régie chez un grand compte",
+      "body": "Bonjour,\n\nMerci pour votre message et pour votre proposition. Je dois cependant la décliner : j'ai accepté un autre poste et ne suis plus à la recherche d'une opportunité.\n\nJe vous souhaite de trouver rapidement le profil qui correspond à votre besoin.\n\nCordialement,",
+      "notes": ""
+    },
+    {
+      "id": "rep-03",
+      "intent": "demander_precisions",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : votre profil GitHub",
+      "body": "Bonjour Monsieur Girard,\n\nMerci pour votre message. Le poste de premier ingénieur plateforme data m'intéresse. Avant d'aller plus loin, j'aurais deux questions : quelle est la part de télétravail prévue pour ce poste, et dans quelle fourchette de salaire se situe-t-il ?\n\nJe vous remercie par avance de ces précisions.\n\nCordialement,",
+      "notes": "Le message est un premier contact sans détail sur le poste : vérifiez que vous souhaitez bien manifester votre intérêt avant d'avoir ces réponses."
+    },
+    {
+      "id": "rep-04",
+      "intent": "relancer",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : Accusé de réception — Ingénieur logiciel backend",
+      "body": "Bonjour,\n\nJe me permets de revenir vers vous au sujet de ma candidature au poste d'ingénieur logiciel backend, dont vous avez accusé réception. Le délai de dix jours que vous mentionniez est écoulé : où en est l'examen de mon dossier ?\n\nJe reste disponible pour échanger si vous avez besoin d'informations complémentaires.\n\nCordialement,",
+      "notes": "Le message d'origine ne donne pas la date de réception : vérifiez que les dix jours annoncés sont bien écoulés avant d'envoyer, et ajustez la phrase sinon."
+    },
+    {
+      "id": "rep-05",
+      "intent": "remercier",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : Entretien final avec la CTO",
+      "body": "Bonjour,\n\nJe tenais à vous remercier pour l'échange avec la CTO au sujet de la plateforme de données. Cet entretien m'a permis de mieux comprendre les enjeux de l'équipe, et je l'ai trouvé très intéressant.\n\nJe reste disponible si vous avez besoin d'informations complémentaires de ma part.\n\nCordialement,",
+      "notes": "Le message reçu est une invitation à un entretien (lundi 5 octobre 2026 à 17 h), pas un retour après coup : si vous répondez avant l'entretien, adaptez le texte, ou confirmez simplement votre présence. Vérifiez aussi que les sujets abordés lors de l'échange correspondent à ce que vous voulez mentionner."
+    },
+    {
+      "id": "rep-06",
+      "intent": "accepter_entretien",
+      "passed": true,
+      "problems": [],
+      "placeholders": [],
+      "subject": "Re : Prochaine étape",
+      "body": "Bonjour,\n\nMerci pour votre message, je serais ravi de passer cet entretien technique. Je suis disponible jeudi ou vendredi matin la semaine prochaine. Dites-moi quel créneau vous convient le mieux.\n\nCordialement,",
+      "notes": "Le message ne précise pas de date ni d'horaire : vous pouvez ajouter des plages horaires exactes pour jeudi et vendredi matin avant d'envoyer."
+    }
+  ]
+}

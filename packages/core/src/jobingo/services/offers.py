@@ -25,11 +25,19 @@ from jobingo.services.identity import redaction_values
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, title, company_name, location, contract, remote, salary_min, salary_max, url,
+    id, title, company_name, locations, contract, remote, salary_min, salary_max, url,
     description_md, llm_call_id, message_id, state, decision, created_at, updated_at
 """
 # The columns a merge may fill, named here and never taken from the payload.
-_MERGEABLE = ("contract", "remote", "url", "salary_min", "salary_max", "description_md")
+_MERGEABLE = (
+    "locations",
+    "contract",
+    "remote",
+    "url",
+    "salary_min",
+    "salary_max",
+    "description_md",
+)
 
 
 class NoOfferFoundError(Exception):
@@ -61,7 +69,7 @@ def _store(
 ) -> tuple[Offer, bool]:
     """The offer, inserted, or merged into the known row with the same key. The second
     value says whether it was merged."""
-    key = dedup_key(extracted.company_name, extracted.title, extracted.location)
+    key = dedup_key(extracted.company_name, extracted.title, extracted.locations)
     row = conn.execute(
         f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s AND dedup_key = %s",
         (user_id, key),
@@ -96,7 +104,7 @@ def _store(
 
     inserted = conn.execute(
         """
-        INSERT INTO offers (user_id, title, company_name, location, contract, remote,
+        INSERT INTO offers (user_id, title, company_name, locations, contract, remote,
             salary_min, salary_max, url, description_md, dedup_key, llm_call_id, message_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
@@ -105,7 +113,7 @@ def _store(
             user_id,
             extracted.title,
             extracted.company_name,
-            extracted.location,
+            extracted.locations,
             extracted.contract,
             extracted.remote,
             extracted.salary_min,
@@ -179,7 +187,7 @@ def intake(
             {
                 name
                 for extracted in output.offers
-                for name in ("company_name", "location", "contract", "remote", "salary_min")
+                for name in ("company_name", "locations", "contract", "remote", "salary_min")
                 if not getattr(extracted, name)
             }
         ),
@@ -198,7 +206,7 @@ def store_alert_offers(
             extracted = ExtractedOffer(
                 title=card.title,
                 company_name=card.company_name,
-                location=card.location,
+                locations=[card.location] if card.location else [],
                 url=card.url,
             )
             offer, _ = _store(conn, user_id, extracted, None, message_id)

@@ -57,36 +57,25 @@
         }
       }
     },
-    "/api/cv/{lang}/drafts": {
+    "/api/applications/{application_id}/cv-drafts": {
       "post": {
         "tags": [
           "cv-drafts"
         ],
-        "summary": "Create Draft",
-        "description": "Ask the model which parts of the CV serve this offer. One call, journalled.",
-        "operationId": "create_draft",
+        "summary": "Adapt Cv",
+        "description": "A CV adapted for this application: to its offer, or for a spontaneous one to the\nrole, the company and the notes on it. One call, journalled.",
+        "operationId": "adapt_cv",
         "parameters": [
           {
-            "name": "lang",
+            "name": "application_id",
             "in": "path",
             "required": true,
             "schema": {
-              "const": "fr",
-              "type": "string",
-              "title": "Lang"
+              "type": "integer",
+              "title": "Application Id"
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OfferInput"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -107,6 +96,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "No such application"
           },
           "429": {
             "description": "A spending cap is reached",
@@ -149,27 +141,46 @@
             }
           }
         }
-      }
-    },
-    "/api/cv/drafts": {
+      },
       "get": {
         "tags": [
           "cv-drafts"
         ],
         "summary": "List Drafts",
-        "description": "Newest first.",
+        "description": "The application's adapted CVs, newest first.",
         "operationId": "list_drafts",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/DraftSummary"
                   },
-                  "type": "array",
                   "title": "Response List Drafts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1382,7 +1393,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OfferPage"
+                  "$ref": "#/components/schemas/ScoredOffer"
                 }
               }
             }
@@ -1521,102 +1532,6 @@
           },
           "404": {
             "description": "No such offer"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/offers/{offer_id}/cv-drafts/{lang}": {
-      "post": {
-        "tags": [
-          "offers"
-        ],
-        "summary": "Adapt Cv To Offer",
-        "description": "A CV adapted to this offer, as `POST /cv/{lang}/drafts` makes it from pasted text.",
-        "operationId": "adapt_cv_to_offer",
-        "parameters": [
-          {
-            "name": "offer_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Offer Id"
-            }
-          },
-          {
-            "name": "lang",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "const": "fr",
-              "type": "string",
-              "title": "Lang"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DraftView"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Nothing to adapt, or contact details in the CV",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Refused"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such offer"
-          },
-          "429": {
-            "description": "A spending cap is reached",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Refused"
-                }
-              }
-            }
-          },
-          "502": {
-            "description": "The model's answer was unusable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Refused"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "No API key, or the API is unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Refused"
-                }
-              }
-            }
           },
           "422": {
             "description": "Validation Error",
@@ -2021,6 +1936,62 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/Contact"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such application"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{application_id}/rating": {
+      "put": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Set Rating",
+        "description": "The user's own rating, 1 to 5 stars, or none.",
+        "operationId": "set_rating",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rating"
               }
             }
           }
@@ -3680,6 +3651,17 @@
             "type": "string",
             "title": "Company Name"
           },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
           "status": {
             "$ref": "#/components/schemas/Status"
           },
@@ -3720,6 +3702,7 @@
           "offer_id",
           "title",
           "company_name",
+          "rating",
           "status",
           "tone",
           "last_event",
@@ -3752,6 +3735,17 @@
           "company_name": {
             "type": "string",
             "title": "Company Name"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
           },
           "status": {
             "$ref": "#/components/schemas/Status"
@@ -3814,6 +3808,7 @@
           "offer_id",
           "title",
           "company_name",
+          "rating",
           "status",
           "tone",
           "last_event",
@@ -4420,6 +4415,11 @@
               }
             ],
             "title": "Updated At"
+          },
+          "needs_save": {
+            "type": "boolean",
+            "title": "Needs Save",
+            "default": false
           }
         },
         "type": "object",
@@ -4495,6 +4495,14 @@
             "title": "Hobbies",
             "default": []
           },
+          "projects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Projects",
+            "default": []
+          },
           "before": {
             "type": "string",
             "title": "Before",
@@ -4525,6 +4533,7 @@
           "formation",
           "skills",
           "hobbies",
+          "projects",
           "before",
           "others",
           "order"
@@ -4577,6 +4586,13 @@
             "type": "array",
             "title": "Experiences"
           },
+          "projets": {
+            "items": {
+              "$ref": "#/components/schemas/PageItem"
+            },
+            "type": "array",
+            "title": "Projets"
+          },
           "formation": {
             "items": {
               "$ref": "#/components/schemas/PageFormation"
@@ -4620,6 +4636,7 @@
         "required": [
           "resume",
           "experiences",
+          "projets",
           "formation",
           "competences",
           "loisirs",
@@ -4971,6 +4988,17 @@
             ],
             "title": "Offer Id"
           },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
           "offer_title": {
             "type": "string",
             "title": "Offer Title"
@@ -5005,6 +5033,7 @@
         "required": [
           "id",
           "offer_id",
+          "application_id",
           "offer_title",
           "offer_company",
           "llm_call_id",
@@ -5036,6 +5065,17 @@
               }
             ],
             "title": "Offer Id"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
           },
           "llm_call_id": {
             "anyOf": [
@@ -5074,6 +5114,13 @@
             },
             "type": "array",
             "title": "Experiences"
+          },
+          "projets": {
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            },
+            "type": "array",
+            "title": "Projets"
           },
           "formation": {
             "items": {
@@ -5124,11 +5171,13 @@
           "lang",
           "offer",
           "offer_id",
+          "application_id",
           "llm_call_id",
           "created_at",
           "updated_at",
           "resume",
           "experiences",
+          "projets",
           "formation",
           "competences",
           "loisirs",
@@ -5815,6 +5864,12 @@
             "title": "Address",
             "default": ""
           },
+          "website": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Website",
+            "default": ""
+          },
           "linkedin": {
             "type": "string",
             "maxLength": 300,
@@ -5834,6 +5889,7 @@
           "email",
           "phone",
           "address",
+          "website",
           "linkedin",
           "github"
         ],
@@ -5865,6 +5921,12 @@
             "title": "Address",
             "default": ""
           },
+          "website": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Website",
+            "default": ""
+          },
           "linkedin": {
             "type": "string",
             "maxLength": 300,
@@ -5888,6 +5950,7 @@
           "email",
           "phone",
           "address",
+          "website",
           "linkedin",
           "github",
           "has_photo"
@@ -6587,7 +6650,6 @@
             "default": {
               "mission": 1.0,
               "stack": 1.0,
-              "salary": 1.0,
               "culture": 1.0
             }
           },
@@ -6648,9 +6710,12 @@
             "type": "string",
             "title": "Company Name"
           },
-          "location": {
-            "type": "string",
-            "title": "Location"
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Locations"
           },
           "contract": {
             "$ref": "#/components/schemas/Contract"
@@ -6746,7 +6811,7 @@
           "id",
           "title",
           "company_name",
-          "location",
+          "locations",
           "contract",
           "remote",
           "salary_min",
@@ -6813,165 +6878,6 @@
         ],
         "title": "OfferIntake"
       },
-      "OfferPage": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "company_name": {
-            "type": "string",
-            "title": "Company Name"
-          },
-          "location": {
-            "type": "string",
-            "title": "Location"
-          },
-          "contract": {
-            "$ref": "#/components/schemas/Contract"
-          },
-          "remote": {
-            "$ref": "#/components/schemas/Remote"
-          },
-          "salary_min": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Salary Min"
-          },
-          "salary_max": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Salary Max"
-          },
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url"
-          },
-          "description_md": {
-            "type": "string",
-            "title": "Description Md"
-          },
-          "llm_call_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Call Id"
-          },
-          "message_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message Id"
-          },
-          "state": {
-            "$ref": "#/components/schemas/OfferState"
-          },
-          "decision": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OfferDecision"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          },
-          "current_score": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OfferScore"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "drafts": {
-            "items": {
-              "$ref": "#/components/schemas/DraftSummary"
-            },
-            "type": "array",
-            "title": "Drafts"
-          },
-          "application_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Application Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "company_name",
-          "location",
-          "contract",
-          "remote",
-          "salary_min",
-          "salary_max",
-          "url",
-          "description_md",
-          "llm_call_id",
-          "message_id",
-          "state",
-          "decision",
-          "created_at",
-          "updated_at",
-          "current_score",
-          "drafts",
-          "application_id"
-        ],
-        "title": "OfferPage"
-      },
       "OfferScore": {
         "properties": {
           "id": {
@@ -7009,17 +6915,6 @@
                 "type": "null"
               }
             ]
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
           },
           "fit_score": {
             "anyOf": [
@@ -7094,7 +6989,6 @@
           "eliminated_by",
           "unknown",
           "criteria",
-          "score",
           "fit_score",
           "salary_score",
           "summary",
@@ -7259,6 +7153,28 @@
         ],
         "title": "PhotoUpload"
       },
+      "Rating": {
+        "properties": {
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "Rating"
+      },
       "Refused": {
         "properties": {
           "message": {
@@ -7374,9 +7290,12 @@
             "type": "string",
             "title": "Company Name"
           },
-          "location": {
-            "type": "string",
-            "title": "Location"
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Locations"
           },
           "contract": {
             "$ref": "#/components/schemas/Contract"
@@ -7475,6 +7394,17 @@
                 "type": "null"
               }
             ]
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
           }
         },
         "type": "object",
@@ -7482,7 +7412,7 @@
           "id",
           "title",
           "company_name",
-          "location",
+          "locations",
           "contract",
           "remote",
           "salary_min",
@@ -8173,13 +8103,6 @@
             "title": "Stack",
             "default": 1
           },
-          "salary": {
-            "type": "number",
-            "maximum": 5.0,
-            "minimum": 0.0,
-            "title": "Salary",
-            "default": 1
-          },
           "culture": {
             "type": "number",
             "maximum": 5.0,
@@ -8190,7 +8113,7 @@
         },
         "type": "object",
         "title": "Weights",
-        "description": "How much each of the model's ratings counts in the global score."
+        "description": "How much each of the model's ratings counts in the fit score. The salary has its\nown score, so no weight: a weight stored before that is ignored on reading."
       }
     }
   }

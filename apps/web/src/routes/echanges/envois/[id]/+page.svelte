@@ -93,7 +93,7 @@
 </svelte:head>
 
 <div class="mx-auto w-full max-w-[72rem] flex-1 px-3 pt-2 pb-12 sm:px-6">
-	<a href={resolve('/envois')} class="font-bold text-ink">← Envois</a>
+	<a href={resolve('/echanges')} class="font-bold text-ink">← Échanges</a>
 
 	{#if phase === 'loading'}
 		<p class="mt-4 text-ink-soft" role="status">Chargement…</p>
@@ -193,7 +193,7 @@
 					<dt class="font-bold text-ink-soft">En réponse</dt>
 					<dd>
 						{#if action.message_id}<a
-								href={resolve('/courrier/[id]', { id: String(action.message_id) })}
+								href={resolve('/echanges/recus/[id]', { id: String(action.message_id) })}
 								class="font-bold text-ink">au message reçu</a
 							>{:else}à un message reçu{/if}
 					</dd>

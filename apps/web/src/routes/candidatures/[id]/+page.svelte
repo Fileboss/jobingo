@@ -17,6 +17,7 @@
 	import { formatDateTime } from '#lib/observability/format.ts';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
+	import Stars from '#lib/ui/Stars.svelte';
 
 	const EVENT_TYPES = Object.keys(eventLabels) as EventType[];
 
@@ -28,6 +29,26 @@
 	let kind = $state<EventType>('applied');
 	let day = $state(today());
 	let note = $state('');
+	let rating = $state(false);
+
+	/** The user's own stars: saved at once, the page follows the answer. */
+	async function rate(value: number | null) {
+		if (!application) return;
+		rating = true;
+		failure = null;
+		try {
+			const { data } = await api.PUT('/api/applications/{application_id}/rating', {
+				params: { path: { application_id: application.id } },
+				body: { rating: value }
+			});
+			if (data) application = data;
+			else failure = 'La note n’a pas été enregistrée.';
+		} catch {
+			failure = 'Le serveur ne répond pas. Réessayez.';
+		} finally {
+			rating = false;
+		}
+	}
 	let contactName = $state('');
 	let contactEmail = $state('');
 	let contactPhone = $state('');
@@ -35,6 +56,9 @@
 	let notes = $state('');
 	let notesSaved = $state(false);
 	let letters = $state.raw<{ id: number; created_at: string }[]>([]);
+	let drafts = $state.raw<{ id: number; created_at: string }[]>([]);
+	let adapting = $state(false);
+	let cvFailure = $state<string | null>(null);
 	let writing_to = $state(false);
 	let writing = $state(false);
 	let letterFailure = $state<string | null>(null);
@@ -63,7 +87,7 @@
 			phase = 'unavailable';
 			return;
 		}
-		// The letters are a side list: failing to read them leaves the page usable.
+		// The documents are side lists: failing to read them leaves the page usable.
 		try {
 			const { data: listed } = await api.GET('/api/applications/{application_id}/letters', {
 				params: { path: { application_id: id } }
@@ -71,6 +95,33 @@
 			letters = listed ?? [];
 		} catch {
 			letters = [];
+		}
+		try {
+			const { data: listed } = await api.GET('/api/applications/{application_id}/cv-drafts', {
+				params: { path: { application_id: id } }
+			});
+			drafts = listed ?? [];
+		} catch {
+			drafts = [];
+		}
+	}
+
+	async function adaptCv() {
+		adapting = true;
+		cvFailure = null;
+		try {
+			const { data, error } = await api.POST('/api/applications/{application_id}/cv-drafts', {
+				params: { path: { application_id: id } }
+			});
+			if (!data) {
+				cvFailure = error && 'message' in error ? error.message : 'La proposition a échoué.';
+				return;
+			}
+			await goto(resolve('/adapter/[id]', { id: String(data.id) }));
+		} catch {
+			cvFailure = 'Le serveur ne répond pas. Réessayez.';
+		} finally {
+			adapting = false;
 		}
 	}
 
@@ -159,6 +210,14 @@
 	let late = $derived(application?.follow_up_on != null && application.follow_up_on <= today());
 </script>
 
+{#snippet documentLabel(label: string, at: string)}
+	<span class="min-w-0">
+		<span class="block font-bold">{label}</span>
+		<span class="block text-sm text-ink-soft">{formatDateTime(at)}</span>
+	</span>
+	<span class="shrink-0 text-sm font-bold underline underline-offset-4">Ouvrir</span>
+{/snippet}
+
 <svelte:head>
 	<title>{application ? `${application.title} | ` : ''}Candidatures | Jobingo</title>
 </svelte:head>
@@ -183,6 +242,7 @@
 				{application.title}
 			</h1>
 			<StatusPill status={application.status} tone={application.tone} />
+			<Stars value={application.rating} label="Votre note" onchange={rate} disabled={rating} />
 		</div>
 		<p class="text-xl font-bold text-ink-soft">
 			{application.company_name || 'Entreprise non nommée'}
@@ -243,7 +303,7 @@
 						/>
 					</label>
 					<label class="grid gap-1 sm:col-span-2">
-						<span class="text-sm font-bold">Note</span>
+						<span class="text-sm font-bold">Commentaire</span>
 						<input
 							bind:value={note}
 							maxlength="2000"
@@ -283,7 +343,7 @@
 								{#if entry.note}<p class="mt-0.5">{entry.note}</p>{/if}
 								{#if entry.message_id}
 									<a
-										href={resolve('/courrier/[id]', { id: String(entry.message_id) })}
+										href={resolve('/echanges/recus/[id]', { id: String(entry.message_id) })}
 										class="text-sm font-bold text-ink">Voir le message</a
 									>
 								{/if}
@@ -294,18 +354,70 @@
 			</section>
 
 			<aside class="grid content-start gap-6">
-				<BristolCard title="Lettre de motivation" colour="green">
-					{#if letters.length}
-						<ul class="mb-3 grid gap-1">
-							{#each letters as letter (letter.id)}
+				<BristolCard title="Documents" colour="green">
+					<h3 class="mb-2 font-extrabold text-ink">
+						CV adaptés{#if drafts.length}<span class="ml-1.5 text-ink-soft">{drafts.length}</span
+							>{/if}
+					</h3>
+					{#if drafts.length}
+						<ul class="mb-3 grid gap-2">
+							{#each drafts as draft, index (draft.id)}
 								<li>
 									<a
-										href={resolve('/lettres/[id]', { id: String(letter.id) })}
-										class="font-bold text-ink">Lettre du {formatDateTime(letter.created_at)}</a
+										href={resolve('/adapter/[id]', { id: String(draft.id) })}
+										class="flex items-center justify-between gap-3 rounded-sm bg-paper px-3 py-2 text-ink no-underline shadow-sm hover:bg-white"
+										>{@render documentLabel(
+											index === 0 ? 'CV adapté, le plus récent' : 'CV adapté',
+											draft.created_at
+										)}</a
 									>
 								</li>
 							{/each}
 						</ul>
+					{:else}
+						<p class="mb-2 text-sm">Aucun CV adapté pour l’instant.</p>
+					{/if}
+					<Button onclick={adaptCv} disabled={adapting}>
+						{drafts.length ? 'Adapter à nouveau' : 'Adapter mon CV'}
+					</Button>
+					<p class="mt-2 text-sm">
+						{application.offer_id
+							? 'Le modèle choisit dans tout votre CV ce qui sert l’offre.'
+							: 'Candidature spontanée : le modèle s’appuie sur le poste, l’entreprise et vos notes.'}
+					</p>
+					{#if adapting}
+						<p role="status" class="mt-2 text-sm">
+							Le modèle lit votre CV, une dizaine de secondes…
+						</p>
+					{/if}
+					{#if cvFailure}
+						<p role="alert" class="mt-2 bg-alert px-3 py-2 text-sm font-bold text-white">
+							{cvFailure}
+						</p>
+					{/if}
+
+					<h3 class="mt-6 mb-2 font-extrabold text-ink">
+						Lettres de motivation{#if letters.length}<span class="ml-1.5 text-ink-soft"
+								>{letters.length}</span
+							>{/if}
+					</h3>
+					{#if letters.length}
+						<ul class="mb-3 grid gap-2">
+							{#each letters as letter, index (letter.id)}
+								<li>
+									<a
+										href={resolve('/lettres/[id]', { id: String(letter.id) })}
+										class="flex items-center justify-between gap-3 rounded-sm bg-paper px-3 py-2 text-ink no-underline shadow-sm hover:bg-white"
+										>{@render documentLabel(
+											index === 0 ? 'Lettre, la plus récente' : 'Lettre',
+											letter.created_at
+										)}</a
+									>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<p class="mb-2 text-sm">Aucune lettre pour l’instant.</p>
 					{/if}
 					<Button onclick={writeLetter} disabled={writing}>
 						{letters.length ? 'Rédiger une autre lettre' : 'Rédiger une lettre'}
@@ -326,7 +438,7 @@
 					</p>
 				</BristolCard>
 
-				<BristolCard title="Courrier" colour="yellow">
+				<BristolCard title="Échanges" colour="yellow">
 					<div class="mb-3">
 						<Button onclick={() => (writing_to = true)} disabled={writing_to}>
 							Écrire au contact
@@ -337,7 +449,7 @@
 							{#each application.messages as message (message.id)}
 								<li>
 									<a
-										href={resolve('/courrier/[id]', { id: String(message.id) })}
+										href={resolve('/echanges/recus/[id]', { id: String(message.id) })}
 										class="block font-bold break-words text-ink"
 										>{message.subject || '(sans objet)'}</a
 									>
@@ -352,8 +464,8 @@
 						</ul>
 					{:else}
 						<p class="text-sm">
-							Aucun message rattaché. Le Courrier les rattache par le fil, l’adresse du contact ou
-							le nom de l’entreprise.
+							Aucun message rattaché. Un message reçu est rattaché par le fil, l’adresse du contact
+							ou le nom de l’entreprise.
 						</p>
 					{/if}
 				</BristolCard>

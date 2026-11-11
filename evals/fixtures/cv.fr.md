@@ -28,6 +28,11 @@ Ingénieur backend, huit ans sur des plateformes de données et des API à fort 
 - Maintenance d'applications Java pour des clients du secteur bancaire <!-- id=colibri-01 tags=java -->
 - Automatisation des déploiements avec Ansible <!-- id=colibri-02 tags=ops,ansible -->
 
+## Projets personnels
+
+- Application de suivi de dépenses en Django et PostgreSQL <!-- id=project-01 tags=python,django -->
+- Station météo connectée sur un nano-ordinateur <!-- id=project-02 -->
+
 ## Formation
 
 - Diplôme d'ingénieur en informatique, INSA Lyon, 2016 <!-- id=formation-01 -->

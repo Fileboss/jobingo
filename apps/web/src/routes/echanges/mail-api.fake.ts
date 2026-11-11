@@ -89,6 +89,7 @@ const application: Schemas['ApplicationSummary'] = {
 	offer_id: 6,
 	title: 'Data engineer',
 	company_name: 'Voltéo',
+	rating: null,
 	status: 'postule',
 	tone: 'active',
 	last_event: null,

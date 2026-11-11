@@ -110,10 +110,10 @@ def _application(conn: Conn, user_id: int, application_id: int) -> dict[str, Any
     ).fetchone()
 
 
-def _achievements(conn: Conn, user_id: int, offer_id: int | None) -> list[AchievementInput]:
-    """What the letter may draw on: the CV adapted to this offer as the user settled it,
-    or else the whole CV."""
-    if offer_id is not None and (drafts := list_drafts(conn, user_id, offer_id=offer_id)):
+def _achievements(conn: Conn, user_id: int, application_id: int) -> list[AchievementInput]:
+    """What the letter may draw on: the CV adapted for this application as the user
+    settled it, or else the whole CV."""
+    if drafts := list_drafts(conn, user_id, application_id):
         draft = load_draft(conn, user_id, drafts[0].id)
         if draft is not None:
             kept = [b for e in draft.experiences for b in [e, *e.bullets] if b.kept]
@@ -142,7 +142,7 @@ def propose_letter(
             "Votre CV contient des coordonnées. Retirez-les dans « Mon CV » : elles vont "
             "dans l'identité, que le modèle ne lit jamais."
         )
-    achievements = _achievements(conn, user_id, application["offer_id"])
+    achievements = _achievements(conn, user_id, application_id)
     if not achievements:
         raise LetterNotPossibleError("Votre CV est vide : remplissez-le avant la lettre.")
 

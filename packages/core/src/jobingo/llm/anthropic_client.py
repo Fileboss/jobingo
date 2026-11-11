@@ -54,6 +54,29 @@ def _check_tier(tier: TierSettings) -> None:
             raise ValueError(f"thinking off accepts effort low, medium or high, not {tier.effort}")
 
 
+def _reason(error: anthropic.APIError, model: str) -> str:
+    """What the user can do about it, in French: most refusals are settings to fix."""
+    if isinstance(error, anthropic.AuthenticationError):
+        return (
+            "La clé Anthropic est refusée : vérifiez ANTHROPIC_API_KEY dans la configuration, "
+            "puis relancez l'API."
+        )
+    if isinstance(error, anthropic.PermissionDeniedError):
+        return "La clé Anthropic n'a pas accès à cette API ou à ce modèle."
+    if isinstance(error, anthropic.NotFoundError):
+        return (
+            f"Le modèle {model} est inconnu de l'API : vérifiez LLM_MODEL_FAST et "
+            "LLM_MODEL_WRITING dans la configuration."
+        )
+    if isinstance(error, anthropic.BadRequestError) and "credit balance" in str(error).lower():
+        return "Le crédit du compte Anthropic est épuisé : rechargez-le dans la console Anthropic."
+    if isinstance(error, anthropic.RateLimitError):
+        return "L'API Anthropic limite le débit : réessayez dans un instant."
+    if isinstance(error, anthropic.BadRequestError):
+        return "L'API Anthropic a refusé la requête : le détail est dans le journal des appels."
+    return LLMUnavailable.reason
+
+
 class AnthropicLLMClient:
     """The real `LLMClient`. It constrains the answer with structured output, validates
     it against the task's model, and retries once on a truncated, refused or invalid
@@ -117,13 +140,15 @@ class AnthropicLLMClient:
                 answer = cast(Message, self._sdk.messages.create(**params))
             except anthropic.APIError as exc:
                 elapsed = int((time.monotonic() - started) * 1000)
-                raise LLMUnavailable(
+                unavailable = LLMUnavailable(
                     f"Anthropic API unavailable ({task.name}): {exc}",
                     model=model,
                     usage=replace(usage, attempts=attempt, latency_ms=usage.latency_ms + elapsed),
                     request=params,
                     response=response,
-                ) from exc
+                )
+                unavailable.reason = _reason(exc, model)
+                raise unavailable from exc
             elapsed = int((time.monotonic() - started) * 1000)
             counted = answer.usage
             usage = Usage(

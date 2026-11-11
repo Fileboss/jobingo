@@ -24,3 +24,11 @@ Settled by the user. Follow them instead of asking again. Format and rules: `doc
 - [The CV embeds a free font](2026-11-05-embedded-font.md): when changing the CV's typography or adding a template
 - [Real local mail servers in Docker, not hand-made mocks](2026-11-07-mailpit-for-mail-tests.md): when building or testing sending or reading mail, the approval queue's executor, or a local mail setup for development and demos
 - [The mail account is set in `.env`, local servers by default](2026-11-07-mail-account-in-env.md): when configuring the mailbox the app reads and sends from, or adding a setting for it
+- [Two scores per offer: fit and salary, never mixed](2026-11-10-two-scores-per-offer.md): when computing, showing or sorting an offer's score, or changing the scoring weights
+- [A star rating of the user's own on each application](2026-11-10-star-rating-per-application.md): when working on the applications' fields or screens, or on what the timeline's free-text field is called
+- [No merging: the source CV is the user's to write well](2026-11-10-no-merge-user-writes-the-cv.md): when changing what the model may do when it adapts the CV to an offer, or tempted to merge, condense or deduplicate CV items for the user
+- [A « Projets personnels » section, one line per project](2026-11-10-personal-projects-section.md): when working on the CV's sections, its format, its editor, its template or what the model selects from it
+- [Adapted CVs belong to applications](2026-11-10-tailored-cvs-belong-to-applications.md): when working on adapted CVs, the offer or application screens, or how an application is created
+- [All offers in one table, with a status column](2026-11-10-offers-in-one-table.md): when laying out the offers list, or tempted to split a list into tabs or views
+- [Profile links show as a logo and a username](2026-11-10-profile-links-as-logo-and-username.md): when rendering the identity's contact details on the CV or a letter, or adding a profile link to the identity
+- [No Aperçu screen; mail and sends share one « Échanges » screen](2026-11-10-navigation-and-exchanges-screen.md): when changing the main navigation, adding a screen, or working on the screens for mail received and sends

@@ -20,10 +20,12 @@ EXPERIENCES_SECTION = "Expériences"
 FORMATION_SECTION = "Formation"
 COMPETENCES_SECTION = "Compétences"
 LOISIRS_SECTION = "Loisirs"
+PROJETS_SECTION = "Projets personnels"
 
 KNOWN_SECTIONS = (
     RESUME_SECTION,
     EXPERIENCES_SECTION,
+    PROJETS_SECTION,
     FORMATION_SECTION,
     COMPETENCES_SECTION,
     LOISIRS_SECTION,
@@ -45,6 +47,14 @@ _SECTION_SYNONYMS = {
     FORMATION_SECTION: ("formation", "formations", "education"),
     COMPETENCES_SECTION: ("competences", "competence", "skills"),
     LOISIRS_SECTION: ("loisirs", "centres d'interet", "interests", "hobbies"),
+    PROJETS_SECTION: (
+        "projets personnels",
+        "projet personnel",
+        "projets",
+        "side projects",
+        "personal projects",
+        "projects",
+    ),
 }
 
 
@@ -58,7 +68,7 @@ def canonical_section(title: str) -> str:
 
 class ProfileItem(BaseModel):
     id: str
-    kind: str  # resume | experience | formation | bullet | skill | hobby
+    kind: str  # resume | experience | formation | bullet | skill | hobby | project
     text: str
     section: str
     tags: list[str] = []
@@ -184,12 +194,15 @@ def scan_cv_body(lines: list[str]) -> list[ScannedLine]:
             FORMATION_SECTION,
             COMPETENCES_SECTION,
             LOISIRS_SECTION,
+            PROJETS_SECTION,
         ):
             text = bullet.group(1)
             if section == COMPETENCES_SECTION:
                 scanned.append(ScannedLine(index, "item", section, "skill", text, "- "))
             elif section == LOISIRS_SECTION:
                 scanned.append(ScannedLine(index, "item", section, "hobby", text, "- "))
+            elif section == PROJETS_SECTION:
+                scanned.append(ScannedLine(index, "item", section, "project", text, "- "))
             elif section == FORMATION_SECTION:
                 scanned.append(ScannedLine(index, "item", section, "formation", text, "- "))
             elif top and not h3_seen and _NESTED_BULLET_RE.match(_next_line(lines, index)):

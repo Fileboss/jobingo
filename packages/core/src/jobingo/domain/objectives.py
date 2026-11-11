@@ -17,7 +17,7 @@ class HardFilters(BaseModel):
 
     contracts: list[Contract] = Field(default=[], max_length=10)
     remote: list[Remote] = Field(default=[], max_length=10)
-    # Matched as a part of the offer's location: « Lyon » keeps « Lyon 3e ».
+    # Matched as a part of one of the offer's cities: « Lyon » keeps « Lyon 3e ».
     locations: list[Term] = Field(default=[], max_length=30)
     salary_min_eur: int | None = Field(default=None, ge=0, le=1_000_000)
     # Matched in the title and the description.
@@ -26,11 +26,11 @@ class HardFilters(BaseModel):
 
 
 class Weights(BaseModel):
-    """How much each of the model's ratings counts in the global score."""
+    """How much each of the model's ratings counts in the fit score. The salary has its
+    own score, so no weight: a weight stored before that is ignored on reading."""
 
     mission: Weight = 1
     stack: Weight = 1
-    salary: Weight = 1
     culture: Weight = 1
 
 
@@ -73,10 +73,12 @@ def apply_hard_filters(offer: Offer, filters: HardFilters) -> FilterResult:
             eliminated.append(f"télétravail non retenu : {offer.remote}")
 
     if filters.locations:
-        if not offer.location.strip():
+        # One city the user accepts is enough: « Paris ou Toulouse » passes « Toulouse ».
+        cities = [city for city in offer.locations if city.strip()]
+        if not cities:
             unknown.append("lieu")
-        elif not any(_norm(place) in _norm(offer.location) for place in filters.locations):
-            eliminated.append(f"lieu non retenu : {offer.location}")
+        elif not any(_norm(place) in _norm(city) for place in filters.locations for city in cities):
+            eliminated.append(f"lieu non retenu : {', '.join(cities)}")
 
     if filters.salary_min_eur is not None:
         # The top of the range: an offer that may reach the minimum stays.

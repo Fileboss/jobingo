@@ -43,6 +43,7 @@ from jobingo.domain.profile import (
     HEADING_RE,
     KNOWN_SECTIONS,
     LOISIRS_SECTION,
+    PROJETS_SECTION,
     RESUME_SECTION,
     canonical_section,
     extract_comment,
@@ -100,6 +101,7 @@ class CvFields(_Fields):
     formation: list[FormationEntry] = []
     skills: list[str] = []
     hobbies: list[str] = []
+    projects: list[str] = []
     before: str = ""  # text before the first section
     others: list[str] = []  # blocks the form cannot show, in Markdown
     # The sections in document order: keys of `SECTION_KEYS`, and OTHER for the next
@@ -108,13 +110,14 @@ class CvFields(_Fields):
 
 
 OTHER = "other"
-SECTION_KEYS = ("resume", "experiences", "formation", "skills", "hobbies")
+SECTION_KEYS = ("resume", "experiences", "projects", "formation", "skills", "hobbies")
 _KEY_OF_SECTION = {
     RESUME_SECTION: "resume",
     EXPERIENCES_SECTION: "experiences",
     FORMATION_SECTION: "formation",
     COMPETENCES_SECTION: "skills",
     LOISIRS_SECTION: "hobbies",
+    PROJETS_SECTION: "projects",
 }
 
 
@@ -293,6 +296,8 @@ def parse_fields(clean: str) -> CvFields:
                 continue
             if section == COMPETENCES_SECTION:
                 fields.skills = texts
+            elif section == PROJETS_SECTION:
+                fields.projects = texts
             else:
                 fields.hobbies = texts
         taken.add(section)
@@ -349,6 +354,9 @@ def _section_blocks(fields: CvFields) -> dict[str, str]:
     hobbies = _bullet_block(fields.hobbies)
     if hobbies:
         blocks["hobbies"] = f"## {LOISIRS_SECTION}\n\n{hobbies}"
+    projects = _bullet_block(fields.projects)
+    if projects:
+        blocks["projects"] = f"## {PROJETS_SECTION}\n\n{projects}"
     return blocks
 
 

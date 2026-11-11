@@ -1,17 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import {
-	FakePreviewApi,
-	fictionalIdentity,
-	notAnImage,
-	pngFile
-} from '../apercu/preview-api.fake.ts';
+import { FakeIdentityApi, fictionalIdentity, notAnImage, pngFile } from './identity-api.fake.ts';
 
 const save = (page: Page) => page.getByRole('button', { name: 'Enregistrer', exact: true });
 const photoInput = (page: Page) => page.getByLabel('Choisir une photo');
 const thumbnail = (page: Page) => page.getByRole('img', { name: 'Votre portrait' });
 
 async function open(page: Page) {
-	const api = new FakePreviewApi();
+	const api = new FakeIdentityApi();
 	await api.install(page);
 	await page.goto('/identite');
 	return api;

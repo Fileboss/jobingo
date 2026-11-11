@@ -20,7 +20,6 @@
 	const WEIGHTS: [WeightName, string, string][] = [
 		['mission', 'Mission', 'ce que le poste fait faire'],
 		['stack', 'Stack technique', 'les outils et langages'],
-		['salary', 'Salaire', 'face à votre attente'],
 		['culture', 'Culture', 'l’équipe et ses pratiques']
 	];
 
@@ -36,7 +35,7 @@
 	let salary = $state<number | null>(null);
 	let keywords = $state('');
 	let companies = $state('');
-	let weights = $state<Record<WeightName, number>>({ mission: 1, stack: 1, salary: 1, culture: 1 });
+	let weights = $state<Record<WeightName, number>>({ mission: 1, stack: 1, culture: 1 });
 	let preferences = $state('');
 	let savedKey = $state('');
 
@@ -212,8 +211,9 @@
 
 				<BristolCard title="Pondérations" colour="yellow" tab={1}>
 					<p class="mb-4 text-sm">
-						Le modèle note chaque critère de 0 à 10. Le score global est leur moyenne pondérée,
-						calculée par le code : à 0, un critère ne compte pas.
+						Le modèle note chaque critère de 0 à 10. L’adéquation d’une offre est leur moyenne
+						pondérée, calculée par le code : à 0, un critère ne compte pas. Le salaire est noté à
+						part, et ne pénalise pas une offre qui n’en indique pas.
 					</p>
 					<div class="grid gap-4 sm:grid-cols-2">
 						{#each WEIGHTS as [name, label, hint] (name)}

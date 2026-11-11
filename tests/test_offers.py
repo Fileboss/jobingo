@@ -5,7 +5,6 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import BaseModel
 
 from jobingo.domain.offers import ExtractedOffer, web_url
 from jobingo.llm.fake import FakeLLMClient
@@ -19,7 +18,7 @@ def _offers(*offers: ExtractedOffer) -> ExtractOfferOutput:
     return ExtractOfferOutput(offers=list(offers))
 
 
-DATA = ExtractedOffer(title="Data engineer", company_name="Plume Énergie", location="Lyon")
+DATA = ExtractedOffer(title="Data engineer", company_name="Plume Énergie", locations=["Lyon"])
 LEAD = ExtractedOffer(
     title="Tech Lead", company_name="Voltéo", contract="CDI", url="javascript:alert(1)"
 )
@@ -74,6 +73,18 @@ def test_the_same_offer_again_is_completed_not_duplicated(client: TestClient, fa
     assert offer["url"] == "https://plume.example/offres/42"
 
 
+def test_a_second_source_adds_the_cities_it_names(client: TestClient, fake: FakeLLMClient):
+    alert = ExtractedOffer(title="Ingénieur IA", company_name="Pivolo", locations=["Nantes"])
+    [first] = _intake(client, fake, _offers(alert)).json()["offers"]
+    full = alert.model_copy(update={"locations": ["Nantes", "Bordeaux", "nantes"]})
+
+    second = _intake(client, fake, _offers(full)).json()
+
+    assert second["merged_ids"] == [first["id"]]
+    [offer] = client.get("/api/offers").json()
+    assert offer["locations"] == ["Nantes", "Bordeaux"]
+
+
 def test_the_candidate_is_redacted_before_the_call(client: TestClient, fake: FakeLLMClient):
     client.put(
         "/api/identity",
@@ -109,34 +120,6 @@ def test_without_a_key_nothing_is_called(client: TestClient):
     client.app.state.llm_client = None  # type: ignore[attr-defined]
     response = client.post("/api/offers/intake", json={"text": DIGEST})
     assert response.status_code == 503
-
-
-class _Wire(BaseModel):
-    experiences: list[str] = []
-    bullets: list[str] = []
-    competences: list[str] = []
-
-
-def test_a_cv_adapted_to_an_offer_is_listed_on_it(client: TestClient, fake: FakeLLMClient):
-    current = client.get("/api/cv/fr").json()
-    client.put(
-        "/api/cv/fr",
-        json={"draft": {"mode": "text", "text": FIXTURE}, "expected_sha256": current["sha256"]},
-    )
-    [offer] = _intake(client, fake, _offers(DATA)).json()["offers"]
-    fake.queue("select_cv_content", _Wire(experiences=["E1"], competences=["C1"]))
-
-    response = client.post(f"/api/offers/{offer['id']}/cv-drafts/fr")
-
-    assert response.status_code == 201
-    draft = response.json()
-    assert draft["offer_id"] == offer["id"]
-    assert draft["offer"]["title"] == "Data engineer"
-    # A title-only offer is still something to adapt to.
-    assert draft["offer"]["description"] == "Data engineer"
-    page = client.get(f"/api/offers/{offer['id']}").json()
-    assert [d["id"] for d in page["drafts"]] == [draft["id"]]
-    assert client.post("/api/offers/999/cv-drafts/fr").status_code == 404
 
 
 @pytest.mark.parametrize(

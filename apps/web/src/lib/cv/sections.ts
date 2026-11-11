@@ -2,6 +2,7 @@
 export const sectionId = {
 	resume: 'cv-resume',
 	experiences: 'cv-experiences',
+	projets: 'cv-projets',
 	formation: 'cv-formation',
 	competences: 'cv-competences',
 	loisirs: 'cv-loisirs'
@@ -10,6 +11,7 @@ export const sectionId = {
 const bySectionName: Record<string, string> = {
 	Résumé: sectionId.resume,
 	Expériences: sectionId.experiences,
+	'Projets personnels': sectionId.projets,
 	Formation: sectionId.formation,
 	Compétences: sectionId.competences,
 	Loisirs: sectionId.loisirs

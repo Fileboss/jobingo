@@ -1,4 +1,4 @@
-"""Scoring: filters in code, four ratings from the model, every score computed by code."""
+"""Scoring: filters in code, four ratings from the model, two scores computed by code."""
 
 from pathlib import Path
 from typing import Any
@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from jobingo.domain.objectives import Weights
 from jobingo.domain.offers import ExtractedOffer
-from jobingo.domain.scoring import Criteria, fit_score, global_score
+from jobingo.domain.scoring import Criteria, fit_score
 from jobingo.llm.client import LLMUnavailable, Usage
 from jobingo.llm.fake import FakeLLMClient
 from jobingo.llm.tasks.extract_offer import ExtractOfferOutput
@@ -18,7 +18,7 @@ FIXTURE = (Path(__file__).parent / "fixtures" / "cv.fr.md").read_text(encoding="
 DATA = ExtractedOffer(
     title="Data engineer",
     company_name="Plume Énergie",
-    location="Lyon",
+    locations=["Lyon"],
     contract="CDI",
     salary_min=55000,
     salary_max=62000,
@@ -30,12 +30,11 @@ RATINGS = ScoreOfferOutput(
 )
 
 
-def test_scores_are_weighted_averages_on_100():
-    criteria = Criteria(mission=8, stack=9, salary=6, culture=7)
-    assert global_score(criteria, Weights()) == 75
-    assert global_score(criteria, Weights(mission=2, stack=2, salary=1, culture=1)) == 78
+def test_the_fit_is_a_weighted_average_on_100_without_the_salary():
+    criteria = Criteria(mission=8, stack=9, salary=0, culture=7)
     assert fit_score(criteria, Weights()) == 80
-    assert global_score(criteria, Weights(mission=0, stack=0, salary=0, culture=0)) == 0
+    assert fit_score(criteria, Weights(mission=2, stack=2, culture=1)) == 82
+    assert fit_score(criteria, Weights(mission=0, stack=0, culture=0)) == 0
 
 
 @pytest.fixture
@@ -68,7 +67,7 @@ def test_intake_scores_what_passes_and_filters_the_rest_without_a_call(
     _objectives(
         client,
         hard_filters={"contracts": ["CDI"]},
-        weights={"mission": 2, "stack": 2, "salary": 1, "culture": 1},
+        weights={"mission": 2, "stack": 2, "culture": 1},
         preferences="Plateformes de données.",
     )
     fake.queue("score_offer", RATINGS)
@@ -84,20 +83,22 @@ def test_intake_scores_what_passes_and_filters_the_rest_without_a_call(
     data, java = listed["Data engineer"], listed["Développeur Java"]
     assert data["state"] == "scored"
     score = data["current_score"]
-    assert (score["score"], score["fit_score"], score["salary_score"]) == (78, 82, 60)
-    assert score["weights"] == {"mission": 2, "stack": 2, "salary": 1, "culture": 1}
+    assert (score["fit_score"], score["salary_score"]) == (82, 60)
+    assert "score" not in score  # two scores, never mixed
+    assert score["weights"] == {"mission": 2, "stack": 2, "culture": 1}
     assert score["llm_call_id"] is not None and not score["stale"]
     assert java["state"] == "filtered"
     assert java["current_score"]["eliminated_by"] == ["contrat non retenu : CDD"]
     assert java["current_score"]["llm_call_id"] is None
 
 
-def test_an_offer_without_salary_has_no_salary_score(client: TestClient, fake: FakeLLMClient):
-    fake.queue("score_offer", RATINGS)
+def test_an_offer_without_salary_keeps_its_fit(client: TestClient, fake: FakeLLMClient):
+    """An unknown salary, rated 0 by the model, once pulled a fit of 67 down to 50."""
+    fake.queue("score_offer", RATINGS.model_copy(update={"salary": 0}))
     _intake(client, fake, JAVA)
     [offer] = client.get("/api/offers").json()
     assert offer["current_score"]["salary_score"] is None
-    assert offer["current_score"]["score"] == 75  # the rating still counts in the score
+    assert offer["current_score"]["fit_score"] == 80
 
 
 def test_a_failed_scoring_keeps_the_offer_and_says_so(client: TestClient, fake: FakeLLMClient):
@@ -108,7 +109,7 @@ def test_a_failed_scoring_keeps_the_offer_and_says_so(client: TestClient, fake: 
 
     assert len(result["offers"]) == 2
     assert len(result["unscored_ids"]) == 2  # it stops at the first failure
-    assert result["scoring_error"] == "le modèle n'a pas pu noter l'offre"
+    assert result["scoring_error"] == LLMUnavailable.reason  # the outage, said as such
     assert all(o["state"] == "new" for o in client.get("/api/offers").json())
 
 
@@ -136,7 +137,7 @@ def test_changed_objectives_make_scores_stale_and_rescoring_updates_them(
     _intake(client, fake, DATA)
     assert client.get("/api/offers/stale").json() == {"count": 0}
 
-    _objectives(client, weights={"mission": 3, "stack": 1, "salary": 1, "culture": 1})
+    _objectives(client, weights={"mission": 3, "stack": 1, "culture": 1})
     [offer] = client.get("/api/offers").json()
     assert offer["current_score"]["stale"]
     assert client.get("/api/offers/stale").json() == {"count": 1}
@@ -147,7 +148,7 @@ def test_changed_objectives_make_scores_stale_and_rescoring_updates_them(
     assert run == {"scored_ids": [offer["id"]], "unscored_ids": [], "error": None}
     [rescored] = client.get("/api/offers").json()
     assert not rescored["current_score"]["stale"]
-    assert rescored["current_score"]["score"] == 77
+    assert rescored["current_score"]["fit_score"] == 80
 
 
 def test_scoring_needs_a_key_and_an_existing_offer(client: TestClient, fake: FakeLLMClient):

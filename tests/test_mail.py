@@ -317,7 +317,9 @@ def test_another_senders_alert_is_read_by_the_model_then_scored(
         json={"draft": {"mode": "text", "text": CV}, "expected_sha256": current["sha256"]},
     )
     mailbox.append(alert_folder, _other_alert(), datetime.now(UTC))
-    lead = ExtractedOffer(title="Tech Lead", company_name="Voltéo", location="Lyon", contract="CDI")
+    lead = ExtractedOffer(
+        title="Tech Lead", company_name="Voltéo", locations=["Lyon"], contract="CDI"
+    )
     fake.queue("extract_offer", ExtractOfferOutput(offers=[lead]))
     fake.queue(
         "score_offer",

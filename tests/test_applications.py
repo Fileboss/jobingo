@@ -124,6 +124,16 @@ def test_events_move_the_status_and_removing_one_moves_it_back(client: TestClien
     assert listed["last_event"]["type"] == "applied"
 
 
+def test_the_offer_list_points_to_its_application(client: TestClient, offer_id: int):
+    assert client.get("/api/offers").json()[0]["application_id"] is None
+    app_id = client.post(f"/api/offers/{offer_id}/application").json()["id"]
+
+    assert client.get("/api/offers").json()[0]["application_id"] == app_id
+    assert client.get(f"/api/offers/{offer_id}").json()["application_id"] == app_id
+    client.delete(f"/api/applications/{app_id}")
+    assert client.get("/api/offers").json()[0]["application_id"] is None
+
+
 def test_a_manual_application_has_no_offer(client: TestClient):
     created = client.post(
         "/api/applications", json={"title": "Candidature spontanée", "company_name": "Voltéo"}
@@ -162,3 +172,15 @@ def test_unknown_applications_are_not_found(client: TestClient):
     event = {"type": "note", "occurred_at": "2026-11-07"}
     assert client.post("/api/applications/999/events", json=event).status_code == 404
     assert client.post("/api/offers/999/application").status_code == 404
+
+
+def test_the_user_rates_an_application_with_stars(client: TestClient):
+    app_id = client.post("/api/applications", json={"title": "Tech Lead"}).json()["id"]
+    url = f"/api/applications/{app_id}/rating"
+    assert client.get(f"/api/applications/{app_id}").json()["rating"] is None
+
+    assert client.put(url, json={"rating": 4}).json()["rating"] == 4
+    assert client.get("/api/applications").json()[0]["rating"] == 4
+    assert client.put(url, json={"rating": 6}).status_code == 422
+    assert client.put(url, json={"rating": None}).json()["rating"] is None
+    assert client.put("/api/applications/999/rating", json={"rating": 3}).status_code == 404

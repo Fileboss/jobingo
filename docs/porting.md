@@ -65,6 +65,14 @@ What step 3 left in the POC, for the step that needs it:
 
 What step 4.1 left in the POC: `journal.find_reusable_call` and `reuse_or_run_task`, for 4.4 and the CV proposal only. Step 4.2 replaced the POC's JSON-lines log file with the `app_events` table.
 
+After step 7, on the user's request (2026-11-10):
+
+- Merging close CV items was tried and dropped: prompts v6 to v8 asked Sonnet 5.5 to merge two complementary bullets when the page lacked room, and measured on 2026-11-10 (10/11, 9/11, 10/11 on 11 cases) it never merged where a case required it, leaving a bullet out instead. The user settled that the source CV is theirs to write well: v5 ships, and the merge code, cases and prompts are gone.
+- An offer has two scores, fit and salary, never mixed; the global score and the salary weight are gone (migration 0017).
+- Each application has the user's own rating, 1 to 5 stars (migration 0018).
+- An adapted CV belongs to an application (`cv_drafts.application_id`, migration 0019, which moved each draft to the live application of its offer). It is made from the application's page only, for a spontaneous one from the role, the company and the notes; the offer pages, the « Adapter » screen and its pasted-offer route are gone.
+- « Projets personnels » is a known section, one line per project (`project-` ids, alias `R` for the model), printed under the experiences, at most 3 in a proposal. `select_cv_content` v6 knows it; the eval CV has two projects. A CV saved while the section was unknown holds its lines without ids: the editor flags it (`needs_save`) and one save carries them forward, since only a human save writes the source CV.
+
 What step 7.4 changed or left:
 
 - `draft_reply` ships as the POC's v4, the version in service: a missing fact becomes the canonical `[À COMPLÉTER : …]` marker, whose labels the system prompt lists verbatim (a test keeps them equal to `domain/placeholders.py`). Its 6 cases and the 15 injection cases are ported, every domain rewritten to `.example`. Neither suite is measured here yet: run `make eval ARGS="--task draft_reply"` and `--task injection`.

@@ -28,16 +28,14 @@ const item = (id: string, original: string, extra: Partial<DraftItem> = {}): Dra
 
 /** The drafts API in memory, for Playwright, on the fictional persona's CV. */
 export class FakeDraftsApi {
-	created: Schemas['OfferInput'][] = [];
 	choicesSent: DraftChoices[] = [];
 	pdfRequests = 0;
-	/** What creating a draft does: succeed, or refuse with a message. */
-	createState: 'ok' | 'no-key' = 'ok';
 
 	draft: DraftView = {
 		id: 7,
 		lang: 'fr',
 		offer_id: null,
+		application_id: 5,
 		offer: {
 			title: 'Ingénieur data plateforme',
 			company: 'Plume Énergie',
@@ -75,6 +73,7 @@ export class FakeDraftsApi {
 				bullets: []
 			}
 		],
+		projets: [],
 		formation: [],
 		competences: [item('skill-python', 'Python', { kept: true, proposed: true })],
 		loisirs: [],
@@ -110,31 +109,6 @@ export class FakeDraftsApi {
 	}
 
 	async install(page: Page) {
-		await page.route('**/api/cv/drafts', (route) =>
-			route.fulfill({
-				json: [
-					{
-						id: this.draft.id,
-						offer_id: null,
-						offer_title: this.draft.offer.title,
-						offer_company: this.draft.offer.company,
-						llm_call_id: 42,
-						created_at: this.draft.created_at,
-						updated_at: this.draft.updated_at
-					}
-				]
-			})
-		);
-		await page.route('**/api/cv/fr/drafts', async (route) => {
-			this.created.push(route.request().postDataJSON());
-			if (this.createState === 'no-key') {
-				return route.fulfill({
-					status: 503,
-					json: { message: 'L’IA n’est pas configurée : renseignez ANTHROPIC_API_KEY.' }
-				});
-			}
-			await route.fulfill({ status: 201, json: this.draft });
-		});
 		await page.route(/\/api\/cv\/drafts\/\d+$/, (route) => {
 			const id = Number(route.request().url().split('/').at(-1));
 			if (id !== this.draft.id) return route.fulfill({ status: 404, json: { detail: 'x' } });

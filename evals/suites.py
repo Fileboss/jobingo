@@ -13,7 +13,7 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from evals.harness import NO_BUDGET, Workspace
 from jobingo.domain.identity import Identity
@@ -120,18 +120,35 @@ def grade_select_cv(rows: list[Row]) -> dict[str, Any]:
 # Compared exactly: the objectives' filters match these values.
 _EXACT_FIELDS = ("contract", "remote")
 # Compared loosely: « Ingénieur (H/F) » is « Ingénieur ».
-_LOOSE_FIELDS = ("title", "company_name", "location")
+_LOOSE_FIELDS = ("title", "company_name")
+# Every city expected, and no other, each compared loosely: « Lyon » is « Lyon 3e ».
+_LIST_FIELDS = ("locations",)
 
 
 def _norm(value: object) -> str:
     return " ".join(fold(str(value or "")).split())
 
 
-def _field_ok(name: str, expected: object, got: object) -> bool:
-    want, have = _norm(expected), _norm(got)
-    if name in _EXACT_FIELDS or not want or not have:
+def _norm_list(value: object) -> list[str]:
+    return [_norm(item) for item in cast("list[object]", value)] if isinstance(value, list) else []
+
+
+def _loose_ok(want: str, have: str) -> bool:
+    if not want or not have:
         return want == have
     return want in have or have in want
+
+
+def _field_ok(name: str, expected: object, got: object) -> bool:
+    if name in _LIST_FIELDS:
+        wants, haves = _norm_list(expected), _norm_list(got)
+        return len(wants) == len(haves) and all(
+            any(_loose_ok(want, have) for have in haves) for want in wants
+        )
+    want, have = _norm(expected), _norm(got)
+    if name in _EXACT_FIELDS:
+        return want == have
+    return _loose_ok(want, have)
 
 
 def run_extract(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> list[Row]:
@@ -156,7 +173,7 @@ def run_extract(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -
         checked = ok = 0
         misses: list[str] = []
         for want, got in zip(expected, output.offers, strict=False):
-            for name in _EXACT_FIELDS + _LOOSE_FIELDS:
+            for name in _EXACT_FIELDS + _LOOSE_FIELDS + _LIST_FIELDS:
                 if name not in want:
                     continue
                 checked += 1
@@ -227,7 +244,7 @@ def spearman(expected_ranks: list[float], scores: list[float]) -> float:
 def _insert_offer(ws: Workspace, offer: dict[str, Any]) -> int:
     row = ws.conn.execute(
         """
-        INSERT INTO offers (user_id, title, company_name, location, contract, remote,
+        INSERT INTO offers (user_id, title, company_name, locations, contract, remote,
             salary_min, salary_max, description_md, dedup_key)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
         """,
@@ -235,7 +252,7 @@ def _insert_offer(ws: Workspace, offer: dict[str, Any]) -> int:
             ws.user_id,
             offer["title"],
             offer.get("company_name", ""),
-            offer.get("location", ""),
+            [offer["location"]] if offer.get("location") else [],
             offer.get("contract", ""),
             offer.get("remote", ""),
             offer.get("salary_min"),
@@ -264,8 +281,10 @@ def run_score(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> 
             | {
                 # A case fails alone only when it could not be scored; the suite is
                 # graded on the whole ranking.
-                "passed": score.score is not None,
-                "score": score.score,
+                "passed": score.fit_score is not None,
+                # The fit score, which ranks the offers; the salary is scored apart.
+                "score": score.fit_score,
+                "salary_score": score.salary_score,
                 "criteria": score.criteria.model_dump() if score.criteria else None,
                 "summary": score.summary,
             }
@@ -619,7 +638,7 @@ SUITES: dict[str, Suite] = {
     ),
     "score_offer": Suite(
         name="score_offer",
-        metric="corrélation de rang avec le classement fait à la main",
+        metric="corrélation de rang de l'adéquation avec le classement fait à la main",
         tier="fast",
         prompt_version=SCORE_OFFER_TASK.prompt_version,
         threshold=SCORE_THRESHOLD,

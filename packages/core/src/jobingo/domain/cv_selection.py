@@ -96,6 +96,7 @@ class CvPage(BaseModel):
 
     resume: PageItem | None  # one tick for the whole summary, on its first line's id
     experiences: list[PageExperience]
+    projets: list[PageItem]
     formation: list[PageFormation]
     competences: list[PageItem]
     loisirs: list[PageItem]
@@ -125,6 +126,9 @@ class CvSelection(BaseModel):
     lang: str
     resume: SelectedItem | None
     experiences: list[SelectedExperience]
+    # Personal projects, one line each, under the experiences. Saved drafts and
+    # selections from before them have none.
+    projets: list[SelectedItem] = []
     formation: list[SelectedFormation]
     competences: list[SelectedItem]
     loisirs: list[SelectedItem]
@@ -139,6 +143,7 @@ class CvSelection(BaseModel):
         for experience in self.experiences:
             items.append(experience)
             items.extend(experience.bullets)
+        items.extend(self.projets)
         items.extend(self.formation)
         items.extend(self.competences)
         if self.options.loisirs:
@@ -199,6 +204,7 @@ def page_of(
             else None
         ),
         experiences=[experience(source) for source in _of_kind(profile, "experience")],
+        projets=[item(source) for source in _of_kind(profile, "project")],
         formation=[
             PageFormation(
                 id=source.id,
@@ -252,6 +258,7 @@ def build_selection(
             for experience in _of_kind(profile, "experience")
             if experience.id not in excluded_ids
         ],
+        projets=chosen("project"),
         formation=[
             SelectedFormation(id=source.id, text=source.text, heading=source.heading)
             for source in _of_kind(profile, "formation")

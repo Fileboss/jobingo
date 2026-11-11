@@ -26,7 +26,7 @@ from jobingo.services.offers import get_offer
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, offer_id, title, company_name, contact_name, contact_email, contact_phone,
+    id, offer_id, title, company_name, rating, contact_name, contact_email, contact_phone,
     company_notes, created_at
 """
 
@@ -50,6 +50,7 @@ def _summary(row: dict[str, Any], events: list[ApplicationEvent]) -> dict[str, A
         "offer_id": row["offer_id"],
         "title": row["title"],
         "company_name": row["company_name"],
+        "rating": row["rating"],
         "status": status,
         "tone": tone(status, events),
         "last_event": events[0] if events else None,
@@ -237,6 +238,17 @@ def set_contact(
         WHERE user_id = %s AND id = %s AND deleted_at IS NULL
         """,
         (contact.name.strip(), contact.email, contact.phone.strip(), user_id, application_id),
+    ).rowcount
+    return get_application(conn, user_id, application_id) if updated else None
+
+
+def set_rating(
+    conn: Conn, user_id: int, application_id: int, rating: int | None
+) -> ApplicationView | None:
+    updated = conn.execute(
+        "UPDATE applications SET rating = %s, updated_at = now()"
+        " WHERE user_id = %s AND id = %s AND deleted_at IS NULL",
+        (rating, user_id, application_id),
     ).rowcount
     return get_application(conn, user_id, application_id) if updated else None
 

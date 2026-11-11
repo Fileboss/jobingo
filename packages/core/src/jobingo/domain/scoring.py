@@ -1,6 +1,7 @@
-"""An offer's score: the model rates each criterion from 0 to 10, and code computes
+"""An offer's scores: the model rates each criterion from 0 to 10, and code computes
 every score shown from those ratings and the user's weights, so a score is always
-reproducible and explainable."""
+reproducible and explainable. There are two, never mixed: how well the job fits, and
+the salary, which most offers do not state."""
 
 import hashlib
 import json
@@ -26,21 +27,10 @@ def _weighted(pairs: list[tuple[float, float]]) -> int:
     return max(0, min(100, round(10 * sum(v * w for v, w in pairs) / total)))
 
 
-def global_score(criteria: Criteria, weights: Weights) -> int:
-    """The weighted average of the four ratings, on 0 to 100."""
-    return _weighted(
-        [
-            (criteria.mission, weights.mission),
-            (criteria.stack, weights.stack),
-            (criteria.salary, weights.salary),
-            (criteria.culture, weights.culture),
-        ]
-    )
-
-
 def fit_score(criteria: Criteria, weights: Weights) -> int:
-    """How well the job fits, salary aside: many offers state no salary, and the user
-    must be able to tell the two apart."""
+    """How well the job fits, on 0 to 100: the weighted average of the mission, stack
+    and culture ratings. It ranks the offers. The salary stays out: most offers state
+    none, and an unknown salary must not bury an offer that fits."""
     return _weighted(
         [
             (criteria.mission, weights.mission),
@@ -72,7 +62,6 @@ class OfferScore(BaseModel):
     unknown: list[str]
     # None when the filters eliminated the offer: no call was made.
     criteria: Criteria | None
-    score: int | None
     fit_score: int | None
     salary_score: int | None
     summary: str
@@ -88,6 +77,8 @@ class OfferScore(BaseModel):
 class ScoredOffer(Offer):
     # None: never scored.
     current_score: OfferScore | None
+    # Its live application, if the user applied: adapted CVs and letters live there.
+    application_id: int | None = None
 
 
 class ScoringRun(BaseModel):

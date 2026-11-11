@@ -37,13 +37,15 @@
 	}
 }
 
-/* A sheet of ruled paper: the text sits on the lines of its line height. */
+/* A sheet of ruled paper: the text sits on the lines of its line height.
+   `--tw-leading` too, so a `text-*` size beside it cannot shrink the line off the rules. */
 @utility ruled {
+	--tw-leading: 2rem;
 	line-height: 2rem;
 	background-image: repeating-linear-gradient(
 		to bottom,
 		transparent 0 calc(2rem - 1px),
-		color-mix(in srgb, var(--color-ink) 30%, transparent) calc(2rem - 1px) 2rem
+		color-mix(in srgb, var(--color-ink) 8%, transparent) calc(2rem - 1px) 2rem
 	);
 	background-attachment: local;
 }

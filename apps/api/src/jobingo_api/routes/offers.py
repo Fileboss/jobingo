@@ -4,12 +4,9 @@ from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from jobingo.domain.cv_document import CvLang
-from jobingo.domain.cv_draft import DraftSummary, DraftView
 from jobingo.domain.offers import IntakeResult, OfferDecision, OfferIntake
 from jobingo.domain.scoring import ScoredOffer, ScoringRun
-from jobingo.services import applications, cv_drafts, offer_intake, offers, scoring
-from jobingo.services.cv_proposal import NothingToTailorError, PersonalDataInCvError
+from jobingo.services import applications, offer_intake, offers, scoring
 from jobingo_api.deps import CurrentUser, DbConn, LlmBudget, LlmClient
 from jobingo_api.llm_errors import LLM_RESPONSES, llm_refusal, not_configured, refused
 from jobingo_api.schemas import Refused
@@ -17,13 +14,6 @@ from jobingo_api.schemas import Refused
 router = APIRouter(prefix="/offers", tags=["offers"])
 
 _NOT_FOUND = "Offre introuvable"
-
-
-class OfferPage(ScoredOffer):
-    # The CVs adapted to this offer, newest first.
-    drafts: list[DraftSummary]
-    # Its application, if the user applied.
-    application_id: int | None
 
 
 class DecisionBody(BaseModel):
@@ -40,7 +30,9 @@ def _scored(conn: DbConn, user_id: int, offer_id: int) -> ScoredOffer:
     if offer is None:
         raise HTTPException(status_code=404, detail=_NOT_FOUND)
     return ScoredOffer(
-        **offer.model_dump(), current_score=scoring.latest_score(conn, user_id, offer_id)
+        **offer.model_dump(),
+        current_score=scoring.latest_score(conn, user_id, offer_id),
+        application_id=applications.application_for_offer(conn, user_id, offer_id),
     )
 
 
@@ -96,14 +88,8 @@ def rescore_stale_offers(
 
 
 @router.get("/{offer_id}", responses={404: {"description": "No such offer"}})
-def get_offer(offer_id: int, user: CurrentUser, conn: DbConn) -> OfferPage:
-    scored = _scored(conn, user.id, offer_id)
-    drafts = cv_drafts.list_drafts(conn, user.id, offer_id=offer_id)
-    return OfferPage(
-        **scored.model_dump(),
-        drafts=drafts,
-        application_id=applications.application_for_offer(conn, user.id, offer_id),
-    )
+def get_offer(offer_id: int, user: CurrentUser, conn: DbConn) -> ScoredOffer:
+    return _scored(conn, user.id, offer_id)
 
 
 @router.post(
@@ -137,38 +123,3 @@ def decide_on_offer(
     if not scoring.set_decision(conn, user.id, offer_id, body.decision):
         raise HTTPException(status_code=404, detail=_NOT_FOUND)
     return _scored(conn, user.id, offer_id)
-
-
-@router.post(
-    "/{offer_id}/cv-drafts/{lang}",
-    response_model=DraftView,
-    status_code=201,
-    responses={
-        400: {"model": Refused, "description": "Nothing to adapt, or contact details in the CV"},
-        404: {"description": "No such offer"},
-        **LLM_RESPONSES,
-    },
-)
-def adapt_cv_to_offer(
-    offer_id: int,
-    lang: CvLang,
-    user: CurrentUser,
-    conn: DbConn,
-    client: LlmClient,
-    budget: LlmBudget,
-) -> DraftView | JSONResponse:
-    """A CV adapted to this offer, as `POST /cv/{lang}/drafts` makes it from pasted text."""
-    if client is None:
-        return not_configured()
-    try:
-        draft = cv_drafts.create_draft_for_offer(conn, client, budget, user.id, lang, offer_id)
-    except (NothingToTailorError, PersonalDataInCvError) as error:
-        return refused(400, str(error))
-    except Exception as error:
-        answer = llm_refusal(error)
-        if answer is None:
-            raise
-        return answer
-    if draft is None:
-        raise HTTPException(status_code=404, detail=_NOT_FOUND)
-    return draft

@@ -29,10 +29,13 @@ from jobingo.domain.text_checks import numbers_in, unsourced_proper_nouns
 
 MAX_REWRITE_RATIO = 1.2
 
-type ProposalSection = Literal["experiences", "bullets", "formation", "competences", "loisirs"]
+type ProposalSection = Literal[
+    "experiences", "bullets", "projets", "formation", "competences", "loisirs"
+]
 PROPOSAL_SECTIONS: tuple[ProposalSection, ...] = (
     "experiences",
     "bullets",
+    "projets",
     "formation",
     "competences",
     "loisirs",
@@ -43,6 +46,7 @@ _SECTION_OF_KIND: dict[str, CvSection] = {
     "formation": "formation",
     "skill": "competences",
     "hobby": "loisirs",
+    "project": "projets",
 }
 
 
@@ -69,6 +73,7 @@ class CvProposalSchema(BaseModel):
     resume: str = ""
     experiences: list[str] = []
     bullets: list[str] = []
+    projets: list[str] = []
     formation: list[str] = []
     competences: list[str] = []
     loisirs: list[str] = []
@@ -84,6 +89,7 @@ class CvProposal(BaseModel):
     resume: str = ""
     experiences: list[ProposedItem] = []
     bullets: list[ProposedItem] = []
+    projets: list[ProposedItem] = []
     formation: list[ProposedItem] = []
     competences: list[ProposedItem] = []
     loisirs: list[ProposedItem] = []
@@ -112,7 +118,14 @@ class CvProposal(BaseModel):
 
 # --- Short ids --------------------------------------------------------------
 
-_ALIAS_PREFIX = {"experience": "E", "formation": "F", "skill": "C", "hobby": "L", "bullet": "P"}
+_ALIAS_PREFIX = {
+    "experience": "E",
+    "formation": "F",
+    "skill": "C",
+    "hobby": "L",
+    "project": "R",
+    "bullet": "P",
+}
 
 
 def short_ids(items: list[ProfileItem]) -> dict[str, str]:
@@ -221,6 +234,7 @@ class TailoredCv(BaseModel):
 
     resume: ReviewedItem | None = None
     experiences: list[ReviewedExperience] = []
+    projets: list[ReviewedItem] = []
     formation: list[ReviewedFormation] = []
     competences: list[ReviewedItem] = []
     loisirs: list[ReviewedItem] = []
@@ -235,6 +249,7 @@ class TailoredCv(BaseModel):
         for experience in self.experiences:
             items.append(experience)
             items.extend(experience.bullets)
+        items.extend(self.projets)
         items.extend(self.formation)
         items.extend(self.competences)
         items.extend(self.loisirs)
@@ -256,6 +271,7 @@ class TailoredCv(BaseModel):
                 )
                 for e in self.experiences
             ],
+            projets=[plain(item) for item in self.projets],
             formation=[
                 SelectedFormation(id=f.id, text=f.text, heading=f.heading) for f in self.formation
             ],
@@ -368,6 +384,12 @@ def review_proposal(
         resume=_review_resume(proposal.resume, profile, manifest, style, warnings),
         # The model picks these two sections; the code orders them, most recent first.
         experiences=sort_reverse_chronological(built, lambda e: e.original),
+        projets=_cut(
+            chosen.get("project", []),
+            manifest.limits("projets").max_items,
+            "projets personnels",
+            discarded,
+        ),
         formation=sort_reverse_chronological(formation, lambda f: f.original),
         competences=_cut(
             chosen.get("skill", []),

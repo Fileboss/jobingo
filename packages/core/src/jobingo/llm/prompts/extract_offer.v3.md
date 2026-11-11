@@ -1,0 +1,3 @@
+<offre>
+{{ payload.text }}
+</offre>

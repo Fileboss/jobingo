@@ -8,6 +8,7 @@ from jobingo.domain.applications import (
     Contact,
     NewApplication,
     NewEvent,
+    Rating,
 )
 from jobingo.services import applications
 from jobingo_api.deps import CurrentUser, DbConn
@@ -80,3 +81,11 @@ def set_contact(
     application_id: int, body: Annotated[Contact, Body()], user: CurrentUser, conn: DbConn
 ) -> ApplicationView:
     return _found(applications.set_contact(conn, user.id, application_id, body))
+
+
+@router.put("/applications/{application_id}/rating", responses=_404)
+def set_rating(
+    application_id: int, body: Annotated[Rating, Body()], user: CurrentUser, conn: DbConn
+) -> ApplicationView:
+    """The user's own rating, 1 to 5 stars, or none."""
+    return _found(applications.set_rating(conn, user.id, application_id, body.rating))

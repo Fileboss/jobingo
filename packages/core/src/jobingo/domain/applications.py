@@ -117,11 +117,18 @@ class NewApplication(BaseModel):
     company_name: str = Field(default="", max_length=300)
 
 
+class Rating(BaseModel):
+    # The user's own, from 1 to 5 stars; None clears it.
+    rating: int | None = Field(ge=1, le=5)
+
+
 class ApplicationSummary(BaseModel):
     id: int
     offer_id: int | None
     title: str
     company_name: str
+    # The user's own rating, from 1 to 5 stars: apart from the scores the code computes.
+    rating: int | None
     status: Status
     tone: Tone
     last_event: ApplicationEvent | None

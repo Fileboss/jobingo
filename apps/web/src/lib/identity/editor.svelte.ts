@@ -22,18 +22,25 @@ export const identityFields: {
 	{ key: 'phone', label: 'Téléphone', missing: 'le téléphone', type: 'tel', autocomplete: 'tel' },
 	{ key: 'address', label: 'Adresse', missing: 'l’adresse', autocomplete: 'street-address' },
 	{
+		key: 'website',
+		label: 'Site web',
+		missing: 'le site web',
+		autocomplete: 'off',
+		placeholder: 'monsite.fr'
+	},
+	{
 		key: 'linkedin',
 		label: 'LinkedIn',
 		missing: 'LinkedIn',
 		autocomplete: 'off',
-		placeholder: 'linkedin.com/in/…'
+		placeholder: 'linkedin.com/in/… ou votre nom d’utilisateur'
 	},
 	{
 		key: 'github',
 		label: 'GitHub',
 		missing: 'GitHub',
 		autocomplete: 'off',
-		placeholder: 'github.com/…'
+		placeholder: 'github.com/… ou votre nom d’utilisateur'
 	}
 ];
 
@@ -46,8 +53,8 @@ export function missingFields(identity: IdentityFields): string | null {
 	return words.length ? `${words.join(', ')} et ${last}` : (last as string);
 }
 
-function toFields({ name, email, phone, address, linkedin, github }: IdentityDocument) {
-	return { name, email, phone, address, linkedin, github };
+function toFields({ name, email, phone, address, website, linkedin, github }: IdentityDocument) {
+	return { name, email, phone, address, website, linkedin, github };
 }
 
 function readBase64(file: File): Promise<string> {
@@ -67,6 +74,7 @@ export class IdentityEditor {
 		email: '',
 		phone: '',
 		address: '',
+		website: '',
 		linkedin: '',
 		github: ''
 	});

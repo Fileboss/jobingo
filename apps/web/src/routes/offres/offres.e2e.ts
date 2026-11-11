@@ -16,7 +16,7 @@ test('pasted text becomes offers in the list', async ({ page }) => {
 	await page.getByRole('button', { name: 'Extraire les offres' }).click();
 
 	await expect(page.getByText('2 offres ajoutées.')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Développeur Python' })).toBeVisible();
+	await expect(page.getByRole('cell', { name: 'Développeur Python' })).toBeVisible();
 	await expect(page.getByLabel('Texte des offres')).toHaveValue('');
 	expect(api.texts).toEqual(['Nouvelles offres pour vous : …']);
 	await expect(page.getByText('60 k€ – 70 k€').first()).toBeVisible();
@@ -41,8 +41,8 @@ test('a text without offer says so and keeps the text', async ({ page }) => {
 	await expect(page.getByLabel('Texte des offres')).toHaveValue('Bonjour');
 });
 
-test('an offer shows its details, its call and a way to adapt the CV', async ({ page }) => {
-	const api = await open(page, '/offres/1');
+test('an offer shows its details and its call, and adapts no CV', async ({ page }) => {
+	await open(page, '/offres/1');
 	await expect(page.getByRole('heading', { name: 'Ingénieur backend senior' })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'l’appel #12' })).toHaveAttribute(
 		'href',
@@ -53,9 +53,9 @@ test('an offer shows its details, its call and a way to adapt the CV', async ({ 
 		'noopener noreferrer'
 	);
 
-	await page.getByRole('button', { name: 'Adapter mon CV' }).click();
-	await expect(page.getByRole('alert')).toContainText('ANTHROPIC_API_KEY');
-	expect(api.adaptRequests).toBe(1);
+	// An adapted CV belongs to an application: it is made from there.
+	await expect(page.getByRole('button', { name: 'Adapter mon CV' })).toHaveCount(0);
+	await expect(page.getByText('Le CV adapté et la lettre se font')).toBeVisible();
 });
 
 test('an unknown offer says so', async ({ page }) => {
@@ -73,22 +73,34 @@ for (const path of ['/offres', '/offres/1']) {
 	});
 }
 
-test('offers sort by score and split into views', async ({ page }) => {
+test('every offer is in one table, sorted by score, with its status', async ({ page }) => {
 	const api = await open(page, '/offres');
 	await page.getByLabel('Texte des offres').fill('Des offres');
 	await page.getByRole('button', { name: 'Extraire les offres' }).click();
 	await expect(page.getByText('2 offres ajoutées.')).toBeVisible();
 
-	const titles = page.locator('tbody tr td:nth-child(2) a');
+	const titles = page.locator('tbody tr td:nth-child(3) a');
 	await expect(titles).toHaveText([
 		'Développeur Python',
 		'Ingénieur backend senior',
-		'Ingénieur plateforme'
+		'Ingénieur plateforme',
+		'Développeur Java'
 	]);
-	await page.getByRole('button', { name: 'Écartées' }).click();
-	await expect(titles).toHaveText(['Développeur Java']);
-	await expect(page.getByText('filtrée')).toBeVisible();
+	const statuses = page.locator('tbody tr td:nth-child(2)');
+	await expect(statuses.last()).toHaveText('Filtrée');
+	await expect(statuses.first()).toHaveText('À examiner');
+	await expect(page.getByRole('button', { name: 'Écartées' })).toHaveCount(0);
 	expect(api.texts).toHaveLength(1);
+});
+
+test('an offer applied to links to its application', async ({ page }) => {
+	const api = new FakeOffersApi();
+	api.offers[0] = { ...api.offers[0], application_id: 5 };
+	await open(page, '/offres', api);
+	await expect(page.getByRole('link', { name: 'Candidature →' })).toHaveAttribute(
+		'href',
+		'/candidatures/5'
+	);
 });
 
 test('stale scores are counted and scored again on request', async ({ page }) => {

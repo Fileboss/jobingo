@@ -10,6 +10,7 @@
 		type ApplicationSummary
 	} from '#lib/applications/format.ts';
 	import StatusPill from '#lib/applications/StatusPill.svelte';
+	import Stars from '#lib/ui/Stars.svelte';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
@@ -119,6 +120,7 @@
 										<span class="block text-sm text-ink-soft"
 											>{application.company_name || 'Entreprise non nommée'}</span
 										>
+										<Stars value={application.rating} label="Votre note" size="sm" />
 									</td>
 									<td class="py-2 pr-4 text-sm">
 										{#if application.last_event}
@@ -150,9 +152,12 @@
 			{/if}
 		</section>
 
-		<BristolCard title="Sans offre" colour="yellow">
+		<BristolCard title="Candidature spontanée" colour="yellow">
 			<form class="grid gap-3" onsubmit={create}>
-				<p class="text-sm">Une candidature spontanée, ou une recommandation.</p>
+				<p class="text-sm">
+					Sans offre : une candidature spontanée, ou une recommandation. Les autres naissent d’une
+					<a href={resolve('/offres')} class="font-bold text-ink">offre</a>.
+				</p>
 				<label class="grid gap-1">
 					<span class="font-bold">Poste</span>
 					<input
@@ -173,7 +178,9 @@
 				{#if failure}<p role="alert" class="bg-alert px-3 py-2 font-bold text-white">
 						{failure}
 					</p>{/if}
-				<div><Button type="submit" disabled={!title.trim()}>Ajouter</Button></div>
+				<div>
+					<Button type="submit" disabled={!title.trim()}>Créer la candidature spontanée</Button>
+				</div>
 			</form>
 		</BristolCard>
 	</div>

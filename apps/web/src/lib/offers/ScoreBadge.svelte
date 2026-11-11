@@ -13,13 +13,15 @@
 	<span
 		class={[
 			'inline-flex min-w-11 justify-center rounded-sm px-1.5 py-0.5 text-lg font-extrabold tabular-nums',
-			(score.score ?? 0) >= 70
+			(score.fit_score ?? 0) >= 70
 				? 'bg-ink text-white'
-				: (score.score ?? 0) >= 50
+				: (score.fit_score ?? 0) >= 50
 					? 'bg-bristol-blue text-ink'
 					: 'bg-bristol-grey text-ink-soft'
 		]}
-		title={score.stale ? 'Note périmée : objectifs ou CV changés depuis' : undefined}
-		>{score.score}{#if score.stale}<span aria-label=" (périmée)">*</span>{/if}</span
+		title={score.stale
+			? 'Adéquation périmée : objectifs ou CV changés depuis'
+			: 'Adéquation au poste, salaire à part'}
+		>{score.fit_score}{#if score.stale}<span aria-label=" (périmée)">*</span>{/if}</span
 	>
 {/if}

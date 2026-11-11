@@ -7,6 +7,7 @@
 	const dividers = [
 		{ label: 'Résumé', background: 'bg-bristol-yellow' },
 		{ label: 'Expériences', background: 'bg-bristol-blue' },
+		{ label: 'Projets', background: 'bg-bristol-yellow' },
 		{ label: 'Formation', background: 'bg-bristol-green' },
 		{ label: 'Compétences', background: 'bg-bristol-salmon' },
 		{ label: 'Loisirs', background: 'bg-bristol-lilac' }

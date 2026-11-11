@@ -9,7 +9,8 @@
 	const styles = {
 		primary:
 			'bg-ink px-5 py-1.5 text-white hover:bg-ink-deep disabled:bg-transparent disabled:text-ink-soft',
-		quiet: 'px-2 py-1 text-ink underline underline-offset-4 hover:text-ink-deep',
+		quiet:
+			'px-2 py-1 text-ink underline decoration-ink/30 decoration-1 underline-offset-[0.3em] hover:text-ink-deep hover:decoration-ink-deep',
 		inverse: 'border border-white px-3 py-1 text-white hover:bg-white hover:text-ink'
 	};
 </script>

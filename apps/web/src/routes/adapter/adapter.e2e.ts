@@ -7,37 +7,16 @@ async function open(page: Page, path: string, api = new FakeDraftsApi()) {
 	return api;
 }
 
-test('pasting an offer asks for a proposal and opens it', async ({ page }) => {
-	const api = await open(page, '/adapter');
-	await expect(page.getByRole('link', { name: /Ingénieur data plateforme/ })).toBeVisible();
-	const propose = page.getByRole('button', { name: 'Proposer un CV pour cette offre' });
-	await expect(propose).toBeDisabled();
-
-	await page.getByLabel('Intitulé du poste').fill('Data engineer');
-	await page.getByLabel('Entreprise').fill('Lumen');
-	await page.getByLabel('Annonce').fill('Airflow et PostgreSQL.');
-	await propose.click();
-
-	await expect(page).toHaveURL(/\/adapter\/7$/);
-	expect(api.created).toEqual([
-		{ title: 'Data engineer', company: 'Lumen', description: 'Airflow et PostgreSQL.' }
-	]);
+test('the review leads back to its application, and to the call', async ({ page }) => {
+	await open(page, '/adapter/7');
+	await expect(page.getByRole('link', { name: '← La candidature' })).toHaveAttribute(
+		'href',
+		'/candidatures/5'
+	);
 	await expect(page.getByRole('link', { name: 'Voir l’appel #42' })).toHaveAttribute(
 		'href',
 		'/suivi/appels/42'
 	);
-});
-
-test('a refused proposal says why and keeps the offer typed', async ({ page }) => {
-	const api = new FakeDraftsApi();
-	api.createState = 'no-key';
-	await open(page, '/adapter', api);
-	await page.getByLabel('Intitulé du poste').fill('Data engineer');
-	await page.getByLabel('Annonce').fill('Airflow.');
-	await page.getByRole('button', { name: 'Proposer un CV pour cette offre' }).click();
-
-	await expect(page.getByRole('alert')).toContainText('ANTHROPIC_API_KEY');
-	await expect(page.getByLabel('Annonce')).toHaveValue('Airflow.');
 });
 
 test('the review shows what the model did and the user decides', async ({ page }) => {
@@ -75,7 +54,7 @@ test('an unknown draft says so', async ({ page }) => {
 	await expect(page.getByText('Ce CV adapté n’existe pas.')).toBeVisible();
 });
 
-for (const path of ['/adapter', '/adapter/7']) {
+for (const path of ['/adapter/7']) {
 	test(`${path} fits a phone, with no horizontal scroll`, async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 800 });
 		await open(page, path);

@@ -1,15 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { FakeActionsApi } from './actions-api.fake.ts';
 import { FakeMailApi } from './mail-api.fake.ts';
 
+/** The screen lists both what comes in and what goes out. */
+async function install(page: Page, mail = new FakeMailApi()) {
+	await mail.install(page);
+	await new FakeActionsApi().install(page);
+	return mail;
+}
+
 test('a sync reads the mailbox and an alert leads to its offers', async ({ page }) => {
-	const api = new FakeMailApi();
-	await api.install(page);
-	await page.goto('/courrier');
-	await expect(page.getByRole('link', { name: 'Courrier' })).toHaveAttribute(
+	const api = await install(page);
+	await page.goto('/echanges');
+	await expect(page.getByRole('link', { name: 'Échanges' })).toHaveAttribute(
 		'aria-current',
 		'page'
 	);
-	await expect(page.getByText('Aucun message pour l’instant')).toBeVisible();
+	await expect(page.getByText('Rien pour l’instant')).toBeVisible();
 	await expect(page.getByText('Serveur local de démonstration')).toBeVisible();
 	await expect(page.getByText('Jamais lue.')).toBeVisible();
 
@@ -34,16 +41,15 @@ test('a sync reads the mailbox and an alert leads to its offers', async ({ page 
 test('an unreachable mailbox is said', async ({ page }) => {
 	const api = new FakeMailApi();
 	api.syncAnswer = 'unreachable';
-	await api.install(page);
-	await page.goto('/courrier');
+	await install(page, api);
+	await page.goto('/echanges');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
 	await expect(page.getByRole('alert')).toContainText('injoignable');
 });
 
 test('a refusal is tied to its application, then confirmed by a click', async ({ page }) => {
-	const api = new FakeMailApi();
-	await api.install(page);
-	await page.goto('/courrier');
+	const api = await install(page);
+	await page.goto('/echanges');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
 
 	await page.getByRole('button', { name: /À traiter/ }).click();
@@ -66,9 +72,8 @@ test('a refusal is tied to its application, then confirmed by a click', async ({
 });
 
 test('a newsletter is hidden without the model, and can be restored', async ({ page }) => {
-	const api = new FakeMailApi();
-	await api.install(page);
-	await page.goto('/courrier');
+	await install(page);
+	await page.goto('/echanges');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
 	await expect(page.getByRole('link', { name: 'Les nouvelles de la semaine' })).toHaveCount(0);
 
@@ -83,15 +88,15 @@ test('a newsletter is hidden without the model, and can be restored', async ({ p
 });
 
 test('an unknown message says so', async ({ page }) => {
-	await new FakeMailApi().install(page);
-	await page.goto('/courrier/99');
+	await install(page);
+	await page.goto('/echanges/recus/99');
 	await expect(page.getByText('Ce message n’existe pas.')).toBeVisible();
 });
 
-test('/courrier fits a phone, with no horizontal scroll', async ({ page }) => {
+test('/echanges fits a phone, with no horizontal scroll', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 800 });
-	await new FakeMailApi().install(page);
-	await page.goto('/courrier');
+	await install(page);
+	await page.goto('/echanges');
 	await page.getByRole('button', { name: 'Synchroniser' }).click();
 	await expect(page.getByRole('link', { name: 'Votre candidature chez Voltéo' })).toBeVisible();
 	const width = await page.evaluate(() => document.documentElement.scrollWidth);

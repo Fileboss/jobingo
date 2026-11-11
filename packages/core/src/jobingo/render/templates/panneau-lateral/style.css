@@ -111,6 +111,19 @@ ul.contact li + li::before {
     content: " · ";
 }
 
+/* A profile shows its logo, then its username: the link keeps the full address. */
+ul.contact svg.icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.14em;
+    margin-right: 0.18em;
+}
+
+ul.contact a {
+    color: inherit;
+    text-decoration: none;
+}
+
 /* Main column */
 main section {
     margin-bottom: 3mm;
@@ -163,7 +176,8 @@ main ul {
     padding-left: 4.5mm;
 }
 
-main section.timeline ul {
+main section.timeline ul,
+main section.projects ul {
     list-style: "•  "; /* In Lato, unlike the square marker. */
 }
 

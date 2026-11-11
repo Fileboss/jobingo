@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 type CvOptionName = Literal["photo", "panneau_competences", "loisirs"]
-type CvSection = Literal["resume", "experiences", "formation", "competences", "loisirs"]
+type CvSection = Literal["resume", "experiences", "projets", "formation", "competences", "loisirs"]
 
 
 class SectionLimits(BaseModel):

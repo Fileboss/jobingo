@@ -125,6 +125,9 @@ def draft_selection(
             )
             for experience in experiences
         ],
+        projets=[
+            SelectedItem(id=p.id, text=text_of(p.id, p.text)) for p in ordered(of_kind("project"))
+        ],
         formation=[
             SelectedFormation(id=f.id, text=text_of(f.id, f.text), heading=f.heading)
             for f in formation
@@ -166,6 +169,9 @@ class DraftFormation(DraftItem):
 class DraftSummary(BaseModel):
     id: int
     offer_id: int | None
+    # The application it was made for; None for a draft made before CVs belonged to
+    # applications, with no live application for its offer.
+    application_id: int | None
     offer_title: str
     offer_company: str
     llm_call_id: int | None
@@ -173,17 +179,30 @@ class DraftSummary(BaseModel):
     updated_at: datetime
 
 
+class DraftSections(BaseModel):
+    """The whole CV, section by section, as the diff screen shows it."""
+
+    resume: DraftItem | None
+    experiences: list[DraftExperience]
+    projets: list[DraftItem]
+    formation: list[DraftFormation]
+    competences: list[DraftItem]
+    loisirs: list[DraftItem]
+
+
 class DraftView(BaseModel):
     id: int
     lang: str
     offer: OfferInput
-    # The stored offer it was adapted to; None for pasted text.
+    # The stored offer it was adapted to; None for a spontaneous application.
     offer_id: int | None
+    application_id: int | None
     llm_call_id: int | None
     created_at: datetime
     updated_at: datetime
     resume: DraftItem | None
     experiences: list[DraftExperience]
+    projets: list[DraftItem]
     formation: list[DraftFormation]
     competences: list[DraftItem]
     loisirs: list[DraftItem]
@@ -200,15 +219,7 @@ def _reviewed_index(tailored: TailoredCv) -> dict[str, ReviewedItem]:
     return {item.id: item for item in tailored.kept_items()}
 
 
-def draft_items(
-    profile: Profile, tailored: TailoredCv, choices: DraftChoices
-) -> tuple[
-    DraftItem | None,
-    list[DraftExperience],
-    list[DraftFormation],
-    list[DraftItem],
-    list[DraftItem],
-]:
+def draft_items(profile: Profile, tailored: TailoredCv, choices: DraftChoices) -> DraftSections:
     """The whole CV, in its own order, each item with the model's proposal and the
     user's current choice."""
     reviewed = _reviewed_index(tailored)
@@ -245,15 +256,16 @@ def draft_items(
                 ],
             )
         )
-    return (
-        item(resume.id, resume.original) if resume else None,
-        experiences,
-        [
+    return DraftSections(
+        resume=item(resume.id, resume.original) if resume else None,
+        experiences=experiences,
+        projets=[item(p.id, p.text) for p in of_kind("project")],
+        formation=[
             DraftFormation(**item(f.id, f.text).model_dump(), heading=f.heading)
             for f in of_kind("formation")
         ],
-        [item(s.id, s.text) for s in of_kind("skill")],
-        [item(h.id, h.text) for h in of_kind("hobby")],
+        competences=[item(s.id, s.text) for s in of_kind("skill")],
+        loisirs=[item(h.id, h.text) for h in of_kind("hobby")],
     )
 
 

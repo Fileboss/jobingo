@@ -30,6 +30,7 @@ ALEX = {
     "email": "alex.moreau@example.org",
     "phone": "06 00 00 00 00",
     "address": "12 rue des Lilas, 69003 Lyon",
+    "website": "alexmoreau.example",
     "linkedin": "linkedin.com/in/alex-moreau",
     "github": "github.com/alex-moreau",
 }
@@ -73,6 +74,7 @@ def test_a_new_account_has_an_empty_identity(client: TestClient):
         "email": "",
         "phone": "",
         "address": "",
+        "website": "",
         "linkedin": "",
         "github": "",
         "has_photo": False,
@@ -90,6 +92,7 @@ def test_a_saved_identity_replaces_the_previous_and_survives_a_restart(
     with TestClient(create_app(settings), base_url="http://127.0.0.1") as second:
         loaded = second.get("/api/identity").json()
         assert loaded["name"] == "Alex M." and loaded["has_photo"] is True
+        assert loaded["website"] == "alexmoreau.example"
         assert second.get("/api/identity/photo").status_code == 200
 
 

@@ -119,7 +119,7 @@
 </svelte:head>
 
 <div class="mx-auto w-full max-w-[72rem] flex-1 px-3 pt-2 pb-12 sm:px-6">
-	<a href={resolve('/courrier')} class="font-bold text-ink">← Courrier</a>
+	<a href={resolve('/echanges')} class="font-bold text-ink">← Échanges</a>
 
 	{#if phase === 'loading'}
 		<p class="mt-4 text-ink-soft" role="status">Chargement…</p>
@@ -296,7 +296,9 @@
 										class="font-extrabold text-ink">{offer.title}</a
 									>
 									<span class="block text-sm text-ink-soft"
-										>{[offer.company_name, offer.location].filter(Boolean).join(' · ')}</span
+										>{[offer.company_name, offer.locations.join(', ')]
+											.filter(Boolean)
+											.join(' · ')}</span
 									>
 								</div>
 							</li>

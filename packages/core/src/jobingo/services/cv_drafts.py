@@ -1,4 +1,5 @@
-"""CVs adapted to an offer: proposed by the model, checked by code, settled by the user.
+"""CVs adapted to an application: proposed by the model, checked by code, settled by the
+user. They are made from the application, from its offer when it has one.
 
 Nothing here writes the source CV: a draft holds ids and texts, and the CV stays the
 user's own words (`tests/test_architecture.py`).
@@ -28,6 +29,7 @@ from jobingo.llm.client import LLMClient
 from jobingo.llm.journal import Budget
 from jobingo.logs import event
 from jobingo.render.cv import load_manifest
+from jobingo.services.applications import get_application
 from jobingo.services.cv import load_cv
 from jobingo.services.cv_page import CvPdf, OptionUnavailableError, page_options, render_selection
 from jobingo.services.cv_proposal import OfferText, propose_cv
@@ -36,8 +38,8 @@ from jobingo.services.offers import get_offer
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, lang, offer_id, offer_title, offer_company, offer_description, llm_call_id, proposal,
-    choices, created_at, updated_at
+    id, lang, offer_id, application_id, offer_title, offer_company, offer_description,
+    llm_call_id, proposal, choices, created_at, updated_at
 """
 
 
@@ -54,6 +56,7 @@ def create_draft(
     lang: CvLang,
     offer: OfferInput,
     *,
+    application_id: int,
     offer_id: int | None = None,
 ) -> DraftView:
     """Ask for a proposal and store it with the starting choices: what the model kept,
@@ -73,15 +76,16 @@ def create_draft(
     )
     row = conn.execute(
         """
-        INSERT INTO cv_drafts (user_id, lang, offer_id, offer_title, offer_company,
-            offer_description, llm_call_id, proposal, choices)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO cv_drafts (user_id, lang, offer_id, application_id, offer_title,
+            offer_company, offer_description, llm_call_id, proposal, choices)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
         (
             user_id,
             lang,
             offer_id,
+            application_id,
             offer.title,
             offer.company,
             offer.description,
@@ -91,43 +95,76 @@ def create_draft(
         ),
     ).fetchone()
     assert row is not None
-    event(log, "cv.draft_created", user_id=user_id, llm_call_id=call_id, draft_id=row["id"])
+    event(
+        log,
+        "cv.draft_created",
+        user_id=user_id,
+        llm_call_id=call_id,
+        draft_id=row["id"],
+        application_id=application_id,
+    )
     view = load_draft(conn, user_id, row["id"])
     assert view is not None
     return view
 
 
-def create_draft_for_offer(
+def target_of(
+    conn: Conn, user_id: int, application_id: int
+) -> tuple[OfferInput, int | None] | None:
+    """What the CV is adapted to: the application's offer, or for a spontaneous
+    application what is known of it, the role, the company and the notes on it. None:
+    no such application."""
+    application = get_application(conn, user_id, application_id)
+    if application is None:
+        return None
+    offer = get_offer(conn, user_id, application.offer_id) if application.offer_id else None
+    if offer is not None:
+        # A title-only offer is still something to adapt to.
+        description = offer.description_md or offer.title
+        return OfferInput(
+            title=offer.title, company=offer.company_name, description=description
+        ), offer.id
+    lines = [f"Candidature spontanée, sans annonce : poste visé « {application.title} »."]
+    if application.company_name:
+        lines.append(f"Entreprise : {application.company_name}.")
+    if application.company_notes.strip():
+        lines.append(f"Ce que la personne sait de l'entreprise :\n{application.company_notes}")
+    return OfferInput(
+        title=application.title,
+        company=application.company_name,
+        description="\n\n".join(lines)[:20_000],
+    ), None
+
+
+def create_draft_for_application(
     conn: Conn,
     client: LLMClient,
     budget: Budget,
     user_id: int,
     lang: CvLang,
-    offer_id: int,
+    application_id: int,
 ) -> DraftView | None:
-    """`create_draft` on a stored offer. None when there is no such offer."""
-    offer = get_offer(conn, user_id, offer_id)
-    if offer is None:
+    """`create_draft` for an application. None when there is no such application."""
+    target = target_of(conn, user_id, application_id)
+    if target is None:
         return None
-    text = OfferInput(
-        title=offer.title,
-        company=offer.company_name,
-        # A title-only offer is still something to adapt to.
-        description=offer.description_md or offer.title,
+    offer, offer_id = target
+    return create_draft(
+        conn, client, budget, user_id, lang, offer, application_id=application_id, offer_id=offer_id
     )
-    return create_draft(conn, client, budget, user_id, lang, text, offer_id=offer_id)
 
 
-def list_drafts(conn: Conn, user_id: int, *, offer_id: int | None = None) -> list[DraftSummary]:
-    """Newest first; only those adapted to `offer_id` when it is given."""
+def list_drafts(conn: Conn, user_id: int, application_id: int) -> list[DraftSummary]:
+    """The application's adapted CVs, newest first."""
     rows = conn.execute(
         """
-        SELECT id, offer_id, offer_title, offer_company, llm_call_id, created_at, updated_at
+        SELECT id, offer_id, application_id, offer_title, offer_company, llm_call_id,
+            created_at, updated_at
         FROM cv_drafts
-        WHERE user_id = %s AND (%s::bigint IS NULL OR offer_id = %s)
+        WHERE user_id = %s AND application_id = %s
         ORDER BY created_at DESC, id DESC
         """,
-        (user_id, offer_id, offer_id),
+        (user_id, application_id),
     )
     return [DraftSummary.model_validate(row) for row in rows]
 
@@ -148,11 +185,12 @@ def load_draft(conn: Conn, user_id: int, draft_id: int) -> DraftView | None:
     tailored = TailoredCv.model_validate(row["proposal"])
     choices = cleaned_choices(DraftChoices.model_validate(row["choices"]), profile)
     _, blockers = page_options(conn, user_id, lang)
-    resume, experiences, formation, competences, loisirs = draft_items(profile, tailored, choices)
+    sections = draft_items(profile, tailored, choices)
     return DraftView(
         id=row["id"],
         lang=lang,
         offer_id=row["offer_id"],
+        application_id=row["application_id"],
         offer=OfferInput(
             title=row["offer_title"],
             company=row["offer_company"],
@@ -161,11 +199,7 @@ def load_draft(conn: Conn, user_id: int, draft_id: int) -> DraftView | None:
         llm_call_id=row["llm_call_id"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
-        resume=resume,
-        experiences=experiences,
-        formation=formation,
-        competences=competences,
-        loisirs=loisirs,
+        **dict(sections),
         options=choices.options.clamped_to(blockers),
         option_blockers=blockers,
         warnings=tailored.warnings,

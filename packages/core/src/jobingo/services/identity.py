@@ -8,7 +8,7 @@ from jobingo.services.photo import decode_upload
 def load_identity(conn: Conn, user_id: int) -> Identity:
     row = conn.execute(
         """
-        SELECT name, email, phone, address, linkedin, github
+        SELECT name, email, phone, address, website, linkedin, github
         FROM identities
         WHERE user_id = %s
         """,
@@ -30,13 +30,14 @@ def redaction_values(conn: Conn, user_id: int) -> list[str]:
 def save_identity(conn: Conn, user_id: int, identity: Identity) -> None:
     conn.execute(
         """
-        INSERT INTO identities (user_id, name, email, phone, address, linkedin, github)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO identities (user_id, name, email, phone, address, website, linkedin, github)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (user_id) DO UPDATE SET
             name = EXCLUDED.name,
             email = EXCLUDED.email,
             phone = EXCLUDED.phone,
             address = EXCLUDED.address,
+            website = EXCLUDED.website,
             linkedin = EXCLUDED.linkedin,
             github = EXCLUDED.github,
             updated_at = now()
@@ -47,6 +48,7 @@ def save_identity(conn: Conn, user_id: int, identity: Identity) -> None:
             identity.email,
             identity.phone,
             identity.address,
+            identity.website,
             identity.linkedin,
             identity.github,
         ),

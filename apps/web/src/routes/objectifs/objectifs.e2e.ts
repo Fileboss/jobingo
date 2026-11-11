@@ -14,7 +14,7 @@ const defaults: ObjectivesView = {
 			excluded_keywords: [],
 			excluded_companies: []
 		},
-		weights: { mission: 1, stack: 1, salary: 1, culture: 1 },
+		weights: { mission: 1, stack: 1, culture: 1 },
 		preferences: ''
 	},
 	updated_at: null,

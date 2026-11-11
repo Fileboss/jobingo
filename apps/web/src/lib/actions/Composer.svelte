@@ -89,7 +89,7 @@
 		};
 		try {
 			const { data, error } = await api.POST('/api/actions', { body: proposal });
-			if (data) await goto(resolve('/envois/[id]', { id: String(data.id) }));
+			if (data) await goto(resolve('/echanges/envois/[id]', { id: String(data.id) }));
 			else failure = error && 'message' in error ? error.message : 'La proposition a échoué.';
 		} catch {
 			failure = 'Le serveur ne répond pas. Réessayez.';

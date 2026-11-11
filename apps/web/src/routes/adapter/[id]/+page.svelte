@@ -26,6 +26,7 @@
 		return [
 			...(draft.resume ? [draft.resume] : []),
 			...draft.experiences.flatMap((e) => [e, ...e.bullets]),
+			...draft.projets,
 			...draft.formation,
 			...draft.competences,
 			...draft.loisirs
@@ -46,11 +47,20 @@
 </script>
 
 <svelte:head>
-	<title>{draft ? `${draft.offer.title} | ` : ''}Adapter mon CV | Jobingo</title>
+	<title>{draft ? `${draft.offer.title} | ` : ''}CV adapté | Jobingo</title>
 </svelte:head>
 
 <div class="flex-1 px-3 pt-2 pb-12 sm:px-6">
-	<p class="mb-2"><a href={resolve('/adapter')} class="font-bold text-ink">← CV adaptés</a></p>
+	<p class="mb-2">
+		{#if draft?.application_id}
+			<a
+				href={resolve('/candidatures/[id]', { id: String(draft.application_id) })}
+				class="font-bold text-ink">← La candidature</a
+			>
+		{:else}
+			<a href={resolve('/candidatures')} class="font-bold text-ink">← Candidatures</a>
+		{/if}
+	</p>
 
 	{#if editor.status === 'loading'}
 		<p class="text-ink-soft" role="status">Chargement…</p>
@@ -155,7 +165,7 @@
 						</BristolCard>
 					{/if}
 
-					{#each [['Formation', 'green', 2, draft.formation], ['Compétences', 'salmon', 3, draft.competences], ['Loisirs', 'lilac', 4, draft.loisirs]] as const as [title, colour, tab, items] (title)}
+					{#each [['Projets personnels', 'yellow', 2, draft.projets], ['Formation', 'green', 3, draft.formation], ['Compétences', 'salmon', 4, draft.competences], ['Loisirs', 'lilac', 5, draft.loisirs]] as const as [title, colour, tab, items] (title)}
 						{#if items.length}
 							<BristolCard {title} {colour} {tab}>
 								<ul class="grid gap-2">

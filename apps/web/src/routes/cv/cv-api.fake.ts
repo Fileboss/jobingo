@@ -12,6 +12,7 @@ const emptyFields = (): Fields => ({
 	formation: [],
 	skills: [],
 	hobbies: [],
+	projects: [],
 	before: '',
 	others: [],
 	order: []
@@ -114,7 +115,8 @@ export class FakeCvApi {
 		...view({ mode: 'text', text: '' }),
 		sha256: null,
 		version: 0,
-		updated_at: null
+		updated_at: null,
+		needs_save: false
 	};
 	failing = false;
 
@@ -124,7 +126,8 @@ export class FakeCvApi {
 			...view({ mode: 'text', text }),
 			sha256: `sha-${version}`,
 			version,
-			updated_at: '2026-11-05T18:42:00Z'
+			updated_at: '2026-11-05T18:42:00Z',
+			needs_save: false
 		};
 	}
 

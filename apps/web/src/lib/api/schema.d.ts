@@ -38,27 +38,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/cv/{lang}/drafts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Draft
-         * @description Ask the model which parts of the CV serve this offer. One call, journalled.
-         */
-        post: operations["create_draft"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/cv/drafts": {
+    "/api/applications/{application_id}/cv-drafts": {
         parameters: {
             query?: never;
             header?: never;
@@ -67,11 +47,16 @@ export interface paths {
         };
         /**
          * List Drafts
-         * @description Newest first.
+         * @description The application's adapted CVs, newest first.
          */
         get: operations["list_drafts"];
         put?: never;
-        post?: never;
+        /**
+         * Adapt Cv
+         * @description A CV adapted for this application: to its offer, or for a spontaneous one to the
+         *     role, the company and the notes on it. One call, journalled.
+         */
+        post: operations["adapt_cv"];
         delete?: never;
         options?: never;
         head?: never;
@@ -492,26 +477,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/offers/{offer_id}/cv-drafts/{lang}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Adapt Cv To Offer
-         * @description A CV adapted to this offer, as `POST /cv/{lang}/drafts` makes it from pasted text.
-         */
-        post: operations["adapt_cv_to_offer"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/objectives": {
         parameters: {
             query?: never;
@@ -648,6 +613,26 @@ export interface paths {
         get?: never;
         /** Set Contact */
         put: operations["set_contact"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{application_id}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Rating
+         * @description The user's own rating, 1 to 5 stars, or none.
+         */
+        put: operations["set_rating"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1211,6 +1196,8 @@ export interface components {
             title: string;
             /** Company Name */
             company_name: string;
+            /** Rating */
+            rating: number | null;
             status: components["schemas"]["Status"];
             tone: components["schemas"]["Tone"];
             last_event: components["schemas"]["ApplicationEvent"] | null;
@@ -1232,6 +1219,8 @@ export interface components {
             title: string;
             /** Company Name */
             company_name: string;
+            /** Rating */
+            rating: number | null;
             status: components["schemas"]["Status"];
             tone: components["schemas"]["Tone"];
             last_event: components["schemas"]["ApplicationEvent"] | null;
@@ -1464,6 +1453,11 @@ export interface components {
             version: number;
             /** Updated At */
             updated_at: string | null;
+            /**
+             * Needs Save
+             * @default false
+             */
+            needs_save: boolean;
         };
         CvDraft: components["schemas"]["TextDraft"] | components["schemas"]["FormDraft"];
         /** CvFields */
@@ -1499,6 +1493,11 @@ export interface components {
              */
             hobbies: string[];
             /**
+             * Projects
+             * @default []
+             */
+            projects: string[];
+            /**
              * Before
              * @default
              */
@@ -1533,6 +1532,8 @@ export interface components {
             resume: components["schemas"]["PageItem"] | null;
             /** Experiences */
             experiences: components["schemas"]["PageExperience"][];
+            /** Projets */
+            projets: components["schemas"]["PageItem"][];
             /** Formation */
             formation: components["schemas"]["PageFormation"][];
             /** Competences */
@@ -1666,6 +1667,8 @@ export interface components {
             id: number;
             /** Offer Id */
             offer_id: number | null;
+            /** Application Id */
+            application_id: number | null;
             /** Offer Title */
             offer_title: string;
             /** Offer Company */
@@ -1692,6 +1695,8 @@ export interface components {
             offer: components["schemas"]["OfferInput"];
             /** Offer Id */
             offer_id: number | null;
+            /** Application Id */
+            application_id: number | null;
             /** Llm Call Id */
             llm_call_id: number | null;
             /**
@@ -1707,6 +1712,8 @@ export interface components {
             resume: components["schemas"]["DraftItem"] | null;
             /** Experiences */
             experiences: components["schemas"]["DraftExperience"][];
+            /** Projets */
+            projets: components["schemas"]["DraftItem"][];
             /** Formation */
             formation: components["schemas"]["DraftFormation"][];
             /** Competences */
@@ -2002,6 +2009,11 @@ export interface components {
              */
             address: string;
             /**
+             * Website
+             * @default
+             */
+            website: string;
+            /**
              * Linkedin
              * @default
              */
@@ -2034,6 +2046,11 @@ export interface components {
              * @default
              */
             address: string;
+            /**
+             * Website
+             * @default
+             */
+            website: string;
             /**
              * Linkedin
              * @default
@@ -2288,7 +2305,6 @@ export interface components {
              * @default {
              *       "mission": 1,
              *       "stack": 1,
-             *       "salary": 1,
              *       "culture": 1
              *     }
              */
@@ -2315,8 +2331,8 @@ export interface components {
             title: string;
             /** Company Name */
             company_name: string;
-            /** Location */
-            location: string;
+            /** Locations */
+            locations: string[];
             contract: components["schemas"]["Contract"];
             remote: components["schemas"]["Remote"];
             /** Salary Min */
@@ -2366,48 +2382,6 @@ export interface components {
             /** Text */
             text: string;
         };
-        /** OfferPage */
-        OfferPage: {
-            /** Id */
-            id: number;
-            /** Title */
-            title: string;
-            /** Company Name */
-            company_name: string;
-            /** Location */
-            location: string;
-            contract: components["schemas"]["Contract"];
-            remote: components["schemas"]["Remote"];
-            /** Salary Min */
-            salary_min: number | null;
-            /** Salary Max */
-            salary_max: number | null;
-            /** Url */
-            url: string | null;
-            /** Description Md */
-            description_md: string;
-            /** Llm Call Id */
-            llm_call_id: number | null;
-            /** Message Id */
-            message_id: number | null;
-            state: components["schemas"]["OfferState"];
-            decision: components["schemas"]["OfferDecision"] | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-            current_score: components["schemas"]["OfferScore"] | null;
-            /** Drafts */
-            drafts: components["schemas"]["DraftSummary"][];
-            /** Application Id */
-            application_id: number | null;
-        };
         /** OfferScore */
         OfferScore: {
             /** Id */
@@ -2421,8 +2395,6 @@ export interface components {
             /** Unknown */
             unknown: string[];
             criteria: components["schemas"]["Criteria"] | null;
-            /** Score */
-            score: number | null;
             /** Fit Score */
             fit_score: number | null;
             /** Salary Score */
@@ -2499,6 +2471,11 @@ export interface components {
             /** Data Base64 */
             data_base64: string;
         };
+        /** Rating */
+        Rating: {
+            /** Rating */
+            rating: number | null;
+        };
         /**
          * Refused
          * @description A request refused for a reason the user can read, in French.
@@ -2545,8 +2522,8 @@ export interface components {
             title: string;
             /** Company Name */
             company_name: string;
-            /** Location */
-            location: string;
+            /** Locations */
+            locations: string[];
             contract: components["schemas"]["Contract"];
             remote: components["schemas"]["Remote"];
             /** Salary Min */
@@ -2574,6 +2551,8 @@ export interface components {
              */
             updated_at: string;
             current_score: components["schemas"]["OfferScore"] | null;
+            /** Application Id */
+            application_id?: number | null;
         };
         /**
          * ScoringRun
@@ -2848,7 +2827,8 @@ export interface components {
         };
         /**
          * Weights
-         * @description How much each of the model's ratings counts in the global score.
+         * @description How much each of the model's ratings counts in the fit score. The salary has its
+         *     own score, so no weight: a weight stored before that is ignored on reading.
          */
         Weights: {
             /**
@@ -2861,11 +2841,6 @@ export interface components {
              * @default 1
              */
             stack: number;
-            /**
-             * Salary
-             * @default 1
-             */
-            salary: number;
             /**
              * Culture
              * @default 1
@@ -2930,20 +2905,47 @@ export interface operations {
             };
         };
     };
-    create_draft: {
+    list_drafts: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                lang: "fr";
+                application_id: number;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OfferInput"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
+    };
+    adapt_cv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {
@@ -2962,6 +2964,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Refused"];
                 };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2997,26 +3006,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Refused"];
-                };
-            };
-        };
-    };
-    list_drafts: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DraftSummary"][];
                 };
             };
         };
@@ -3863,7 +3852,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OfferPage"];
+                    "application/json": components["schemas"]["ScoredOffer"];
                 };
             };
             /** @description No such offer */
@@ -3987,81 +3976,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    adapt_cv_to_offer: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                offer_id: number;
-                lang: "fr";
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DraftView"];
-                };
-            };
-            /** @description Nothing to adapt, or contact details in the CV */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Refused"];
-                };
-            };
-            /** @description No such offer */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description A spending cap is reached */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Refused"];
-                };
-            };
-            /** @description The model's answer was unusable */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Refused"];
-                };
-            };
-            /** @description No API key, or the API is unavailable */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Refused"];
                 };
             };
         };
@@ -4377,6 +4291,48 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Contact"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationView"];
+                };
+            };
+            /** @description No such application */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_rating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Rating"];
             };
         };
         responses: {

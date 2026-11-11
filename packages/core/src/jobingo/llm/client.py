@@ -91,7 +91,10 @@ class LLMValidationError(LLMCallError):
 
 class LLMUnavailable(LLMCallError):
     """The API could not be reached or refused the request, after the SDK's own
-    retries. The user gets a "try again" message, never a 500."""
+    retries. The user gets its cause, never a 500."""
+
+    # Why, in French, for the user: a refused key is not an outage.
+    reason: str = "L'API Anthropic ne répond pas. Réessayez dans un instant."
 
 
 class LLMClient(Protocol):

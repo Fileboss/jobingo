@@ -19,12 +19,14 @@ class FakeApplicationsApi {
 		last_event: null,
 		follow_up_on: null,
 		created_at: '2026-11-01T09:00:00Z',
+		rating: null,
 		contact: { name: '', email: '', phone: '' },
 		company_notes: '',
 		events: [],
 		messages: []
 	};
 	created: Schemas['NewApplication'][] = [];
+	adaptRequests = 0;
 
 	#refresh() {
 		const events = [...this.application.events].sort((a, b) =>
@@ -56,9 +58,21 @@ class FakeApplicationsApi {
 			return route.fulfill({ json: [this.application] });
 		});
 		await page.route(/\/api\/applications\/\d+\/letters$/, (route) => route.fulfill({ json: [] }));
+		await page.route(/\/api\/applications\/\d+\/cv-drafts$/, (route) => {
+			if (route.request().method() !== 'POST') return route.fulfill({ json: [] });
+			this.adaptRequests += 1;
+			return route.fulfill({
+				status: 503,
+				json: { message: 'L’IA n’est pas configurée : renseignez ANTHROPIC_API_KEY.' }
+			});
+		});
 		await page.route(/\/api\/applications\/\d+$/, (route) =>
 			route.fulfill({ json: this.application })
 		);
+		await page.route(/\/api\/applications\/\d+\/rating$/, (route) => {
+			this.application = { ...this.application, rating: route.request().postDataJSON().rating };
+			return route.fulfill({ json: this.application });
+		});
 		await page.route(/\/api\/applications\/\d+\/events$/, (route) => {
 			const body = route.request().postDataJSON();
 			const added: ApplicationEvent = {
@@ -108,13 +122,25 @@ test('the timeline drives the status', async ({ page }) => {
 
 	await page.getByLabel('Événement').selectOption('interview_scheduled');
 	await page.getByLabel('Date').fill('2026-11-05');
-	await page.getByLabel('Note', { exact: true }).fill('Visio avec l’équipe');
+	await page.getByLabel('Commentaire', { exact: true }).fill('Visio avec l’équipe');
 	await page.getByRole('button', { name: 'Ajouter' }).click();
 	await expect(page.getByText('Entretien', { exact: true })).toBeVisible();
 	await expect(page.getByText('Visio avec l’équipe')).toBeVisible();
 
 	await page.getByRole('button', { name: /Retirer : Entretien planifié/ }).click();
 	await expect(page.getByText('Postulé', { exact: true })).toBeVisible();
+});
+
+test('the user rates an application with stars, and clears it', async ({ page }) => {
+	await open(page, '/candidatures/5');
+	const stars = page.getByRole('group', { name: 'Votre note' });
+	const four = stars.getByRole('button', { name: '4 étoiles' });
+
+	await four.click();
+	await expect(four).toHaveAttribute('aria-pressed', 'true');
+
+	await four.click();
+	await expect(stars.getByRole('button', { pressed: true })).toHaveCount(0);
 });
 
 test('a wrong contact address is refused and said', async ({ page }) => {
@@ -125,11 +151,22 @@ test('a wrong contact address is refused and said', async ({ page }) => {
 	await expect(page.getByRole('alert')).toContainText('vérifiez l’adresse');
 });
 
+test('a CV is adapted from the application', async ({ page }) => {
+	const api = await open(page, '/candidatures/5');
+	await expect(page.getByText('Aucun CV adapté pour l’instant.')).toBeVisible();
+	await expect(page.getByText('ce qui sert l’offre')).toBeVisible();
+
+	await page.getByRole('button', { name: 'Adapter mon CV' }).click();
+
+	expect(api.adaptRequests).toBe(1);
+	await expect(page.getByRole('alert')).toContainText('ANTHROPIC_API_KEY');
+});
+
 test('an application without offer can be added', async ({ page }) => {
 	const api = await open(page, '/candidatures');
 	await expect(page.getByRole('link', { name: 'Développeur Python' })).toBeVisible();
 	await page.getByLabel('Poste').fill('Candidature spontanée');
-	await page.getByRole('button', { name: 'Ajouter' }).click();
+	await page.getByRole('button', { name: 'Créer la candidature spontanée' }).click();
 	await expect(page).toHaveURL(/\/candidatures\/5$/);
 	expect(api.created).toEqual([{ title: 'Candidature spontanée', company_name: '' }]);
 });

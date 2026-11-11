@@ -97,6 +97,7 @@ def propose_cv(
         max_formation=manifest.limits("formation").max_items,
         max_competences=manifest.limits("competences").max_items,
         max_loisirs=manifest.limits("loisirs").max_items,
+        max_projets=manifest.limits("projets").max_items,
         resume=resume.original if resume else "",
         items=[
             CvItemInput(

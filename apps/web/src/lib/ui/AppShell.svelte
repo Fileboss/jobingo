@@ -8,13 +8,10 @@
 	const screens = [
 		{ href: resolve('/cv'), label: 'Mon CV' },
 		{ href: resolve('/identite'), label: 'Identité' },
-		{ href: resolve('/apercu'), label: 'Aperçu' },
-		{ href: resolve('/offres'), label: 'Offres' },
 		{ href: resolve('/objectifs'), label: 'Objectifs' },
-		{ href: resolve('/adapter'), label: 'Adapter' },
+		{ href: resolve('/offres'), label: 'Offres' },
 		{ href: resolve('/candidatures'), label: 'Candidatures' },
-		{ href: resolve('/courrier'), label: 'Courrier' },
-		{ href: resolve('/envois'), label: 'Envois' },
+		{ href: resolve('/echanges'), label: 'Échanges' },
 		{ href: resolve('/suivi'), label: 'Suivi de l’IA' }
 	];
 </script>
@@ -31,11 +28,9 @@
 							aria-current={page.url.pathname === screen.href ||
 							([
 								resolve('/suivi'),
-								resolve('/adapter'),
 								resolve('/offres'),
 								resolve('/candidatures'),
-								resolve('/courrier'),
-								resolve('/envois')
+								resolve('/echanges')
 							].includes(screen.href) &&
 								page.url.pathname.startsWith(screen.href + '/'))
 								? 'page'

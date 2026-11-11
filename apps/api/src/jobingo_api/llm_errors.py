@@ -31,7 +31,7 @@ def llm_refusal(error: Exception) -> JSONResponse | None:
     if isinstance(error, LLMBudgetExceeded):
         return refused(429, f"Aucun appel : {error}. Le plafond se règle dans la configuration.")
     if isinstance(error, LLMUnavailable):
-        return refused(503, "L'API Anthropic ne répond pas. Réessayez dans un instant.")
+        return refused(503, error.reason)
     if isinstance(error, LLMValidationError):
         return refused(
             502, "La réponse du modèle était inutilisable, même après une relance. Réessayez."

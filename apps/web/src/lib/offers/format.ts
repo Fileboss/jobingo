@@ -23,7 +23,10 @@ export const remoteLabels: Record<string, string> = {
 };
 
 /** Where an offer stands: the user's decision first, then what scoring found. */
-export function standing(offer: ScoredOffer): 'shortlisted' | 'dismissed' | 'filtered' | 'open' {
+export function standing(
+	offer: ScoredOffer
+): 'applied' | 'shortlisted' | 'dismissed' | 'filtered' | 'open' {
+	if (offer.application_id) return 'applied';
 	if (offer.decision) return offer.decision;
 	if (offer.state === 'filtered') return 'filtered';
 	return 'open';

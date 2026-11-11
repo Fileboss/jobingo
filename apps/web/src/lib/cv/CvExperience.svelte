@@ -31,7 +31,7 @@
 	}
 </script>
 
-<article class="grid gap-x-6 gap-y-2 py-4 sm:grid-cols-[13rem_minmax(0,1fr)]">
+<article class="grid gap-x-6 gap-y-2 py-4 sm:grid-cols-[15rem_minmax(0,1fr)]">
 	<div class="grid content-start gap-1">
 		{#if experience.structured}
 			<TextField
@@ -42,9 +42,21 @@
 				class="text-[1.375rem] font-extrabold"
 			/>
 			<TextField bind:value={experience.role} label="Poste de {heading}" placeholder="Poste" />
-			<div class="grid grid-cols-2 gap-2">
-				<TextField bind:value={experience.start} label="Début de {heading}" placeholder="Début" />
-				<TextField bind:value={experience.end} label="Fin de {heading}" placeholder="Fin" />
+			<!-- Each date is as wide as its text, so the dash sits right after the start. -->
+			<div class="flex items-baseline gap-2">
+				<TextField
+					bind:value={experience.start}
+					label="Début de {heading}"
+					placeholder="Début"
+					class="field-sizing-content !w-auto min-w-12"
+				/>
+				<span aria-hidden="true">–</span>
+				<TextField
+					bind:value={experience.end}
+					label="Fin de {heading}"
+					placeholder="Fin"
+					class="field-sizing-content !w-auto min-w-12"
+				/>
 			</div>
 		{:else}
 			<TextField
@@ -69,22 +81,27 @@
 		{#if flagged}
 			<p class="w-fit bg-postit px-2 text-sm font-bold">À vérifier</p>
 		{/if}
-		<div class="-ml-2 flex flex-wrap text-sm">
-			<Button
-				variant="quiet"
-				disabled={first}
-				aria-label="Monter {heading}"
-				class="disabled:invisible"
-				onclick={() => onmove(-1)}>Monter</Button
+		<!-- Only the moves that apply are shown, so the row starts at the edge, on one line. -->
+		<div class="mt-1 flex flex-wrap gap-x-4 text-sm">
+			{#if !first}
+				<Button
+					variant="quiet"
+					aria-label="Monter {heading}"
+					class="!px-0"
+					onclick={() => onmove(-1)}>Monter</Button
+				>
+			{/if}
+			{#if !last}
+				<Button
+					variant="quiet"
+					aria-label="Descendre {heading}"
+					class="!px-0"
+					onclick={() => onmove(1)}>Descendre</Button
+				>
+			{/if}
+			<Button variant="quiet" aria-label="Retirer {heading}" class="!px-0" onclick={onremove}
+				>Retirer</Button
 			>
-			<Button
-				variant="quiet"
-				disabled={last}
-				aria-label="Descendre {heading}"
-				class="disabled:invisible"
-				onclick={() => onmove(1)}>Descendre</Button
-			>
-			<Button variant="quiet" aria-label="Retirer {heading}" onclick={onremove}>Retirer</Button>
 		</div>
 	</div>
 	<RuledArea

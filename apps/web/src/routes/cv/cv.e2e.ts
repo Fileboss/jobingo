@@ -66,6 +66,19 @@ test('typing in the form then saving survives a reload', async ({ page }) => {
 	await expect(resume(page)).toHaveValue('Ingénieure données, dix ans de métier.');
 });
 
+test('a CV waiting for its ids can be saved with no edit', async ({ page }) => {
+	const api = new FakeCvApi();
+	api.store(fictionalCv);
+	api.document = { ...api.document, needs_save: true };
+	await api.install(page);
+	await page.goto('/cv');
+
+	await expect(page.getByText('attend un enregistrement')).toBeVisible();
+	await save(page).click();
+
+	await expect(page.getByText(/Version 2, enregistrée/)).toBeVisible();
+});
+
 test('typing in the text mode then saving survives a reload', async ({ page }) => {
 	await open(page);
 	await textMode(page).click();
@@ -146,4 +159,21 @@ test('in a conflict the user can drop their input for the stored version', async
 	await page.getByRole('button', { name: 'Abandonner ma saisie' }).click();
 	await expect(resume(page)).toHaveValue(/neuf ans/);
 	await expect(page.getByRole('alert')).toBeHidden();
+});
+
+test('every ruled field keeps its text on the rules, a kept block in monospace too', async ({
+	page
+}) => {
+	const api = new FakeCvApi();
+	api.store(fictionalCv);
+	api.document.fields.others = ['## Notes pour l’oral\n\n- Une réponse à garder.'];
+	await api.install(page);
+	await page.goto('/cv');
+	await expect(page.getByRole('textbox', { name: 'Bloc conservé 1' })).toBeVisible();
+
+	const heights = await page
+		.locator('textarea.ruled')
+		.evaluateAll((areas) => areas.map((area) => getComputedStyle(area).lineHeight));
+	expect(heights.length).toBeGreaterThan(3);
+	expect(new Set(heights)).toEqual(new Set(['32px']));
 });

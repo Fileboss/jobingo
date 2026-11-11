@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from jobingo.db import Conn
 from jobingo.domain.objectives import HardFilters, apply_hard_filters
 from jobingo.domain.offers import ExtractedOffer, Offer
 from jobingo.llm.fake import FakeLLMClient
@@ -19,7 +20,7 @@ def _offer(**fields: Any) -> Offer:
         "id": 1,
         "title": "Ingénieur backend",
         "company_name": "Stratus",
-        "location": "Lyon 3e",
+        "locations": ["Lyon 3e"],
         "contract": "CDI",
         "remote": "hybride",
         "salary_min": 55000,
@@ -61,7 +62,7 @@ def test_a_known_value_that_fails_eliminates(
 
 
 def test_an_unknown_value_is_flagged_never_eliminating():
-    offer = _offer(contract="", remote="", location="", salary_min=None, salary_max=None)
+    offer = _offer(contract="", remote="", locations=[], salary_min=None, salary_max=None)
     filters = HardFilters(
         contracts=["CDI"], remote=["remote"], locations=["Lyon"], salary_min_eur=60000
     )
@@ -70,8 +71,15 @@ def test_an_unknown_value_is_flagged_never_eliminating():
     assert result.unknown == ["contrat", "télétravail", "lieu", "salaire"]
 
 
+def test_an_offer_in_several_cities_passes_on_any_one_of_them():
+    offer = _offer(locations=["Paris", "Toulouse"])
+    assert apply_hard_filters(offer, HardFilters(locations=["Toulouse"])).passed
+    result = apply_hard_filters(offer, HardFilters(locations=["Lyon"]))
+    assert result.eliminated_by == ["lieu non retenu : Paris, Toulouse"]
+
+
 def test_places_and_keywords_ignore_case_and_accents():
-    offer = _offer(location="Saint-Étienne", description_md="Mission en régie.")
+    offer = _offer(locations=["Saint-Étienne"], description_md="Mission en régie.")
     assert apply_hard_filters(offer, HardFilters(locations=["saint-etienne"])).passed
     result = apply_hard_filters(offer, HardFilters(excluded_keywords=["REGIE"]))
     assert result.eliminated_by == ["mot-clé exclu : REGIE"]
@@ -92,10 +100,23 @@ def test_never_saved_objectives_are_the_defaults(client: TestClient):
     assert view["objectives"]["weights"] == {
         "mission": 1,
         "stack": 1,
-        "salary": 1,
         "culture": 1,
     }
     assert view["offers"] == []
+
+
+def test_a_salary_weight_saved_before_the_two_scores_is_ignored(client: TestClient, conn: Conn):
+    """Saved objectives are carried forward: the salary has its own score now."""
+    client.get("/api/objectives")
+    user = conn.execute("SELECT id FROM users").fetchone()
+    assert user is not None
+    conn.execute(
+        "INSERT INTO objectives (user_id, hard_filters, weights, preferences)"
+        " VALUES (%s, '{}', %s, '')",
+        (user["id"], '{"mission": 2, "stack": 1, "salary": 4, "culture": 1}'),
+    )
+    weights = client.get("/api/objectives").json()["objectives"]["weights"]
+    assert weights == {"mission": 2, "stack": 1, "culture": 1}
 
 
 def test_saved_filters_show_which_offers_pass(client: TestClient):
@@ -117,7 +138,7 @@ def test_saved_filters_show_which_offers_pass(client: TestClient):
         "/api/objectives",
         json={
             "hard_filters": {"contracts": ["CDI"], "excluded_keywords": ["java"]},
-            "weights": {"mission": 2, "stack": 2, "salary": 1, "culture": 0.5},
+            "weights": {"mission": 2, "stack": 2, "culture": 0.5},
             "preferences": "  Plateformes de données, en Python.  ",
         },
     ).json()

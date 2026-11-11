@@ -83,7 +83,8 @@ def _from_scan(line: ScannedLine, line_no: int) -> CvDiagnostic | None:
                 "ignorée par les flux."
             ),
             suggestion=(
-                "Sections reconnues : Résumé, Expériences, Formation, Compétences, Loisirs "
+                "Sections reconnues : Résumé, Expériences, Projets personnels, Formation, "
+                "Compétences, Loisirs "
                 "(ou leurs équivalents anglais)."
             ),
         )

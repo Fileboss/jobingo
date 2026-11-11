@@ -9,7 +9,7 @@ export const offer = (id: number, title: string, extra: Partial<Offer> = {}): Of
 	id,
 	title,
 	company_name: 'Stratus',
-	location: 'Lyon',
+	locations: ['Lyon'],
 	contract: 'CDI',
 	remote: 'hybride',
 	salary_min: 60000,
@@ -37,13 +37,12 @@ export const score = (
 	eliminated_by: [],
 	unknown: [],
 	criteria: { mission: 8, stack: 9, salary: 6, culture: 7 },
-	score: value,
-	fit_score: 82,
+	fit_score: value,
 	salary_score: 60,
 	summary: 'Bon accord avec la plateforme de données visée.',
 	strengths: ['Airflow et PostgreSQL'],
 	gaps: ['Kubernetes peu pratiqué'],
-	weights: { mission: 2, stack: 2, salary: 1, culture: 1 },
+	weights: { mission: 2, stack: 2, culture: 1 },
 	llm_call_id: 21,
 	created_at: '2026-11-07T09:00:00Z',
 	stale: false,
@@ -61,7 +60,6 @@ export class FakeOffersApi {
 				passed_filters: false,
 				eliminated_by: ['contrat non retenu : CDD'],
 				criteria: null,
-				score: null,
 				fit_score: null,
 				salary_score: null,
 				llm_call_id: null
@@ -73,7 +71,6 @@ export class FakeOffersApi {
 	scoreRequests = 0;
 	decisions: (string | null)[] = [];
 	texts: string[] = [];
-	adaptRequests = 0;
 	/** What the next intake answers: new offers, a known one completed, or none. */
 	intakeAnswer: 'new' | 'merged' | 'none' = 'new';
 
@@ -150,14 +147,7 @@ export class FakeOffersApi {
 			const id = Number(route.request().url().split('/').at(-1));
 			const found = this.offers.find((o) => o.id === id);
 			if (!found) return route.fulfill({ status: 404, json: { detail: 'Offre introuvable' } });
-			return route.fulfill({ json: { ...found, drafts: [], application_id: null } });
-		});
-		await page.route(/\/api\/offers\/\d+\/cv-drafts\/fr$/, (route) => {
-			this.adaptRequests += 1;
-			return route.fulfill({
-				status: 503,
-				json: { message: 'L’IA n’est pas configurée : renseignez ANTHROPIC_API_KEY.' }
-			});
+			return route.fulfill({ json: { ...found, application_id: null } });
 		});
 	}
 }

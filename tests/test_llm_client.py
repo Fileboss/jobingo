@@ -74,7 +74,7 @@ def _message(text: str | None, stop_reason: str = "end_turn", **usage: int) -> d
 class Api:
     """Answers each request with the next queued response, and keeps the bodies sent."""
 
-    def __init__(self, *responses: dict[str, Any] | int) -> None:
+    def __init__(self, *responses: dict[str, Any] | int | tuple[int, str]) -> None:
         self.responses = list(responses)
         self.bodies: list[dict[str, Any]] = []
 
@@ -82,7 +82,11 @@ class Api:
         self.bodies.append(json.loads(request.content))
         answer = self.responses.pop(0)
         if isinstance(answer, int):
-            return httpx2.Response(answer, json={"type": "error", "error": {"type": "x"}})
+            answer = (answer, "x")
+        if isinstance(answer, tuple):
+            status, message = answer
+            error = {"type": "error", "error": {"type": "x", "message": message}}
+            return httpx2.Response(status, json=error)
         return httpx2.Response(200, json=answer)
 
 
@@ -189,6 +193,24 @@ def test_an_api_error_is_unavailable_and_keeps_what_was_spent(make_client: Any):
 
     assert raised.value.usage.attempts == 2
     assert raised.value.usage.input_tokens == 100
+
+
+@pytest.mark.parametrize(
+    ("answer", "says"),
+    [
+        (401, "clé Anthropic est refusée"),
+        ((400, "Your credit balance is too low to access the Anthropic API."), "crédit"),
+        (404, "modèle claude-haiku-5-5 est inconnu"),
+        (429, "limite le débit"),
+        (529, "ne répond pas"),
+    ],
+)
+def test_an_api_error_says_its_cause_to_the_user(make_client: Any, answer: Any, says: str):
+    """A refused key once read as « the API does not answer »: the user could not tell
+    a typo in the key from an outage."""
+    with pytest.raises(LLMUnavailable) as raised:
+        make_client(Api(answer)).run(RATE, Prompt(user="Note"))
+    assert says in raised.value.reason
 
 
 def test_untrusted_text_cannot_close_a_prompt_tag():

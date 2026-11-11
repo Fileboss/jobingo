@@ -1,10 +1,9 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, HTTPException, Response
 from fastapi.responses import JSONResponse
 
-from jobingo.domain.cv_document import CvLang
-from jobingo.domain.cv_draft import DraftChoices, DraftSummary, DraftView, OfferInput
+from jobingo.domain.cv_draft import DraftChoices, DraftSummary, DraftView
 from jobingo.services import cv_drafts
 from jobingo.services.cv_page import CvRenderError, OptionUnavailableError
 from jobingo.services.cv_proposal import NothingToTailorError, PersonalDataInCvError
@@ -17,28 +16,34 @@ router = APIRouter(tags=["cv-drafts"])
 _NOT_FOUND = "CV adapté introuvable"
 
 
+_ADAPT_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {"model": Refused, "description": "Nothing to adapt, or contact details in the CV"},
+    404: {"description": "No such application"},
+    **LLM_RESPONSES,
+}
+
+
 @router.post(
-    "/cv/{lang}/drafts",
+    "/applications/{application_id}/cv-drafts",
     response_model=DraftView,
     status_code=201,
-    responses={
-        400: {"model": Refused, "description": "Nothing to adapt, or contact details in the CV"},
-        **LLM_RESPONSES,
-    },
+    responses=_ADAPT_RESPONSES,
 )
-def create_draft(
-    lang: CvLang,
-    offer: Annotated[OfferInput, Body()],
+def adapt_cv(
+    application_id: int,
     user: CurrentUser,
     conn: DbConn,
     client: LlmClient,
     budget: LlmBudget,
 ) -> DraftView | JSONResponse:
-    """Ask the model which parts of the CV serve this offer. One call, journalled."""
+    """A CV adapted for this application: to its offer, or for a spontaneous one to the
+    role, the company and the notes on it. One call, journalled."""
     if client is None:
         return not_configured()
     try:
-        return cv_drafts.create_draft(conn, client, budget, user.id, lang, offer)
+        draft = cv_drafts.create_draft_for_application(
+            conn, client, budget, user.id, "fr", application_id
+        )
     except (NothingToTailorError, PersonalDataInCvError) as error:
         return refused(400, str(error))
     except Exception as error:
@@ -46,12 +51,15 @@ def create_draft(
         if answer is None:
             raise
         return answer
+    if draft is None:
+        raise HTTPException(status_code=404, detail="Candidature introuvable")
+    return draft
 
 
-@router.get("/cv/drafts")
-def list_drafts(user: CurrentUser, conn: DbConn) -> list[DraftSummary]:
-    """Newest first."""
-    return cv_drafts.list_drafts(conn, user.id)
+@router.get("/applications/{application_id}/cv-drafts")
+def list_drafts(application_id: int, user: CurrentUser, conn: DbConn) -> list[DraftSummary]:
+    """The application's adapted CVs, newest first."""
+    return cv_drafts.list_drafts(conn, user.id, application_id)
 
 
 @router.get("/cv/drafts/{draft_id}", responses={404: {"description": "No such draft"}})

@@ -56,16 +56,12 @@ def archive_letter(conn: Conn, user_id: int, application_id: int, letter_id: int
 
 
 def archive_cv(conn: Conn, user_id: int, application_id: int) -> Attachment:
-    """The CV adapted to the application's offer, from its latest draft, or else the CV
+    """The CV adapted for the application, its latest draft, or else the CV
     page as it stands. Raises `DocumentError` for a CV that is not one whole page."""
     application = get_application(conn, user_id, application_id)
     if application is None:
         raise DocumentError("Candidature introuvable.")
-    drafts = (
-        cv_drafts.list_drafts(conn, user_id, offer_id=application.offer_id)
-        if application.offer_id
-        else []
-    )
+    drafts = cv_drafts.list_drafts(conn, user_id, application_id)
     try:
         pdf = (
             cv_drafts.render_draft(conn, user_id, drafts[0].id)

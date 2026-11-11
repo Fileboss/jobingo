@@ -27,6 +27,7 @@ ALEX = Identity(
     email="alex.moreau@example.org",
     phone="06 00 00 00 00",
     address="12 rue des Lilas, 69003 Lyon",
+    website="alexmoreau.example",
     linkedin="linkedin.com/in/alex-moreau",
     github="github.com/alex-moreau",
 )
@@ -149,15 +150,31 @@ def test_an_empty_identity_leaves_nothing_behind():
     assert not metadata.author
 
 
-def test_identity_is_injected_at_render_time_only():
-    selection = _selection(parse_cv_markdown(FIXTURE))
+@pytest.mark.parametrize("panel", [True, False])
+def test_identity_is_injected_at_render_time_only(panel: bool):
+    selection = _selection(parse_cv_markdown(FIXTURE), options=_options(panneau_competences=panel))
 
     text = compact(extract_pdf_text(render_cv(selection, ALEX).pdf))
 
-    for value in (ALEX.name, ALEX.email, ALEX.phone, ALEX.linkedin):
+    for value in (ALEX.name, ALEX.email, ALEX.phone, ALEX.website, "alex-moreau"):
         assert compact(value) in text
+    # A profile prints its username beside its logo, not its address...
+    assert compact("linkedin.com/in") not in text and compact("github.com/") not in text
+    # ...which the link keeps.
+    links = {
+        str(annotation.get_object()["/A"]["/URI"])
+        for page in PdfReader(io.BytesIO(render_cv(selection, ALEX).pdf)).pages
+        for annotation in cast(list[Any], page.get("/Annots", []))
+        if "/A" in annotation.get_object()
+    }
+    assert {
+        "https://www.linkedin.com/in/alex-moreau",
+        "https://github.com/alex-moreau",
+        "https://alexmoreau.example",
+        f"mailto:{ALEX.email}",
+    } <= links
     stored = selection.model_dump_json()
-    for value in (ALEX.name, ALEX.email, ALEX.phone, ALEX.linkedin):
+    for value in (ALEX.name, ALEX.email, ALEX.phone, ALEX.website, ALEX.linkedin, ALEX.github):
         assert value not in stored
 
 

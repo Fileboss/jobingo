@@ -26,12 +26,13 @@
 		fields.experiences.splice(index + delta, 0, item);
 	}
 
-	const listField = (list: 'skills' | 'hobbies') => ({
+	const listField = (list: 'skills' | 'hobbies' | 'projects') => ({
 		get: () => fields[list].join('\n'),
 		set: (value: string) => (fields[list] = value.split('\n'))
 	});
 	const skills = listField('skills');
 	const hobbies = listField('hobbies');
+	const projects = listField('projects');
 </script>
 
 <div class="grid gap-6">
@@ -67,7 +68,16 @@
 		</div>
 	</BristolCard>
 
-	<BristolCard title="Formation" colour="green" tab={2} id={sectionId.formation}>
+	<BristolCard title="Projets personnels" colour="yellow" tab={2} id={sectionId.projets}>
+		<RuledArea
+			bind:value={projects.get, projects.set}
+			label="Projets personnels, un par ligne"
+			placeholder="Un projet par ligne : son nom, ce qu’il fait, avec quoi"
+			rows={3}
+		/>
+	</BristolCard>
+
+	<BristolCard title="Formation" colour="green" tab={3} id={sectionId.formation}>
 		<ul class="grid gap-1">
 			{#each fields.formation as entry, index (index)}
 				<li class="flex flex-wrap items-baseline gap-x-2">
@@ -99,7 +109,7 @@
 		>
 	</BristolCard>
 
-	<BristolCard title="Compétences" colour="salmon" tab={3} id={sectionId.competences}>
+	<BristolCard title="Compétences" colour="salmon" tab={4} id={sectionId.competences}>
 		<RuledArea
 			bind:value={skills.get, skills.set}
 			label="Compétences, une par ligne"
@@ -108,7 +118,7 @@
 		/>
 	</BristolCard>
 
-	<BristolCard title="Loisirs" colour="lilac" tab={4} id={sectionId.loisirs}>
+	<BristolCard title="Loisirs" colour="lilac" tab={5} id={sectionId.loisirs}>
 		<RuledArea
 			bind:value={hobbies.get, hobbies.set}
 			label="Loisirs, un par ligne"

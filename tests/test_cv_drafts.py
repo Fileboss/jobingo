@@ -8,8 +8,10 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from jobingo.db import Conn
+from jobingo.domain.offers import ExtractedOffer
 from jobingo.llm.client import LLMUnavailable, LLMValidationError, Usage
 from jobingo.llm.fake import FakeLLMClient
+from jobingo.llm.tasks.extract_offer import ExtractOfferOutput
 from jobingo.render.pdf import engine_available
 from jobingo.render.verify import compact, extract_pdf_text
 
@@ -61,10 +63,26 @@ def _save_cv(client: TestClient, text: str = FIXTURE) -> None:
     assert response.status_code == 200, response.text
 
 
+def _application(client: TestClient, fake: FakeLLMClient) -> int:
+    """An application made from a stored offer, the way a CV gets adapted."""
+    extracted = ExtractedOffer(
+        title=OFFER["title"], company_name=OFFER["company"], description_md=OFFER["description"]
+    )
+    fake.queue("extract_offer", ExtractOfferOutput(offers=[extracted]))
+    [offer] = client.post("/api/offers/intake", json={"text": "Une offre."}).json()["offers"]
+    app_id: int = client.post(f"/api/offers/{offer['id']}/application").json()["id"]
+    return app_id
+
+
+def _adapt(client: TestClient, app_id: int) -> Any:
+    return client.post(f"/api/applications/{app_id}/cv-drafts")
+
+
 def _create(client: TestClient, fake: FakeLLMClient, answer: Any = PROPOSAL) -> dict[str, Any]:
     _save_cv(client)
+    app_id = _application(client, fake)
     fake.queue("select_cv_content", answer)
-    response = client.post("/api/cv/fr/drafts", json=OFFER)
+    response = _adapt(client, app_id)
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -105,7 +123,8 @@ def test_a_draft_shows_the_whole_cv_with_the_proposal_and_its_trail(
     # The summary stays, rewritten or not.
     assert items["resume-01"]["kept"]
 
-    [summary] = client.get("/api/cv/drafts").json()
+    assert draft["application_id"] is not None
+    [summary] = client.get(f"/api/applications/{draft['application_id']}/cv-drafts").json()
     assert summary["offer_title"] == OFFER["title"]
     assert summary["llm_call_id"] == draft["llm_call_id"]
 
@@ -164,13 +183,14 @@ def test_the_pdf_is_the_draft_with_its_texts(client: TestClient, fake: FakeLLMCl
     assert compact("Maintenance d'applications Java") not in text
 
 
-def test_without_a_key_nothing_is_called(client: TestClient):
+def test_without_a_key_nothing_is_called(client: TestClient, fake: FakeLLMClient):
     _save_cv(client)
+    app_id = _application(client, fake)
     client.app.state.llm_client = None  # type: ignore[attr-defined]
-    response = client.post("/api/cv/fr/drafts", json=OFFER)
+    response = _adapt(client, app_id)
     assert response.status_code == 503
     assert "ANTHROPIC_API_KEY" in response.json()["message"]
-    assert client.get("/api/cv/drafts").json() == []
+    assert client.get(f"/api/applications/{app_id}/cv-drafts").json() == []
 
 
 @pytest.mark.parametrize(
@@ -184,19 +204,42 @@ def test_a_failed_call_stores_no_draft_and_says_try_again(
     client: TestClient, fake: FakeLLMClient, conn: Conn, failure: Exception, status: int
 ):
     _save_cv(client)
+    app_id = _application(client, fake)
     fake.queue("select_cv_content", failure)  # type: ignore[arg-type]
-    response = client.post("/api/cv/fr/drafts", json=OFFER)
+    response = _adapt(client, app_id)
     assert response.status_code == status
     assert "Réessayez" in response.json()["message"]
-    assert client.get("/api/cv/drafts").json() == []
-    row = conn.execute("SELECT count(*) AS n FROM llm_calls").fetchone()
+    assert client.get(f"/api/applications/{app_id}/cv-drafts").json() == []
+    row = conn.execute(
+        "SELECT count(*) AS n FROM llm_calls WHERE task = 'select_cv_content'"
+    ).fetchone()
     assert row is not None and row["n"] == 1  # journalled all the same
 
 
 def test_an_empty_cv_is_refused_before_any_call(client: TestClient, fake: FakeLLMClient):
-    response = client.post("/api/cv/fr/drafts", json=OFFER)
+    app_id = _application(client, fake)
+    response = _adapt(client, app_id)
     assert response.status_code == 400
-    assert fake.prompts == []
+    assert "select_cv_content" not in [task for task, _ in fake.prompts]
+
+
+def test_a_spontaneous_application_adapts_to_what_is_known(client: TestClient, fake: FakeLLMClient):
+    _save_cv(client)
+    app_id = client.post(
+        "/api/applications", json={"title": "Data engineer", "company_name": "Voltéo"}
+    ).json()["id"]
+    client.put(f"/api/applications/{app_id}/company-notes", json={"notes": "Plateforme Airflow."})
+    fake.queue("select_cv_content", PROPOSAL)
+
+    draft = _adapt(client, app_id).json()
+
+    assert (draft["offer_id"], draft["application_id"]) == (None, app_id)
+    assert draft["offer"]["title"] == "Data engineer"
+    assert "Candidature spontanée" in draft["offer"]["description"]
+    assert "Plateforme Airflow." in draft["offer"]["description"]
+    _, prompt = fake.prompts[-1]
+    assert "Plateforme Airflow." in prompt.user
+    assert _adapt(client, 999999).status_code == 404
 
 
 def test_another_accounts_draft_is_not_found(client: TestClient, fake: FakeLLMClient, conn: Conn):
@@ -208,4 +251,4 @@ def test_another_accounts_draft_is_not_found(client: TestClient, fake: FakeLLMCl
     conn.execute("UPDATE cv_drafts SET user_id = %s", (other["id"],))
     assert client.get(f"/api/cv/drafts/{draft['id']}").status_code == 404
     assert client.get(f"/api/cv/drafts/{draft['id']}/pdf").status_code == 404
-    assert client.get("/api/cv/drafts").json() == []
+    assert client.get(f"/api/applications/{draft['application_id']}/cv-drafts").json() == []

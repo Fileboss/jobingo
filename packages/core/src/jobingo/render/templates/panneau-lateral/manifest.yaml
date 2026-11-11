@@ -6,6 +6,7 @@ options: [photo, panneau_competences, loisirs]
 sections:
   resume: {max_chars: 450}
   experiences: {max_items: 4, max_bullets_per_item: 4}
+  projets: {max_items: 3}
   formation: {max_items: 3}
   competences: {max_items: 12}
   loisirs: {max_items: 4}

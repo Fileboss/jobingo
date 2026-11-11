@@ -10,13 +10,11 @@
 	import ScoreCard from '#lib/offers/ScoreCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
-	type OfferPage = components['schemas']['OfferPage'];
+	type OfferPage = components['schemas']['ScoredOffer'];
 
 	let id = $derived(Number(page.params.id));
 	let offer = $state.raw<OfferPage | null>(null);
 	let phase = $state<'loading' | 'ready' | 'missing' | 'unavailable'>('loading');
-	let adapting = $state(false);
-	let failure = $state<string | null>(null);
 
 	async function load() {
 		try {
@@ -85,25 +83,6 @@
 			applying = false;
 		}
 	}
-
-	async function adapt() {
-		adapting = true;
-		failure = null;
-		try {
-			const { data, error } = await api.POST('/api/offers/{offer_id}/cv-drafts/{lang}', {
-				params: { path: { offer_id: id, lang: 'fr' } }
-			});
-			if (!data) {
-				failure = error && 'message' in error ? error.message : 'La proposition a échoué.';
-				return;
-			}
-			await goto(resolve('/adapter/[id]', { id: String(data.id) }));
-		} catch {
-			failure = 'Le serveur ne répond pas. Réessayez.';
-		} finally {
-			adapting = false;
-		}
-	}
 </script>
 
 <svelte:head>
@@ -127,7 +106,7 @@
 		<p class="text-xl font-bold text-ink-soft">{offer.company_name || 'Entreprise non nommée'}</p>
 
 		<dl class="mt-5 grid grid-cols-2 gap-x-8 gap-y-3 bg-paper px-5 py-4 sm:grid-cols-4">
-			{#each [['Lieu', offer.location || '—'], ['Contrat', offer.contract || '—'], ['Télétravail', remoteLabels[offer.remote]], ['Salaire', salaryLabel(offer)]] as [label, value] (label)}
+			{#each [['Lieu', offer.locations.join(', ') || '—'], ['Contrat', offer.contract || '—'], ['Télétravail', remoteLabels[offer.remote]], ['Salaire', salaryLabel(offer)]] as [label, value] (label)}
 				<div>
 					<dt class="text-sm font-bold text-ink-soft">{label}</dt>
 					<dd class="font-extrabold text-ink">{value}</dd>
@@ -138,7 +117,7 @@
 			Reçue le {formatDateTime(offer.created_at)}{#if offer.message_id}
 				par
 				<a
-					href={resolve('/courrier/[id]', { id: String(offer.message_id) })}
+					href={resolve('/echanges/recus/[id]', { id: String(offer.message_id) })}
 					class="font-bold text-ink">une alerte e-mail</a
 				>{/if}{#if offer.llm_call_id}, extraite par
 				<a
@@ -217,35 +196,10 @@
 						>
 					{:else}
 						<Button onclick={apply} disabled={applying}>Candidater</Button>
-						<p class="mt-2 text-sm">Crée son suivi ; l’offre est marquée retenue.</p>
-					{/if}
-				</div>
-				<div class="bg-bristol-blue px-4 py-4">
-					<h2 class="mb-2 font-extrabold text-ink">Mon CV pour cette offre</h2>
-					<Button onclick={adapt} disabled={adapting}>Adapter mon CV</Button>
-					{#if adapting}
-						<p role="status" class="mt-2 text-sm text-ink-soft">
-							Le modèle lit votre CV et l’offre, une dizaine de secondes…
+						<p class="mt-2 text-sm">
+							Crée son suivi ; l’offre est marquée retenue. Le CV adapté et la lettre se font depuis
+							la candidature.
 						</p>
-					{/if}
-					{#if failure}
-						<p role="alert" class="mt-2 bg-alert px-3 py-2 text-sm font-bold text-white">
-							{failure}
-						</p>
-					{/if}
-					{#if offer.drafts.length}
-						<ul class="mt-3 grid gap-1 text-sm">
-							{#each offer.drafts as draft (draft.id)}
-								<li>
-									<a
-										href={resolve('/adapter/[id]', { id: String(draft.id) })}
-										class="font-bold text-ink"
-									>
-										CV du {formatDateTime(draft.created_at)}
-									</a>
-								</li>
-							{/each}
-						</ul>
 					{/if}
 				</div>
 			</aside>
