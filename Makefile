@@ -4,7 +4,7 @@
 API_PORT ?= 8000
 export
 
-.PHONY: db-up db-down mail-up api web api-types test lint typecheck check check-guardrails \
+.PHONY: db-up db-down mail-up ats-up ats-down ats api web api-types test lint typecheck check check-guardrails \
 	e2e eval agent agent-front agent-back pair worktree worktree-rm
 
 db-up:
@@ -15,8 +15,22 @@ db-up:
 mail-up:
 	docker compose up -d mailpit greenmail
 
+# The ATS check's parsers, off by default (docs/ats-check.md): Tika on :9998 and
+# Affinda's resume parser on :8090, with no route out of this machine.
+ats-up:
+	docker compose --profile ats up -d
+
+ats-down:
+	docker compose --profile ats stop tika affinda ats-gateway
+
+# What a recruiting tool reads from a CV: `make ats ARGS=path/to/cv.pdf`, or a fictional
+# CV without ARGS.
+ats:
+	uv run python scripts/ats_check.py $(ARGS)
+
+# Every container, the ATS check's included. The volumes, and the data in them, stay.
 db-down:
-	docker compose down
+	docker compose --profile ats down
 
 api:
 	uv run uvicorn --factory jobingo_api.main:create_app --host 127.0.0.1 --port $(API_PORT) --reload

@@ -44,7 +44,7 @@ def test_remote_and_outside_resources_are_never_opened(tmp_path: Path, opened: l
     )
     css = "@import url('https://evil.example/s.css'); p { color: black; }"
 
-    pdf, _pages = render_pdf(html, css, template_dir)
+    pdf = render_pdf(html, css, template_dir).pdf
 
     assert pdf.startswith(b"%PDF")
     assert not any("evil.example" in url or "127.0.0.1" in url for url in opened)

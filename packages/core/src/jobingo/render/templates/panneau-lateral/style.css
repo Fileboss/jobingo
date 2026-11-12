@@ -5,6 +5,10 @@
    WeasyPrint paints positioned boxes last, so its text comes after the main column in
    extraction. `hyphens: none` and no `text-transform` keep the post-render check honest.
 
+   For the tools recruiters run on a PDF: list bullets are text in the line they mark,
+   not list markers (WeasyPrint wrote those apart, all at the end of the extracted text),
+   ligatures are off so « fi » is two letters, and icons are drawn, not text.
+
    The font ships with the template (Lato, SIL Open Font License, see fonts/OFL.txt), so
    line breaks and the page count do not depend on the machine. The generic family only
    covers characters outside the Latin subset. */
@@ -54,6 +58,7 @@ body {
     color: var(--muted);
     margin: 0;
     hyphens: none;
+    font-variant-ligatures: none;
 }
 
 body.with-panel {
@@ -82,9 +87,10 @@ header {
     display: flow-root;
 }
 
+/* Not justified: the stretched spaces of a justified line come out doubled in the text
+   a recruiting tool extracts. */
 p.resume {
     margin: 2mm 0 0;
-    text-align: justify;
     color: var(--muted);
 }
 
@@ -111,12 +117,13 @@ ul.contact li + li::before {
     content: " · ";
 }
 
-/* A profile shows its logo, then its username: the link keeps the full address. */
+/* Each line shows its icon, then its value; a profile shows its username alone, the
+   link keeping the full address. */
 ul.contact svg.icon {
     width: 1em;
     height: 1em;
     vertical-align: -0.14em;
-    margin-right: 0.18em;
+    margin-right: 0.5em;
 }
 
 ul.contact a {
@@ -138,11 +145,32 @@ main h2 {
 
 /* No `position: relative` here: WeasyPrint paints positioned boxes after the
    rest, which would move every article's text after the headings in the PDF's
-   own text stream and break the reading order the post-render check reads. */
+   own text stream and break the reading order the post-render check reads.
+   The line is a background rather than a border, so the first article can start it
+   at its dot instead of above it. */
 section.timeline article {
-    border-left: 1.6pt solid var(--encre);
-    padding: 0 0 2.6mm 4.5mm;
+    /* A one-colour image: WeasyPrint does not size a gradient background. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3Crect width='1' height='1' fill='%23111111'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: 1.6pt 100%;
+    padding: 0 0 2.6mm 5.06mm;
     break-inside: avoid;
+}
+
+/* Shifted down to the first dot; what runs past the bottom is clipped. */
+section.timeline article:first-of-type {
+    background-position: 0 2.4mm;
+}
+
+/* The line ends with the last element's text: the gap to the next section is the
+   section's own margin. */
+section.timeline article:last-of-type {
+    padding-bottom: 0;
+}
+
+main section.timeline {
+    margin-bottom: 5.6mm;
 }
 
 section.timeline h3::before {
@@ -152,8 +180,16 @@ section.timeline h3::before {
     height: 5.6pt;
     border-radius: 50%;
     background: var(--encre);
+    /* As wide as its margins take back, so a title that wraps lines up with itself. */
     margin-left: -16.4pt;
     margin-right: 10.8pt;
+}
+
+/* The dates of a title, set apart: smaller and lighter. */
+h3 .dates {
+    font-size: 8.4pt;
+    font-weight: 400;
+    color: #9a9a9a;
 }
 
 h3 {
@@ -178,7 +214,16 @@ main ul {
 
 main section.timeline ul,
 main section.projects ul {
-    list-style: "•  "; /* In Lato, unlike the square marker. */
+    list-style: none;
+}
+
+/* The bullet is text at the head of its line, hung in the indent. */
+main section.timeline li::before,
+main section.projects li::before {
+    content: "•";
+    display: inline-block;
+    width: 3mm;
+    margin-left: -3mm;
 }
 
 main li {
@@ -241,9 +286,15 @@ aside.panel ul.contact {
     font-weight: 400;
 }
 
+/* The icon hangs in the indent, so a value that wraps (an address) aligns with itself. */
 aside.panel ul.contact li {
     display: block;
     font-weight: 400;
+    padding-left: 1.5em;
+}
+
+aside.panel ul.contact svg.icon {
+    margin-left: -1.5em;
 }
 
 aside.panel ul.contact li + li::before {

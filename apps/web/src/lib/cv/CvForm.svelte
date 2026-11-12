@@ -26,11 +26,12 @@
 		fields.experiences.splice(index + delta, 0, item);
 	}
 
-	const listField = (list: 'skills' | 'hobbies' | 'projects') => ({
+	const listField = (list: 'skills' | 'languages' | 'hobbies' | 'projects') => ({
 		get: () => fields[list].join('\n'),
 		set: (value: string) => (fields[list] = value.split('\n'))
 	});
 	const skills = listField('skills');
+	const languages = listField('languages');
 	const hobbies = listField('hobbies');
 	const projects = listField('projects');
 </script>
@@ -118,7 +119,21 @@
 		/>
 	</BristolCard>
 
-	<BristolCard title="Loisirs" colour="lilac" tab={5} id={sectionId.loisirs}>
+	<BristolCard
+		title="Langues"
+		colour="blue"
+		tab={5}
+		id={sectionId.langues}
+		note="toujours sur la page"
+	>
+		<RuledArea
+			bind:value={languages.get, languages.set}
+			label="Langues, une par ligne"
+			placeholder="Anglais : C1"
+		/>
+	</BristolCard>
+
+	<BristolCard title="Loisirs" colour="lilac" tab={6} id={sectionId.loisirs}>
 		<RuledArea
 			bind:value={hobbies.get, hobbies.set}
 			label="Loisirs, un par ligne"

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from evals.harness import NO_BUDGET, Workspace
+from jobingo.domain.cv_proposal import TailoredCv
 from jobingo.domain.identity import Identity
 from jobingo.domain.mail import parse_iso_date
 from jobingo.domain.placeholders import find_placeholders, format_placeholder
@@ -30,7 +31,8 @@ from jobingo.llm.tasks.extract_offer import EXTRACT_OFFER_TASK, ExtractOfferInpu
 from jobingo.llm.tasks.score_offer import SCORE_OFFER_TASK
 from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
 from jobingo.services.applications import apply_to_offer
-from jobingo.services.cv_proposal import OfferText, propose_cv
+from jobingo.services.cv_drafts import fit_ranking, measure_page
+from jobingo.services.cv_proposal import OfferText, RankedProposal, propose_cv
 from jobingo.services.identity import redaction_values, save_identity
 from jobingo.services.letters import propose_letter, set_company_notes
 from jobingo.services.replies import draft_reply
@@ -61,56 +63,88 @@ class Suite:
 # --- select_cv_content -------------------------------------------------------------
 
 
+def _propose(
+    ws: Workspace, client: LLMClient, case: dict[str, Any], offer: OfferText
+) -> tuple[RankedProposal, TailoredCv, Row]:
+    """The proposal the case grades, made as the app makes it: the model's ranking,
+    taken as far as the page holds. A page case also reports how full the page is."""
+    ranked, _ = propose_cv(ws.conn, client, NO_BUDGET, ws.user_id, "fr", offer, style=ws.style)
+    tailored = fit_ranking(ws.conn, ws.user_id, "fr", ranked, ws.options())
+    if not case.get("page"):
+        return ranked, tailored, {}
+    page = measure_page(ws.conn, ws.user_id, "fr", tailored, ws.options())
+    kept = tailored.kept_items()
+    return (
+        ranked,
+        tailored,
+        {
+            "ranked": ranked.size,
+            "taken": sum(item.id in {k.id for k in kept} for item in ranked.ranking.classement),
+            "fits": page is not None and not page.runs_over,
+            "fill": page.fill and round(page.fill, 3) if page is not None else None,
+            "in_range": page is not None and page.in_range,
+            "shortened": sum(
+                item.rewritten and len(item.text) < len(item.original) for item in kept
+            ),
+        },
+    )
+
+
 def run_select_cv(ws: Workspace, client: LLMClient, cases: list[dict[str, Any]]) -> list[Row]:
     rows: list[Row] = []
     for case in cases:
         offer = case["offer"]
         row: Row = {"id": case["id"], "offer": offer["title"]}
+        ws.use_cv(case.get("cv", "cv.fr.md"))
+        offer_text = OfferText(
+            title=offer["title"], company=offer["company_name"], description=offer["description_md"]
+        )
         try:
-            tailored, _ = propose_cv(
-                ws.conn,
-                client,
-                NO_BUDGET,
-                ws.user_id,
-                "fr",
-                OfferText(
-                    title=offer["title"],
-                    company=offer["company_name"],
-                    description=offer["description_md"],
-                ),
-                style=ws.style,
-            )
+            ranked, tailored, fit = _propose(ws, client, case, offer_text)
         except LLMCallError as exc:
             rows.append(row | {"passed": False, "error": str(exc)})
             continue
         kept = tailored.kept_items()
         kept_ids = {item.id for item in kept}
         missing = [i for i in case.get("must_keep", []) if i not in kept_ids]
-        unwanted = [i for i in case.get("must_drop", []) if i in kept_ids]
+        # May complete the page, never stand among what serves the offer.
+        serving = {item.id for item in ranked.ranking.sert_l_offre}
+        serving_wrongly = [i for i in case.get("not_serving", []) if i in serving]
+        page_text = fold(" ".join(item.text for item in kept))
+        unmentioned = [t for t in case.get("must_mention", []) if fold(t) not in page_text]
+        passed = not missing and not serving_wrongly and not unmentioned
+        if fit:
+            passed = passed and bool(fit["in_range"])
         rows.append(
             row
             | {
-                "passed": not missing and not unwanted,
+                "passed": passed,
                 "missing": missing,
-                "unwanted": unwanted,
+                "serving_wrongly": serving_wrongly,
+                "unmentioned": unmentioned,
                 "refused_rewrites": [
                     f"{item.id}: {item.rejected_reason}" for item in kept if item.rejected_reason
                 ],
                 "accepted_rewrites": sum(item.rewritten for item in kept),
                 "warnings": tailored.warnings,
             }
+            | fit
         )
     return rows
 
 
 def grade_select_cv(rows: list[Row]) -> dict[str, Any]:
     passed = sum(bool(row["passed"]) for row in rows)
+    fitted = [row for row in rows if "fits" in row]
     return {
         "score": round(passed / len(rows), 3) if rows else None,
         "detail": {
             "cases": f"{passed}/{len(rows)}",
             "refused_rewrites": sum(len(row.get("refused_rewrites", [])) for row in rows),
             "accepted_rewrites": sum(row.get("accepted_rewrites", 0) for row in rows),
+            "fitted": f"{sum(bool(row['fits']) for row in fitted)}/{len(fitted)}",
+            "in_range": f"{sum(bool(row['in_range']) for row in fitted)}/{len(fitted)}",
+            "shortened": sum(row["shortened"] for row in fitted),
         },
     }
 
@@ -656,7 +690,11 @@ SUITES: dict[str, Suite] = {
     ),
     "select_cv_content": Suite(
         name="select_cv_content",
-        metric="cas où toute la sélection attendue est retenue, et rien d'exclu",
+        metric=(
+            "cas où toute la sélection attendue est retenue, et rien de ce qui ne sert pas "
+            "l'offre classé comme la servant ; "
+            "pour les cas de page, le CV rendu rempli de 80 à 100 %"
+        ),
         tier="writing",
         prompt_version=SELECT_CV_CONTENT_TASK.prompt_version,
         threshold=None,

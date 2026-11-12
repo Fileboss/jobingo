@@ -135,6 +135,10 @@ def draft_selection(
         competences=[
             SelectedItem(id=s.id, text=text_of(s.id, s.text)) for s in ordered(of_kind("skill"))
         ],
+        langues=[
+            SelectedItem(id=lang.id, text=text_of(lang.id, lang.text))
+            for lang in ordered(of_kind("language"))
+        ],
         loisirs=[
             SelectedItem(id=h.id, text=text_of(h.id, h.text)) for h in ordered(of_kind("hobby"))
         ],
@@ -155,7 +159,9 @@ class DraftItem(BaseModel):
     proposed_rewrite: str  # empty: no rewrite proposed
     rejected_reason: str  # why code refused the rewrite; empty when accepted or none
     unsourced_names: list[str]  # proper nouns the accepted rewrite added, to check
-    discard_reason: str  # the model's motive for leaving it out, if it gave one
+    discard_reason: str  # why it was left out: the model's motive, or code's
+    discarded_by_code: bool  # left out by code (a template limit, no room on the page)
+    complement: bool  # on the page only to complete it: not serving the offer, says the model
 
 
 class DraftExperience(DraftItem):
@@ -187,6 +193,7 @@ class DraftSections(BaseModel):
     projets: list[DraftItem]
     formation: list[DraftFormation]
     competences: list[DraftItem]
+    langues: list[DraftItem]
     loisirs: list[DraftItem]
 
 
@@ -205,6 +212,7 @@ class DraftView(BaseModel):
     projets: list[DraftItem]
     formation: list[DraftFormation]
     competences: list[DraftItem]
+    langues: list[DraftItem]
     loisirs: list[DraftItem]
     options: CvOptions
     option_blockers: OptionBlockers
@@ -223,7 +231,8 @@ def draft_items(profile: Profile, tailored: TailoredCv, choices: DraftChoices) -
     """The whole CV, in its own order, each item with the model's proposal and the
     user's current choice."""
     reviewed = _reviewed_index(tailored)
-    discarded = {d.id: d.reason for d in tailored.discarded}
+    discarded = {d.id: d for d in tailored.discarded}
+    complement = set(tailored.complement_ids)
     kept = set(choices.kept_ids)
 
     def item(item_id: str, original: str) -> DraftItem:
@@ -237,7 +246,9 @@ def draft_items(profile: Profile, tailored: TailoredCv, choices: DraftChoices) -
             proposed_rewrite=proposal.proposed_rewrite if proposal else "",
             rejected_reason=proposal.rejected_reason if proposal else "",
             unsourced_names=proposal.unsourced_names if proposal else [],
-            discard_reason=discarded.get(item_id, ""),
+            discard_reason=discarded[item_id].reason if item_id in discarded else "",
+            discarded_by_code=item_id in discarded and discarded[item_id].by_code,
+            complement=item_id in complement,
         )
 
     def of_kind(kind: str) -> list[ProfileItem]:
@@ -265,6 +276,7 @@ def draft_items(profile: Profile, tailored: TailoredCv, choices: DraftChoices) -
             for f in of_kind("formation")
         ],
         competences=[item(s.id, s.text) for s in of_kind("skill")],
+        langues=[item(lang.id, lang.text) for lang in of_kind("language")],
         loisirs=[item(h.id, h.text) for h in of_kind("hobby")],
     )
 

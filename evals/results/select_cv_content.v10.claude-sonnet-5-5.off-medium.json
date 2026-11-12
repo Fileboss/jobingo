@@ -1,0 +1,246 @@
+{
+  "summary": {
+    "suite": "select_cv_content",
+    "metric": "cas où toute la sélection attendue est retenue, et rien d'exclu ; au-delà de la page, le CV rendu finit rempli de 80 à 100 %",
+    "prompt_version": 10,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 0.615,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "8/13",
+      "refused_rewrites": 2,
+      "accepted_rewrites": 30,
+      "fitted": "5/5",
+      "in_range": "1/5",
+      "fit_calls": 15,
+      "shortened": 25
+    },
+    "cases": 13,
+    "spend": {
+      "live_calls": 23,
+      "cached_calls": 0,
+      "input_tokens": 36659,
+      "output_tokens": 9964,
+      "cache_read_tokens": 111622,
+      "cache_write_tokens": 10169,
+      "cost_usd": "0.220696",
+      "latency_p50_ms": 3322,
+      "latency_p95_ms": 4413
+    },
+    "stopped": null,
+    "run_at": "2026-11-12T13:31:14+00:00"
+  },
+  "rows": [
+    {
+      "id": "cv-01",
+      "offer": "Ingénieur data plateforme",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-02",
+      "offer": "Développeur backend Django",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-03",
+      "offer": "Senior Backend Engineer, billing",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-04",
+      "offer": "Tech Lead backend",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [
+        "resume-01: reformulation trop longue (121 % de l'original, 120 % au maximum)"
+      ],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-05",
+      "offer": "Ingénieur DevOps / SRE",
+      "passed": false,
+      "missing": [],
+      "unwanted": [
+        "batiflux-01"
+      ],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-06",
+      "offer": "Ingénieur backend paiement",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-07",
+      "offer": "Développeur Java",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-08",
+      "offer": "Data engineer",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "fit-01",
+      "offer": "Data engineer",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [
+        "resume-01: reformulation trop longue pour le gabarit (133 caractères au maximum)"
+      ],
+      "accepted_rewrites": 6,
+      "warnings": [
+        "La page n'est remplie qu'à 51 % (après plusieurs propositions) : cochez des éléments pour la compléter."
+      ],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 3,
+      "fits": true,
+      "fill": 0.505,
+      "in_range": false,
+      "length_ratio": 0.266,
+      "shortened": 6
+    },
+    {
+      "id": "fit-02",
+      "offer": "Développeur backend Django",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 5,
+      "warnings": [
+        "La page n'est remplie qu'à 59 % (après plusieurs propositions) : cochez des éléments pour la compléter."
+      ],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 3,
+      "fits": true,
+      "fill": 0.593,
+      "in_range": false,
+      "length_ratio": 0.346,
+      "shortened": 5
+    },
+    {
+      "id": "fit-03",
+      "offer": "Ingénieur fiabilité (SRE)",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 10,
+      "warnings": [
+        "La page n'est remplie qu'à 70 % (après plusieurs propositions) : cochez des éléments pour la compléter."
+      ],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 3,
+      "fits": true,
+      "fill": 0.705,
+      "in_range": false,
+      "length_ratio": 0.407,
+      "shortened": 10
+    },
+    {
+      "id": "fill-01",
+      "offer": "Ingénieur données senior",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "start": {
+        "pages": 1,
+        "fill": 0.161
+      },
+      "calls": 3,
+      "fits": true,
+      "fill": 0.888,
+      "in_range": true,
+      "length_ratio": 9.974,
+      "shortened": 0
+    },
+    {
+      "id": "fill-02",
+      "offer": "Développeur Python full stack",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 4,
+      "warnings": [
+        "La page n'est remplie qu'à 55 % (après plusieurs propositions) : cochez des éléments pour la compléter."
+      ],
+      "start": {
+        "pages": 1,
+        "fill": 0.176
+      },
+      "calls": 3,
+      "fits": true,
+      "fill": 0.55,
+      "in_range": false,
+      "length_ratio": 3.546,
+      "shortened": 4
+    }
+  ]
+}

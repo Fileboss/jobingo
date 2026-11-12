@@ -31,6 +31,9 @@
 				class={[strong ? 'font-extrabold' : 'leading-snug', !on && 'text-ink-soft line-through']}
 				>{text}</span
 			>
+			{#if item.proposed && item.complement && on}
+				<span class="ml-1.5 text-sm font-bold whitespace-nowrap text-ink-soft">en complément</span>
+			{/if}
 			{#if !item.proposed && on}
 				<span class="ml-1.5 text-sm font-bold whitespace-nowrap text-ink-soft">ajouté par vous</span
 				>
@@ -114,7 +117,9 @@
 		{/if}
 		{#if !item.proposed && item.discard_reason}
 			<p class="text-ink-soft">
-				<span class="font-bold">Écarté par le modèle :</span>
+				<span class="font-bold"
+					>{item.discarded_by_code ? 'Écarté par le code :' : 'Écarté par le modèle :'}</span
+				>
 				{item.discard_reason}
 			</p>
 		{/if}

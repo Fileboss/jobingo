@@ -10,23 +10,31 @@ from pydantic import BaseModel
 
 from evals.harness import CachingClient, EvalBudgetExceededError, EvalConfig, Workspace
 from evals.run import run_suite
-from evals.suites import SUITES, load_cases
+from evals.suites import SUITES, load_cases, run_select_cv
 from jobingo.llm.anthropic_client import AnthropicLLMClient
 from jobingo.llm.client import LLMUnavailable, LLMValidationError, Prompt, Usage
 from jobingo.llm.fake import FakeLLMClient
 from jobingo.llm.tasks.select_cv_content import SELECT_CV_CONTENT_TASK
+from jobingo.render.pdf import engine_available
 
 SUITE = SUITES["select_cv_content"]
 
 
+needs_engine = pytest.mark.skipif(not engine_available(), reason="WeasyPrint needs Pango")
+
+
 class _Wire(BaseModel):
-    experiences: list[str] = []
-    bullets: list[str] = []
+    sert_l_offre: list[str] = []
+    complement: list[str] = []
     competences: list[str] = []
 
 
+class _Rewriting(_Wire):
+    rewrites: list[dict[str, str]] = []
+
+
 # What a sensible answer to the first case looks like, on the short ids.
-DATA_PLATFORM = _Wire(experiences=["E1"], bullets=["E1.1", "E1.2"], competences=["C1", "C3"])
+DATA_PLATFORM = _Wire(sert_l_offre=["E1", "E1.1", "E1.2"], competences=["C1", "C3"])
 
 
 @pytest.fixture
@@ -88,7 +96,7 @@ def test_an_answer_is_paid_once(tmp_path: Path, inner: AnthropicLLMClient):
     again = CachingClient(inner, Decimal(1), tmp_path, live=_fake())
     result = again.run(SELECT_CV_CONTENT_TASK, prompt)
     assert (again.spend.live_calls, again.spend.cached_calls) == (1 - 1, 1)
-    assert [e.id for e in result.output.experiences] == ["E1"]
+    assert [e.id for e in result.output.classement] == ["E1", "E1.1", "E1.2"]
 
     other = CachingClient(inner, Decimal(1), tmp_path, live=_fake(DATA_PLATFORM))
     other.run(SELECT_CV_CONTENT_TASK, Prompt(user="Une autre offre", system="Consignes"))
@@ -134,12 +142,12 @@ def test_a_suite_grades_each_case_and_records_the_run(
         SUITE, config, CachingClient(inner, Decimal(5), cache, live=live), results_dir=results
     )
 
-    assert summary["cases"] == len(cases) == 8
-    assert summary["score"] == 0.125  # the answer only suits the first offer
+    assert summary["cases"] == len(cases) == 14
+    assert summary["score"] == 0.071  # the answer only suits the first offer
     assert summary["passed"] is None  # no threshold yet
-    assert summary["spend"]["live_calls"] == 8
+    assert summary["spend"]["live_calls"] == 14
     [path] = results.iterdir()
-    assert path.name == "select_cv_content.v6.claude-sonnet-5-5.off-medium.json"
+    assert path.name == "select_cv_content.v14.claude-sonnet-5-5.off-medium.json"
     stored = json.loads(path.read_text(encoding="utf-8"))
     first = stored["rows"][0]
     assert (first["id"], first["passed"], first["missing"]) == ("cv-01", True, [])
@@ -367,3 +375,46 @@ def test_the_reply_suite_accepts_the_canonical_gap_only(
     rows = {row["id"]: row for row in stored["rows"]}
     assert rows["rep-01"]["passed"]
     assert rows["rep-02"]["problems"] == ["marqueur hors format : [date]"]
+
+
+@needs_engine
+def test_a_page_case_needs_the_page_80_to_100_percent_full(database_url: str):
+    [case] = [case for case in load_cases("select_cv_content") if case["id"] == "fit-01"]
+    shortened = "Migration de 90 traitements nocturnes vers des DAG Airflow testés"
+    # Everything worth showing, most useful first: code takes it as far as the page holds.
+    full = _Rewriting(
+        sert_l_offre=[
+            *("E1", "E1.2", "E1.3", "E1.1", "E1.4"),
+            *("E2", "E2.3", "E2.1", "E2.4", "E2.2"),
+            *("R1", "F1", "F2", "E3", "E3.3", "E3.1", "E3.2", "E3.4"),
+            *("R3", "E4", "E4.2", "E4.4", "F3", "R2"),
+        ],
+        competences=["C1", "C3", "C4"],
+        rewrites=[{"id": "E1.2", "text": shortened}],
+    )
+    # Too short a ranking: the page stays half empty.
+    lean = _Wire(sert_l_offre=["E1", "E1.2", "E1.3"], competences=["C1", "C3", "C4"])
+    fake = _fake(full, lean)
+    with Workspace() as workspace:
+        passing, empty = run_select_cv(workspace, fake, [case, case])
+
+    assert passing["passed"] and passing["in_range"] and passing["shortened"] == 1
+    assert passing["ranked"] == 24 and passing["taken"] < 24  # cut at the page
+    assert empty["fits"] and not empty["in_range"] and not empty["passed"]
+    assert "le modèle n'a classé que 3 éléments" in empty["warnings"][0]
+
+
+def test_what_does_not_serve_the_offer_may_complete_the_page_but_not_serve_it(
+    database_url: str,
+):
+    [case] = [case for case in load_cases("select_cv_content") if case["id"] == "cv-01"]
+    kept = ["E1", "E1.1", "E1.2"]
+    # colibri-01 (E3.1) does not serve a data offer: fine as a complement, not as serving.
+    completing = _Wire(sert_l_offre=kept, complement=["E3", "E3.1"], competences=["C1", "C3"])
+    serving = _Wire(sert_l_offre=[*kept, "E3", "E3.1"], competences=["C1", "C3"])
+    fake = _fake(completing, serving)
+    with Workspace() as workspace:
+        fine, wrong = run_select_cv(workspace, fake, [case, case])
+
+    assert fine["passed"] and fine["serving_wrongly"] == []
+    assert not wrong["passed"] and wrong["serving_wrongly"] == ["colibri-01"]

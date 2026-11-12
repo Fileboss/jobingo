@@ -23,6 +23,8 @@ const item = (id: string, original: string, extra: Partial<DraftItem> = {}): Dra
 	rejected_reason: '',
 	unsourced_names: [],
 	discard_reason: '',
+	discarded_by_code: false,
+	complement: false,
 	...extra
 });
 
@@ -76,6 +78,7 @@ export class FakeDraftsApi {
 		projets: [],
 		formation: [],
 		competences: [item('skill-python', 'Python', { kept: true, proposed: true })],
+		langues: [],
 		loisirs: [],
 		options: { photo: false, panneau_competences: true, loisirs: false },
 		option_blockers: {

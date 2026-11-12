@@ -1,0 +1,237 @@
+{
+  "summary": {
+    "suite": "select_cv_content",
+    "metric": "cas où toute la sélection attendue est retenue, et rien d'exclu ; pour les cas de page, le CV rendu rempli de 80 à 100 %",
+    "prompt_version": 12,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 0.615,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "8/13",
+      "refused_rewrites": 0,
+      "accepted_rewrites": 59,
+      "fitted": "5/5",
+      "in_range": "3/5",
+      "shortened": 44
+    },
+    "cases": 13,
+    "spend": {
+      "live_calls": 13,
+      "cached_calls": 0,
+      "input_tokens": 3515,
+      "output_tokens": 8140,
+      "cache_read_tokens": 55294,
+      "cache_write_tokens": 10450,
+      "cost_usd": "0.125615",
+      "latency_p50_ms": 3947,
+      "latency_p95_ms": 7516
+    },
+    "stopped": null,
+    "run_at": "2026-11-12T13:45:33+00:00"
+  },
+  "rows": [
+    {
+      "id": "cv-01",
+      "offer": "Ingénieur data plateforme",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 2,
+      "warnings": [
+        "La page n'est remplie qu'à 44 % : le modèle n'a classé que 15 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-02",
+      "offer": "Développeur backend Django",
+      "passed": false,
+      "missing": [],
+      "unwanted": [
+        "colibri-01"
+      ],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 2,
+      "warnings": [
+        "La page n'est remplie qu'à 40 % : le modèle n'a classé que 13 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-03",
+      "offer": "Senior Backend Engineer, billing",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [
+        "La page n'est remplie qu'à 44 % : le modèle n'a classé que 15 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-04",
+      "offer": "Tech Lead backend",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [
+        "La page n'est remplie qu'à 46 % : le modèle n'a classé que 16 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-05",
+      "offer": "Ingénieur DevOps / SRE",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 2,
+      "warnings": [
+        "La page n'est remplie qu'à 34 % : le modèle n'a classé que 12 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-06",
+      "offer": "Ingénieur backend paiement",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [
+        "La page n'est remplie qu'à 43 % : le modèle n'a classé que 15 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-07",
+      "offer": "Développeur Java",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [
+        "La page n'est remplie qu'à 42 % : le modèle n'a classé que 14 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "cv-08",
+      "offer": "Data engineer",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 2,
+      "warnings": [
+        "La page n'est remplie qu'à 46 % : le modèle n'a classé que 16 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ]
+    },
+    {
+      "id": "fit-01",
+      "offer": "Data engineer",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 9,
+      "warnings": [
+        "La page n'est remplie qu'à 78 % : le modèle n'a classé que 20 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ],
+      "ranked": 20,
+      "taken": 19,
+      "fits": true,
+      "fill": 0.784,
+      "in_range": false,
+      "shortened": 8
+    },
+    {
+      "id": "fit-02",
+      "offer": "Développeur backend Django",
+      "passed": false,
+      "missing": [],
+      "unwanted": [
+        "ardoise-01"
+      ],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 8,
+      "warnings": [],
+      "ranked": 19,
+      "taken": 19,
+      "fits": true,
+      "fill": 0.875,
+      "in_range": true,
+      "shortened": 8
+    },
+    {
+      "id": "fit-03",
+      "offer": "Ingénieur fiabilité (SRE)",
+      "passed": false,
+      "missing": [],
+      "unwanted": [
+        "fenouil-01"
+      ],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 9,
+      "warnings": [],
+      "ranked": 27,
+      "taken": 22,
+      "fits": true,
+      "fill": 0.987,
+      "in_range": true,
+      "shortened": 8
+    },
+    {
+      "id": "fill-01",
+      "offer": "Ingénieur données senior",
+      "passed": false,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 11,
+      "warnings": [
+        "La page n'est remplie qu'à 77 % : le modèle n'a classé que 20 éléments pour cette offre. Cochez-en d'autres pour la compléter."
+      ],
+      "ranked": 20,
+      "taken": 19,
+      "fits": true,
+      "fill": 0.769,
+      "in_range": false,
+      "shortened": 11
+    },
+    {
+      "id": "fill-02",
+      "offer": "Développeur Python full stack",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 10,
+      "warnings": [],
+      "ranked": 20,
+      "taken": 20,
+      "fits": true,
+      "fill": 0.832,
+      "in_range": true,
+      "shortened": 9
+    }
+  ]
+}

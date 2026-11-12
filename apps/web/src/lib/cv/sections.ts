@@ -5,6 +5,7 @@ export const sectionId = {
 	projets: 'cv-projets',
 	formation: 'cv-formation',
 	competences: 'cv-competences',
+	langues: 'cv-langues',
 	loisirs: 'cv-loisirs'
 } as const;
 
@@ -14,6 +15,7 @@ const bySectionName: Record<string, string> = {
 	'Projets personnels': sectionId.projets,
 	Formation: sectionId.formation,
 	Compétences: sectionId.competences,
+	Langues: sectionId.langues,
 	Loisirs: sectionId.loisirs
 };
 

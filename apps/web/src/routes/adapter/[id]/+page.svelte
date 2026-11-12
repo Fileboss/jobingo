@@ -29,6 +29,7 @@
 			...draft.projets,
 			...draft.formation,
 			...draft.competences,
+			...draft.langues,
 			...draft.loisirs
 		];
 	});
@@ -115,7 +116,7 @@
 							</p>
 						{/if}
 						{#if draft.warnings.length}
-							<p class="font-bold">Le code a ignoré une partie de la réponse :</p>
+							<p class="font-bold">À vérifier :</p>
 							<ul class="list-disc pl-5">
 								{#each draft.warnings as warning (warning)}<li>{warning}</li>{/each}
 							</ul>
@@ -165,7 +166,7 @@
 						</BristolCard>
 					{/if}
 
-					{#each [['Projets personnels', 'yellow', 2, draft.projets], ['Formation', 'green', 3, draft.formation], ['Compétences', 'salmon', 4, draft.competences], ['Loisirs', 'lilac', 5, draft.loisirs]] as const as [title, colour, tab, items] (title)}
+					{#each [['Projets personnels', 'yellow', 2, draft.projets], ['Formation', 'green', 3, draft.formation], ['Compétences', 'salmon', 4, draft.competences], ['Langues', 'blue', 5, draft.langues], ['Loisirs', 'lilac', 6, draft.loisirs]] as const as [title, colour, tab, items] (title)}
 						{#if items.length}
 							<BristolCard {title} {colour} {tab}>
 								<ul class="grid gap-2">
@@ -189,17 +190,31 @@
 							{pages} page{pages > 1 ? 's' : ''}
 						{/if}
 					</p>
-					{#if editor.preview && canDownload}
-						<!-- eslint-disable svelte/no-navigation-without-resolve -- a blob, not a route -->
-						<a
-							href={editor.preview.url}
-							download={editor.preview.filename}
-							class="rounded-sm bg-ink px-4 py-1.5 font-extrabold text-white no-underline hover:bg-ink-deep"
-						>
-							Télécharger le PDF
-						</a>
-						<!-- eslint-enable svelte/no-navigation-without-resolve -->
-					{/if}
+					<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+						{#if editor.preview && !editor.refreshing}
+							<!-- eslint-disable svelte/no-navigation-without-resolve -- a file, not a route -->
+							<a
+								href={`/api/cv/drafts/${draft.id}/html`}
+								download
+								title="Une page autonome, à retoucher à la main ou avec un autre assistant avant de l'imprimer"
+								class="text-sm font-bold text-ink underline underline-offset-4"
+							>
+								Télécharger le HTML
+							</a>
+							<!-- eslint-enable svelte/no-navigation-without-resolve -->
+						{/if}
+						{#if editor.preview && canDownload}
+							<!-- eslint-disable svelte/no-navigation-without-resolve -- a blob, not a route -->
+							<a
+								href={editor.preview.url}
+								download={editor.preview.filename}
+								class="rounded-sm bg-ink px-4 py-1.5 font-extrabold text-white no-underline hover:bg-ink-deep"
+							>
+								Télécharger le PDF
+							</a>
+							<!-- eslint-enable svelte/no-navigation-without-resolve -->
+						{/if}
+					</div>
 				</div>
 				{#if overflow}
 					<p class="mb-2 bg-postit px-4 py-2 leading-snug">

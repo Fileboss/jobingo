@@ -117,6 +117,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cv/drafts/{draft_id}/html": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Draft Html
+         * @description The draft as it stands, as one self-contained HTML file to download: for the user
+         *     to adjust before printing, by hand or with another assistant.
+         */
+        get: operations["get_draft_html"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cv/{lang}": {
         parameters: {
             query?: never;
@@ -1488,6 +1509,11 @@ export interface components {
              */
             skills: string[];
             /**
+             * Languages
+             * @default []
+             */
+            languages: string[];
+            /**
              * Hobbies
              * @default []
              */
@@ -1538,6 +1564,8 @@ export interface components {
             formation: components["schemas"]["PageFormation"][];
             /** Competences */
             competences: components["schemas"]["PageItem"][];
+            /** Langues */
+            langues: components["schemas"]["PageItem"][];
             /** Loisirs */
             loisirs: components["schemas"]["PageItem"][];
             /** Excluded Ids */
@@ -1614,6 +1642,10 @@ export interface components {
             unsourced_names: string[];
             /** Discard Reason */
             discard_reason: string;
+            /** Discarded By Code */
+            discarded_by_code: boolean;
+            /** Complement */
+            complement: boolean;
             /** Bullets */
             bullets: components["schemas"]["DraftItem"][];
         };
@@ -1637,6 +1669,10 @@ export interface components {
             unsourced_names: string[];
             /** Discard Reason */
             discard_reason: string;
+            /** Discarded By Code */
+            discarded_by_code: boolean;
+            /** Complement */
+            complement: boolean;
             /** Heading */
             heading: boolean;
         };
@@ -1660,6 +1696,10 @@ export interface components {
             unsourced_names: string[];
             /** Discard Reason */
             discard_reason: string;
+            /** Discarded By Code */
+            discarded_by_code: boolean;
+            /** Complement */
+            complement: boolean;
         };
         /** DraftSummary */
         DraftSummary: {
@@ -1718,6 +1758,8 @@ export interface components {
             formation: components["schemas"]["DraftFormation"][];
             /** Competences */
             competences: components["schemas"]["DraftItem"][];
+            /** Langues */
+            langues: components["schemas"]["DraftItem"][];
             /** Loisirs */
             loisirs: components["schemas"]["DraftItem"][];
             options: components["schemas"]["CvOptions"];
@@ -3146,6 +3188,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Refused"];
+                };
+            };
+        };
+    };
+    get_draft_html: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
+            };
+            /** @description No such draft */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

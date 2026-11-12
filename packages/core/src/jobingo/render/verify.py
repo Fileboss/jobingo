@@ -43,9 +43,10 @@ def verify_cv_pdf(pdf: bytes, selection: CvSelection) -> list[PdfProblem]:
 
     expected_sections = [
         (SECTION_LABELS["experiences"], bool(selection.experiences)),
-        (SECTION_LABELS["projets"], bool(selection.projets)),
         (SECTION_LABELS["formation"], bool(selection.formation)),
+        (SECTION_LABELS["projets"], bool(selection.projets)),
         (SECTION_LABELS["competences"], bool(selection.competences)),
+        (SECTION_LABELS["langues"], bool(selection.langues)),
         (SECTION_LABELS["loisirs"], selection.options.loisirs and bool(selection.loisirs)),
     ]
     for label, expected in expected_sections:

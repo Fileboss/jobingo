@@ -42,6 +42,7 @@ from jobingo.domain.profile import (
     FORMATION_SECTION,
     HEADING_RE,
     KNOWN_SECTIONS,
+    LANGUES_SECTION,
     LOISIRS_SECTION,
     PROJETS_SECTION,
     RESUME_SECTION,
@@ -100,6 +101,7 @@ class CvFields(_Fields):
     experiences: list[ExperienceFields] = []
     formation: list[FormationEntry] = []
     skills: list[str] = []
+    languages: list[str] = []
     hobbies: list[str] = []
     projects: list[str] = []
     before: str = ""  # text before the first section
@@ -110,12 +112,21 @@ class CvFields(_Fields):
 
 
 OTHER = "other"
-SECTION_KEYS = ("resume", "experiences", "projects", "formation", "skills", "hobbies")
+SECTION_KEYS = (
+    "resume",
+    "experiences",
+    "projects",
+    "formation",
+    "skills",
+    "languages",
+    "hobbies",
+)
 _KEY_OF_SECTION = {
     RESUME_SECTION: "resume",
     EXPERIENCES_SECTION: "experiences",
     FORMATION_SECTION: "formation",
     COMPETENCES_SECTION: "skills",
+    LANGUES_SECTION: "languages",
     LOISIRS_SECTION: "hobbies",
     PROJETS_SECTION: "projects",
 }
@@ -296,6 +307,8 @@ def parse_fields(clean: str) -> CvFields:
                 continue
             if section == COMPETENCES_SECTION:
                 fields.skills = texts
+            elif section == LANGUES_SECTION:
+                fields.languages = texts
             elif section == PROJETS_SECTION:
                 fields.projects = texts
             else:
@@ -351,6 +364,9 @@ def _section_blocks(fields: CvFields) -> dict[str, str]:
     skills = _bullet_block(fields.skills)
     if skills:
         blocks["skills"] = f"## {COMPETENCES_SECTION}\n\n{skills}"
+    languages = _bullet_block(fields.languages)
+    if languages:
+        blocks["languages"] = f"## {LANGUES_SECTION}\n\n{languages}"
     hobbies = _bullet_block(fields.hobbies)
     if hobbies:
         blocks["hobbies"] = f"## {LOISIRS_SECTION}\n\n{hobbies}"

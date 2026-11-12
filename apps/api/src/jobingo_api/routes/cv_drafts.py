@@ -126,3 +126,27 @@ def get_draft_pdf(draft_id: int, user: CurrentUser, conn: DbConn) -> Response:
             "Content-Disposition": f'inline; filename="{pdf.filename}"',
         },
     )
+
+
+@router.get(
+    "/cv/drafts/{draft_id}/html",
+    response_class=Response,
+    responses={
+        200: {
+            "content": {"text/html": {"schema": {"type": "string"}}},
+            "headers": {"Content-Disposition": {"schema": {"type": "string"}}},
+        },
+        404: {"description": "No such draft"},
+    },
+)
+def get_draft_html(draft_id: int, user: CurrentUser, conn: DbConn) -> Response:
+    """The draft as it stands, as one self-contained HTML file to download: for the user
+    to adjust before printing, by hand or with another assistant."""
+    html = cv_drafts.draft_html(conn, user.id, draft_id)
+    if html is None:
+        raise HTTPException(status_code=404, detail=_NOT_FOUND)
+    return Response(
+        content=html.html,
+        media_type="text/html; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{html.filename}"'},
+    )

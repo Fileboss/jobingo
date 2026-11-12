@@ -8,3 +8,6 @@ Bugs the user reported and corrections of how Claude worked. Don't repeat them. 
 - [Say why an external call failed, not only that it did](2026-11-10-say-why-a-model-call-failed.md): when handling a failed call to an external API, or writing the message a user sees when one fails
 - [Ruled text stays on its rules, whatever its size](2026-11-10-ruled-text-stays-on-its-rules.md): when styling a ruled field (the `ruled` utility, `RuledArea`), or setting a text size or line height on one
 - [An offer can name several cities: keep them all](2026-11-10-an-offer-can-name-several-cities.md): when extracting, storing, merging or filtering an offer's place, or adding a field that an offer can state more than once
+- [Give an eval case to every way a loop can start](2026-11-12-eval-every-direction-of-a-loop.md): when writing or changing a feedback loop around a model, or the eval cases that measure it
+- [The CV page has two areas: fit each with its own content](2026-11-12-the-page-has-two-areas.md): when measuring, fitting or filling the CV page, or reading page counts or missing items
+- [A new rule on what goes on the page retires the caps that contradict it](2026-11-12-a-new-rule-retires-old-caps.md): when changing how much of the CV goes on the page, or settling a rule about what a CV must show, while older limits still apply

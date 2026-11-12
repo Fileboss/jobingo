@@ -18,6 +18,7 @@ const emptyFields = (): CvFields => ({
 	experiences: [],
 	formation: [],
 	skills: [],
+	languages: [],
 	hobbies: [],
 	projects: [],
 	before: '',

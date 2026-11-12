@@ -24,6 +24,7 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 from jobingo.config import Settings
 from jobingo.db import Conn, connect, migrate
+from jobingo.domain.cv_selection import CvOptions
 from jobingo.domain.objectives import Objectives
 from jobingo.domain.style import StyleGuide, parse_style
 from jobingo.llm.anthropic_client import AnthropicLLMClient, TierSettings
@@ -40,6 +41,7 @@ from jobingo.llm.client import (
 from jobingo.llm.journal import Budget
 from jobingo.llm.pricing import cost_usd
 from jobingo.services.accounts import ensure_account
+from jobingo.services.cv_page import page_options
 from jobingo.services.objectives import save_objectives
 
 EVALS_DIR = Path(__file__).resolve().parent
@@ -253,6 +255,26 @@ class Workspace:
             (FIXTURES / "objectives.json").read_text(encoding="utf-8")
         )
         save_objectives(self.conn, self.user_id, objectives)
+
+    def options(self) -> CvOptions:
+        """The CV page's options, as a new user has them."""
+        return page_options(self.conn, self.user_id, "fr")[0]
+
+    def use_cv(self, name: str) -> None:
+        """Make the fixture `name` the latest CV, as a save would, when it is not already."""
+        cv = (FIXTURES / name).read_text(encoding="utf-8")
+        row = self.conn.execute(
+            "SELECT version, content FROM cv_versions WHERE user_id = %s AND lang = 'fr' "
+            "ORDER BY version DESC LIMIT 1",
+            (self.user_id,),
+        ).fetchone()
+        assert row is not None
+        if row["content"] != cv:
+            self.conn.execute(
+                "INSERT INTO cv_versions (user_id, lang, version, content) "
+                "VALUES (%s, 'fr', %s, %s)",
+                (self.user_id, row["version"] + 1, cv),
+            )
 
     def close(self) -> None:
         self.conn.close()

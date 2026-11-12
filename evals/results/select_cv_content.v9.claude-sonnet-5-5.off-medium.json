@@ -1,0 +1,194 @@
+{
+  "summary": {
+    "suite": "select_cv_content",
+    "metric": "cas où toute la sélection attendue est retenue, et rien d'exclu ; au-delà de la page, le CV rendu finit rempli de 80 à 100 %",
+    "prompt_version": 9,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 0.909,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "10/11",
+      "refused_rewrites": 1,
+      "accepted_rewrites": 2,
+      "fitted": "3/3",
+      "in_range": "3/3",
+      "fit_calls": 6,
+      "shortened": 0
+    },
+    "cases": 11,
+    "spend": {
+      "live_calls": 14,
+      "cached_calls": 0,
+      "input_tokens": 12764,
+      "output_tokens": 5117,
+      "cache_read_tokens": 58813,
+      "cache_write_tokens": 10033,
+      "cost_usd": "0.113545",
+      "latency_p50_ms": 3416,
+      "latency_p95_ms": 4073
+    },
+    "stopped": null,
+    "run_at": "2026-11-12T13:19:39+00:00"
+  },
+  "rows": [
+    {
+      "id": "cv-01",
+      "offer": "Ingénieur data plateforme",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-02",
+      "offer": "Développeur backend Django",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-03",
+      "offer": "Senior Backend Engineer, billing",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "cv-04",
+      "offer": "Tech Lead backend",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [
+        "resume-01: reformulation trop longue (121 % de l'original, 120 % au maximum)"
+      ],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-05",
+      "offer": "Ingénieur DevOps / SRE",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-06",
+      "offer": "Ingénieur backend paiement",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-07",
+      "offer": "Développeur Java",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": []
+    },
+    {
+      "id": "cv-08",
+      "offer": "Data engineer",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": []
+    },
+    {
+      "id": "fit-01",
+      "offer": "Data engineer",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 2,
+      "fits": true,
+      "fill": 0.868,
+      "in_range": true,
+      "length_ratio": 0.605,
+      "shortened": 0
+    },
+    {
+      "id": "fit-02",
+      "offer": "Développeur backend Django",
+      "passed": false,
+      "missing": [],
+      "unwanted": [
+        "ardoise-01"
+      ],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 2,
+      "fits": true,
+      "fill": 0.918,
+      "in_range": true,
+      "length_ratio": 0.664,
+      "shortened": 0
+    },
+    {
+      "id": "fit-03",
+      "offer": "Ingénieur fiabilité (SRE)",
+      "passed": true,
+      "missing": [],
+      "unwanted": [],
+      "unmentioned": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "start": {
+        "pages": 2,
+        "fill": 0.477
+      },
+      "calls": 2,
+      "fits": true,
+      "fill": 0.977,
+      "in_range": true,
+      "length_ratio": 0.711,
+      "shortened": 0
+    }
+  ]
+}

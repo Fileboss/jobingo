@@ -5,7 +5,10 @@ from pathlib import Path
 
 from jobingo.config import Settings
 
-EXAMPLE = Path(__file__).parent.parent / ".env.example"
+ROOT = Path(__file__).parent.parent
+EXAMPLE = ROOT / ".env.example"
+# Read by docker compose rather than the app.
+COMPOSE_ONLY = {"AFFINDA_LICENSE_TOKEN"}
 _LINE = re.compile(r"^#?\s*([A-Z][A-Z0-9_]+)=(.*)$")
 
 
@@ -20,9 +23,14 @@ def _entries() -> list[tuple[str, str, bool]]:
 
 def test_every_example_setting_exists():
     """A misspelt name would be ignored silently, and Gmail would never be used."""
-    known = {name.upper() for name in Settings.model_fields}
+    known = {name.upper() for name in Settings.model_fields} | COMPOSE_ONLY
     unknown = [name for name, _, _ in _entries() if name not in known]
     assert unknown == []
+
+
+def test_every_compose_setting_is_read_by_compose():
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    assert all(f"${{{name}" in compose for name in COMPOSE_ONLY)
 
 
 def test_the_uncommented_values_are_the_defaults():

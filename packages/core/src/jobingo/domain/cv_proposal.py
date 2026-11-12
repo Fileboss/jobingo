@@ -65,26 +65,70 @@ class ProposedRewrite(BaseModel):
     text: str
 
 
-class CvProposalSchema(BaseModel):
-    """What the API is asked to answer: each section a list of ids, and the rare
-    rewrites apart. Repeating `{"id": …, "rewrite": ""}` for every kept item made most
-    of the output tokens padding."""
+class CvRankingSchema(BaseModel):
+    """What the API is asked to answer: the main column's elements in two rankings, what
+    serves the offer and what only completes the page, each most useful first, and the
+    side sections as lists. Rewrites come apart, since repeating `{"id": …, "rewrite":
+    ""}` for every element made most of the output tokens padding."""
 
     resume: str = ""
-    experiences: list[str] = []
-    bullets: list[str] = []
-    projets: list[str] = []
-    formation: list[str] = []
+    sert_l_offre: list[str] = []
+    complement: list[str] = []
     competences: list[str] = []
     loisirs: list[str] = []
     rewrites: list[ProposedRewrite] = []
     discarded: list[ProposedDiscard] = []
 
 
+RANKING_SECTIONS = ("sert_l_offre", "complement", "competences", "loisirs")
+
+
+def _fold_rewrites(data: Any, sections: tuple[str, ...]) -> Any:
+    """Each rewrite folded back onto its item, ids becoming `ProposedItem`s."""
+    if not isinstance(data, dict):
+        return data
+    raw: dict[str, Any] = dict(data)  # pyright: ignore[reportUnknownArgumentType]
+    texts: dict[str, str] = {}
+    rewrites: object = raw.pop("rewrites", [])
+    for rewrite in rewrites if isinstance(rewrites, list) else []:  # pyright: ignore[reportUnknownVariableType]
+        if isinstance(rewrite, dict) and isinstance(rewrite.get("id"), str):  # pyright: ignore[reportUnknownMemberType]
+            texts[rewrite["id"]] = str(rewrite.get("text", ""))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    for section in sections:
+        items: object = raw.get(section)
+        if isinstance(items, list):
+            raw[section] = [
+                {"id": item, "rewrite": texts.get(item, "")} if isinstance(item, str) else item
+                for item in items  # pyright: ignore[reportUnknownVariableType]
+            ]
+    return raw
+
+
+class CvRanking(BaseModel):
+    """The model's answer with each rewrite folded back onto its item."""
+
+    resume: str = ""
+    sert_l_offre: list[ProposedItem] = []
+    complement: list[ProposedItem] = []
+    competences: list[ProposedItem] = []
+    loisirs: list[ProposedItem] = []
+    discarded: list[ProposedDiscard] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fold(cls, data: Any) -> Any:
+        return _fold_rewrites(data, RANKING_SECTIONS)
+
+    @property
+    def classement(self) -> list[ProposedItem]:
+        """The order code takes elements in: what serves the offer, then what completes
+        the page."""
+        return [*self.sert_l_offre, *self.complement]
+
+
 class CvProposal(BaseModel):
-    """The proposal with each rewrite folded back onto its item. Bullets come as one
-    flat list: their experience is known from the CV, so nesting would only give the
-    model a second way to get it wrong."""
+    """What goes on the page, by section: the first elements of the model's ranking
+    (`proposal_at`). Bullets come as one flat list: their experience is known from the
+    CV. `beyond_page` is the rest of the ranking, left out by code for lack of room."""
 
     resume: str = ""
     experiences: list[ProposedItem] = []
@@ -94,26 +138,76 @@ class CvProposal(BaseModel):
     competences: list[ProposedItem] = []
     loisirs: list[ProposedItem] = []
     discarded: list[ProposedDiscard] = []
+    beyond_page: list[ProposedDiscard] = []
+    # Taken from the model's `complement`: what completes the page, not serving the offer.
+    complement_ids: list[str] = []
 
     @model_validator(mode="before")
     @classmethod
-    def _fold_rewrites(cls, data: Any) -> Any:
-        if not isinstance(data, dict):
-            return data
-        raw: dict[str, Any] = dict(data)  # pyright: ignore[reportUnknownArgumentType]
-        texts: dict[str, str] = {}
-        rewrites: object = raw.pop("rewrites", [])
-        for rewrite in rewrites if isinstance(rewrites, list) else []:  # pyright: ignore[reportUnknownVariableType]
-            if isinstance(rewrite, dict) and isinstance(rewrite.get("id"), str):  # pyright: ignore[reportUnknownMemberType]
-                texts[rewrite["id"]] = str(rewrite.get("text", ""))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
-        for section in PROPOSAL_SECTIONS:
-            items: object = raw.get(section)
-            if isinstance(items, list):
-                raw[section] = [
-                    {"id": item, "rewrite": texts.get(item, "")} if isinstance(item, str) else item
-                    for item in items  # pyright: ignore[reportUnknownVariableType]
-                ]
-        return raw
+    def _fold(cls, data: Any) -> Any:
+        return _fold_rewrites(data, PROPOSAL_SECTIONS)
+
+
+_KIND_SECTION: dict[str, ProposalSection] = {
+    "experience": "experiences",
+    "bullet": "bullets",
+    "project": "projets",
+    "formation": "formation",
+    "skill": "competences",
+    "hobby": "loisirs",
+}
+
+
+def proposal_at(
+    ranking: CvRanking, n: int, profile: Profile, *, side: int | None = None
+) -> CvProposal:
+    """The first `n` ranked elements of the main column as a proposal by section, and the
+    first `side` of the side panel's (skills, then hobbies; all by default), the rest
+    left out for lack of room. A bullet ranked before its experience brings it along: it
+    cannot stand alone, and the model ranked it. Unknown ids go through, for the review
+    to report."""
+    index = {item.id: item for item in profile.items}
+    sections: dict[str, list[ProposedItem]] = {section: [] for section in PROPOSAL_SECTIONS}
+    taken: set[str] = set()
+
+    def take(item: ProposedItem) -> None:
+        if item.id in taken:
+            return
+        taken.add(item.id)
+        source = index.get(item.id)
+        section = _KIND_SECTION.get(source.kind, "experiences") if source else "experiences"
+        sections[section].append(item)
+
+    for item in ranking.classement[:n]:
+        source = index.get(item.id)
+        if source is not None and source.kind == "bullet" and source.parent_id:
+            if source.parent_id not in taken:
+                take(ProposedItem(id=source.parent_id))
+        take(item)
+    beyond = [
+        ProposedDiscard(id=item.id, reason=f"faute de place : {rank}e du classement du modèle")
+        for rank, item in enumerate(ranking.classement[n:], start=n + 1)
+        if item.id not in taken
+    ]
+    panel = [*ranking.competences, *ranking.loisirs]
+    kept_side = panel if side is None else panel[:side]
+    beyond += [
+        ProposedDiscard(id=item.id, reason="faute de place dans le panneau latéral")
+        for item in panel[len(kept_side) :]
+    ]
+    kept_ids = {item.id for item in kept_side}
+    return CvProposal(
+        resume=ranking.resume,
+        experiences=sections["experiences"],
+        bullets=sections["bullets"],
+        projets=sections["projets"],
+        formation=sections["formation"],
+        competences=[item for item in ranking.competences if item.id in kept_ids],
+        loisirs=[item for item in ranking.loisirs if item.id in kept_ids],
+        discarded=ranking.discarded,
+        beyond_page=beyond,
+        complement_ids=[item.id for item in ranking.complement if item.id in taken],
+    )
 
 
 # --- Short ids --------------------------------------------------------------
@@ -146,8 +240,8 @@ def short_ids(items: list[ProfileItem]) -> dict[str, str]:
     return aliases
 
 
-def restore_ids(proposal: CvProposal, aliases: dict[str, str]) -> CvProposal:
-    """The proposal with the CV's own ids back. An id that is no alias is left as is,
+def restore_ids(ranking: CvRanking, aliases: dict[str, str]) -> CvRanking:
+    """The ranking with the CV's own ids back. An id that is no alias is left as is,
     and reported as unknown later."""
     real = {alias: item_id for item_id, alias in aliases.items()}
 
@@ -156,12 +250,12 @@ def restore_ids(proposal: CvProposal, aliases: dict[str, str]) -> CvProposal:
 
     update: dict[str, Any] = {
         section: [
-            item.model_copy(update={"id": back(item.id)}) for item in getattr(proposal, section)
+            item.model_copy(update={"id": back(item.id)}) for item in getattr(ranking, section)
         ]
-        for section in PROPOSAL_SECTIONS
+        for section in RANKING_SECTIONS
     }
-    update["discarded"] = [d.model_copy(update={"id": back(d.id)}) for d in proposal.discarded]
-    return proposal.model_copy(update=update)
+    update["discarded"] = [d.model_copy(update={"id": back(d.id)}) for d in ranking.discarded]
+    return ranking.model_copy(update=update)
 
 
 # --- Checks -----------------------------------------------------------------
@@ -227,6 +321,8 @@ class DiscardedItem(BaseModel):
     id: str
     original: str = ""
     reason: str
+    # Left out by code (a template limit, no room on the page), not by the model.
+    by_code: bool = False
 
 
 class TailoredCv(BaseModel):
@@ -237,10 +333,14 @@ class TailoredCv(BaseModel):
     projets: list[ReviewedItem] = []
     formation: list[ReviewedFormation] = []
     competences: list[ReviewedItem] = []
+    # Every language of the CV: the model does not see them, code always keeps them.
+    langues: list[ReviewedItem] = []
     loisirs: list[ReviewedItem] = []
     discarded: list[DiscardedItem] = []
     # Ids that do not exist, sit in the wrong section or repeat: dropped, and said.
     warnings: list[str] = []
+    # On the page to complete it, the model saying they do not serve the offer.
+    complement_ids: list[str] = []
 
     def kept_items(self) -> list[ReviewedItem]:
         items: list[ReviewedItem] = []
@@ -252,6 +352,7 @@ class TailoredCv(BaseModel):
         items.extend(self.projets)
         items.extend(self.formation)
         items.extend(self.competences)
+        items.extend(self.langues)
         items.extend(self.loisirs)
         return items
 
@@ -276,6 +377,7 @@ class TailoredCv(BaseModel):
                 SelectedFormation(id=f.id, text=f.text, heading=f.heading) for f in self.formation
             ],
             competences=[plain(item) for item in self.competences],
+            langues=[plain(item) for item in self.langues],
             loisirs=[plain(item) for item in self.loisirs],
             options=options,
         )
@@ -290,14 +392,30 @@ def resume_source(profile: Profile) -> ReviewedItem | None:
     return ReviewedItem(id=lines[0].id, original=text, text=text)
 
 
+def with_final_period_of(original: str, rewrite: str) -> str:
+    """`rewrite` ending with a period exactly when `original` does: a rewrite keeps the
+    CV's own punctuation, so that the bullets of one list agree. Other final marks
+    (`?`, `:`, an ellipsis) are left as they are."""
+    original, rewrite = original.rstrip(), rewrite.rstrip()
+    if not original or not rewrite:
+        return rewrite
+    if original.endswith(".") and not original.endswith(".."):
+        return rewrite if rewrite[-1] in ".!?…:;" else rewrite + "."
+    if original[-1].isalnum() or original[-1] in ")»%":
+        if rewrite.endswith(".") and not rewrite.endswith(("..", "etc.")):
+            return rewrite[:-1].rstrip()
+    return rewrite
+
+
 def _reviewed(item: ProfileItem, rewrite: str, style: StyleGuide) -> ReviewedItem:
     reason = validate_rewrite(item.text, rewrite, style)
-    text = rewrite.strip() if rewrite.strip() and not reason else item.text
+    rewrite = with_final_period_of(item.text, rewrite.strip())
+    text = rewrite if rewrite and not reason else item.text
     return ReviewedItem(
         id=item.id,
         original=item.text,
         text=text,
-        proposed_rewrite=rewrite.strip(),
+        proposed_rewrite=rewrite,
         rejected_reason=reason or "",
         unsourced_names=unsourced_proper_nouns(text, item.text),
     )
@@ -314,6 +432,7 @@ def _cut[T: ReviewedItem](
                 id=extra.id,
                 original=extra.original,
                 reason=f"limite du gabarit : {max_items} {label} au maximum",
+                by_code=True,
             )
         )
     return items[:max_items]
@@ -329,6 +448,14 @@ def review_proposal(
     discarded = [
         DiscardedItem(id=d.id, original=index[d.id].text if d.id in index else "", reason=d.reason)
         for d in proposal.discarded
+    ] + [
+        DiscardedItem(
+            id=d.id,
+            original=index[d.id].text if d.id in index else "",
+            reason=d.reason,
+            by_code=True,
+        )
+        for d in proposal.beyond_page
     ]
 
     seen: set[str] = set()
@@ -400,8 +527,14 @@ def review_proposal(
         loisirs=_cut(
             chosen.get("hobby", []), manifest.limits("loisirs").max_items, "loisirs", discarded
         ),
+        langues=[
+            ReviewedItem(id=item.id, original=item.text, text=item.text)
+            for item in profile.items
+            if item.kind == "language"
+        ],
         discarded=discarded,
         warnings=warnings,
+        complement_ids=proposal.complement_ids,
     )
 
 
@@ -415,11 +548,12 @@ def _review_resume(
         return None
     max_chars = manifest.limits("resume").max_chars
     reason = validate_rewrite(source.original, rewrite, style, max_chars=max_chars)
-    text = rewrite.strip() if rewrite.strip() and not reason else source.original
+    rewrite = with_final_period_of(source.original, rewrite.strip())
+    text = rewrite if rewrite and not reason else source.original
     return source.model_copy(
         update={
             "text": text,
-            "proposed_rewrite": rewrite.strip(),
+            "proposed_rewrite": rewrite,
             "rejected_reason": reason or "",
             "unsourced_names": unsourced_proper_nouns(text, source.original),
         }

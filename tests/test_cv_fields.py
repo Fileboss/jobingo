@@ -216,3 +216,17 @@ def test_the_resume_keeps_its_paragraphs():
     clean = "## Résumé\n\nLigne un.\n\nLigne deux.\nLigne trois.\n"
     assert parse_fields(clean).resume == "Ligne un.\n\nLigne deux.\nLigne trois."
     assert fields_to_markdown(parse_fields(clean)) == clean
+
+
+def test_languages_are_a_section_of_their_own_in_both_modes():
+    typed = (
+        "## Compétences\n\n- Python\n\n## Languages\n\n- Anglais : C1\n- Espagnol : B1\n\n"
+        "## Loisirs\n\n- Course à pied\n"
+    )
+    stored = canonical_stored(typed, "")
+    kinds = [(kind, text) for _id, kind, text in _content(stored)]
+    assert ("language", "Anglais : C1") in kinds and ("language", "Espagnol : B1") in kinds
+
+    fields = parse_fields(to_clean_view(stored))
+    assert fields.languages == ["Anglais : C1", "Espagnol : B1"]
+    assert "## Langues" in fields_to_markdown(fields)  # the canonical title

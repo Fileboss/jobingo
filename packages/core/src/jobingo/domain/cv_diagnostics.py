@@ -16,6 +16,7 @@ from jobingo.domain.profile import (
     COMPETENCES_SECTION,
     EXPERIENCES_SECTION,
     FORMATION_SECTION,
+    LANGUES_SECTION,
     LOISIRS_SECTION,
     ScannedLine,
     extract_comment,
@@ -60,6 +61,7 @@ _SECTION_HINT = {
     ),
     FORMATION_SECTION: "Commencez-la par « - » pour en faire une formation.",
     COMPETENCES_SECTION: "Commencez-la par « - » pour en faire une compétence.",
+    LANGUES_SECTION: "Commencez-la par « - » pour en faire une langue.",
     LOISIRS_SECTION: "Commencez-la par « - » pour en faire un loisir.",
 }
 

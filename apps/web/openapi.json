@@ -373,6 +373,59 @@
         }
       }
     },
+    "/api/cv/drafts/{draft_id}/html": {
+      "get": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Get Draft Html",
+        "description": "The draft as it stands, as one self-contained HTML file to download: for the user\nto adjust before printing, by hand or with another assistant.",
+        "operationId": "get_draft_html",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such draft"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cv/{lang}": {
       "get": {
         "tags": [
@@ -4487,6 +4540,14 @@
             "title": "Skills",
             "default": []
           },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages",
+            "default": []
+          },
           "hobbies": {
             "items": {
               "type": "string"
@@ -4532,6 +4593,7 @@
           "experiences",
           "formation",
           "skills",
+          "languages",
           "hobbies",
           "projects",
           "before",
@@ -4607,6 +4669,13 @@
             "type": "array",
             "title": "Competences"
           },
+          "langues": {
+            "items": {
+              "$ref": "#/components/schemas/PageItem"
+            },
+            "type": "array",
+            "title": "Langues"
+          },
           "loisirs": {
             "items": {
               "$ref": "#/components/schemas/PageItem"
@@ -4639,6 +4708,7 @@
           "projets",
           "formation",
           "competences",
+          "langues",
           "loisirs",
           "excluded_ids",
           "options",
@@ -4831,6 +4901,14 @@
             "type": "string",
             "title": "Discard Reason"
           },
+          "discarded_by_code": {
+            "type": "boolean",
+            "title": "Discarded By Code"
+          },
+          "complement": {
+            "type": "boolean",
+            "title": "Complement"
+          },
           "bullets": {
             "items": {
               "$ref": "#/components/schemas/DraftItem"
@@ -4850,6 +4928,8 @@
           "rejected_reason",
           "unsourced_names",
           "discard_reason",
+          "discarded_by_code",
+          "complement",
           "bullets"
         ],
         "title": "DraftExperience"
@@ -4895,6 +4975,14 @@
             "type": "string",
             "title": "Discard Reason"
           },
+          "discarded_by_code": {
+            "type": "boolean",
+            "title": "Discarded By Code"
+          },
+          "complement": {
+            "type": "boolean",
+            "title": "Complement"
+          },
           "heading": {
             "type": "boolean",
             "title": "Heading"
@@ -4911,6 +4999,8 @@
           "rejected_reason",
           "unsourced_names",
           "discard_reason",
+          "discarded_by_code",
+          "complement",
           "heading"
         ],
         "title": "DraftFormation"
@@ -4955,6 +5045,14 @@
           "discard_reason": {
             "type": "string",
             "title": "Discard Reason"
+          },
+          "discarded_by_code": {
+            "type": "boolean",
+            "title": "Discarded By Code"
+          },
+          "complement": {
+            "type": "boolean",
+            "title": "Complement"
           }
         },
         "type": "object",
@@ -4967,7 +5065,9 @@
           "proposed_rewrite",
           "rejected_reason",
           "unsourced_names",
-          "discard_reason"
+          "discard_reason",
+          "discarded_by_code",
+          "complement"
         ],
         "title": "DraftItem"
       },
@@ -5136,6 +5236,13 @@
             "type": "array",
             "title": "Competences"
           },
+          "langues": {
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            },
+            "type": "array",
+            "title": "Langues"
+          },
           "loisirs": {
             "items": {
               "$ref": "#/components/schemas/DraftItem"
@@ -5180,6 +5287,7 @@
           "projets",
           "formation",
           "competences",
+          "langues",
           "loisirs",
           "options",
           "option_blockers",

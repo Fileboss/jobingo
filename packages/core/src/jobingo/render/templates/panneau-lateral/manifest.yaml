@@ -3,9 +3,11 @@ langs: [fr]
 max_pages: 1
 options: [photo, panneau_competences, loisirs]
 # Limits on what the model proposes for an offer, not on the user's own choices.
+# No cap on experiences: every professional one goes on a page with room, and the page
+# itself cuts the end of the ranking (decision 2026-11-12-fit-adapted-cv-to-the-page).
 sections:
   resume: {max_chars: 450}
-  experiences: {max_items: 4, max_bullets_per_item: 4}
+  experiences: {max_bullets_per_item: 4}
   projets: {max_items: 3}
   formation: {max_items: 3}
   competences: {max_items: 12}

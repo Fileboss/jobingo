@@ -62,7 +62,13 @@ export class DraftEditor {
 			visit(experience);
 			experience.bullets.forEach(visit);
 		}
-		[...draft.projets, ...draft.formation, ...draft.competences, ...draft.loisirs].forEach(visit);
+		[
+			...draft.projets,
+			...draft.formation,
+			...draft.competences,
+			...draft.langues,
+			...draft.loisirs
+		].forEach(visit);
 		this.options = { ...draft.options };
 		this.#savedKey = this.#key();
 	}

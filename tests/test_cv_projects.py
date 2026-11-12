@@ -78,7 +78,7 @@ def test_the_model_picks_projects_by_alias_within_the_template_limit():
 
 @pytest.mark.skipif(not engine_available(), reason="WeasyPrint needs Pango")
 @pytest.mark.parametrize("panel", [True, False])
-def test_projects_are_printed_under_the_experiences(panel: bool):
+def test_projects_are_printed_after_the_education(panel: bool):
     selection = build_selection(
         parse_cv_markdown(WITH_PROJECTS),
         set(),
@@ -90,7 +90,7 @@ def test_projects_are_printed_under_the_experiences(panel: bool):
 
     assert verify_cv_pdf(pdf, selection) == []
     text = compact(extract_pdf_text(pdf))
-    assert text.index(compact("Projets personnels")) < text.index(compact("Formation"))
+    assert text.index(compact("Formation")) < text.index(compact("Projets personnels"))
 
 
 def test_projects_written_before_the_section_was_known_wait_for_one_save(

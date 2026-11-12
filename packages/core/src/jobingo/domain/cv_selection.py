@@ -99,6 +99,7 @@ class CvPage(BaseModel):
     projets: list[PageItem]
     formation: list[PageFormation]
     competences: list[PageItem]
+    langues: list[PageItem]
     loisirs: list[PageItem]
     excluded_ids: list[str]
     options: CvOptions  # as they apply: an option that is blocked is off
@@ -131,6 +132,9 @@ class CvSelection(BaseModel):
     projets: list[SelectedItem] = []
     formation: list[SelectedFormation]
     competences: list[SelectedItem]
+    # Always on the page unless the user unticks one. Saved selections from before
+    # the section have none.
+    langues: list[SelectedItem] = []
     loisirs: list[SelectedItem]
     options: CvOptions
 
@@ -143,9 +147,10 @@ class CvSelection(BaseModel):
         for experience in self.experiences:
             items.append(experience)
             items.extend(experience.bullets)
-        items.extend(self.projets)
         items.extend(self.formation)
+        items.extend(self.projets)
         items.extend(self.competences)
+        items.extend(self.langues)
         if self.options.loisirs:
             items.extend(self.loisirs)
         return items
@@ -215,6 +220,7 @@ def page_of(
             for source in _of_kind(profile, "formation")
         ],
         competences=[item(source) for source in _of_kind(profile, "skill")],
+        langues=[item(source) for source in _of_kind(profile, "language")],
         loisirs=[item(source) for source in _of_kind(profile, "hobby")],
         excluded_ids=known_ids(profile, excluded_ids),
         options=options.clamped_to(blockers),
@@ -265,6 +271,7 @@ def build_selection(
             if source.id not in excluded_ids
         ],
         competences=chosen("skill"),
+        langues=chosen("language"),
         loisirs=chosen("hobby"),
         options=options,
     )

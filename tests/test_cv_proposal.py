@@ -10,11 +10,14 @@ from jobingo.db import Conn
 from jobingo.domain.chronology import sort_reverse_chronological
 from jobingo.domain.cv_proposal import (
     CvProposal,
-    CvProposalSchema,
+    CvRanking,
+    CvRankingSchema,
+    proposal_at,
     restore_ids,
     review_proposal,
     short_ids,
     validate_rewrite,
+    with_final_period_of,
 )
 from jobingo.domain.cv_selection import CvOptions
 from jobingo.domain.identity import Identity
@@ -105,24 +108,54 @@ def test_short_ids_name_the_parent_and_map_back():
     assert aliases["formation-02"] == "F2"
 
     restored = restore_ids(
-        _proposal(
-            experiences=["E1"], bullets=["E1.3", "Z9"], discarded=[{"id": "C7", "reason": "x"}]
+        CvRanking.model_validate(
+            {"sert_l_offre": ["E1", "E1.3", "Z9"], "discarded": [{"id": "C7", "reason": "x"}]}
         ),
         aliases,
     )
-    assert [i.id for i in restored.bullets] == ["nordlys-03", "Z9"]
+    assert [i.id for i in restored.classement] == ["nordlys", "nordlys-03", "Z9"]
     assert restored.discarded[0].id == "skill-java"
 
 
 def test_the_compact_answer_folds_its_rewrites_back():
-    wire = CvProposalSchema(
-        experiences=["nordlys"],
-        bullets=["nordlys-01"],
+    wire = CvRankingSchema(
+        sert_l_offre=["nordlys", "nordlys-01"],
         rewrites=[{"id": "nordlys-01", "text": "Migration de 120 tâches vers Airflow"}],  # type: ignore[list-item]
     )
-    proposal = CvProposal.model_validate(wire.model_dump())
-    assert proposal.bullets[0].rewrite == "Migration de 120 tâches vers Airflow"
-    assert proposal.experiences[0].rewrite == ""
+    ranking = CvRanking.model_validate(wire.model_dump())
+    assert ranking.classement[1].rewrite == "Migration de 120 tâches vers Airflow"
+    assert ranking.classement[0].rewrite == ""
+
+
+def _ranking(*ids: str) -> CvRanking:
+    return CvRanking.model_validate({"sert_l_offre": list(ids), "competences": ["skill-python"]})
+
+
+def test_the_head_of_the_ranking_goes_to_its_sections_and_the_rest_is_left_for_room():
+    ranking = _ranking("nordlys", "nordlys-01", "formation-01", "batiflux", "batiflux-01")
+
+    proposal = proposal_at(ranking, 3, PROFILE)
+
+    assert [i.id for i in proposal.experiences] == ["nordlys"]
+    assert [i.id for i in proposal.bullets] == ["nordlys-01"]
+    assert [i.id for i in proposal.formation] == ["formation-01"]
+    assert [i.id for i in proposal.competences] == ["skill-python"]
+    assert [(d.id, d.reason) for d in proposal.beyond_page] == [
+        ("batiflux", "faute de place : 4e du classement du modèle"),
+        ("batiflux-01", "faute de place : 5e du classement du modèle"),
+    ]
+    tailored = review_proposal(proposal, PROFILE, MANIFEST, StyleGuide())
+    left = {d.id: d for d in tailored.discarded}
+    assert left["batiflux"].by_code and left["batiflux-01"].by_code
+
+
+def test_a_bullet_ranked_before_its_experience_brings_it_along():
+    proposal = proposal_at(_ranking("batiflux-02", "nordlys", "batiflux"), 1, PROFILE)
+
+    assert [i.id for i in proposal.experiences] == ["batiflux"]
+    assert [i.id for i in proposal.bullets] == ["batiflux-02"]
+    # Already on the page: not left out for room.
+    assert [d.id for d in proposal.beyond_page] == ["nordlys"]
 
 
 # --- Review of a proposal -----------------------------------------------------------
@@ -268,8 +301,8 @@ class _Wire(BaseModel):
     """What the fake answers: the compact shape, on short ids."""
 
     resume: str = ""
-    experiences: list[str] = []
-    bullets: list[str] = []
+    sert_l_offre: list[str] = []
+    complement: list[str] = []
     competences: list[str] = []
     rewrites: list[dict[str, str]] = []
 
@@ -296,8 +329,7 @@ def test_propose_maps_short_ids_back_and_checks_the_answer(conn: Conn, user_id: 
     client.queue(
         "select_cv_content",
         _Wire(
-            experiences=["E1"],
-            bullets=["E1.1", "E1.2"],
+            sert_l_offre=["E1", "E1.1", "E1.2"],
             competences=["C3", "C1"],
             rewrites=[{"id": "E1.2", "text": "Réduction de 60 % du coût de l'entrepôt"}],
         ),
@@ -308,7 +340,8 @@ def test_propose_maps_short_ids_back_and_checks_the_answer(conn: Conn, user_id: 
         description="Bonjour Alex Moreau, poste en Python et Airflow.",
     )
 
-    tailored, call_id = propose_cv(conn, client, BUDGET, user_id, "fr", offer)
+    ranked, call_id = propose_cv(conn, client, BUDGET, user_id, "fr", offer)
+    tailored = ranked.at(ranked.size)
 
     assert call_id > 0
     assert [item.id for item in tailored.kept_items()] == [
@@ -377,3 +410,53 @@ def test_a_draft_page_keeps_the_models_order_then_what_the_user_added():
         ("skill-java", "Java 21"),
     ]
     assert selection.resume is None
+
+
+def test_what_completes_the_page_comes_after_what_serves_the_offer():
+    ranking = CvRanking.model_validate(
+        {"sert_l_offre": ["nordlys", "nordlys-01"], "complement": ["batiflux", "batiflux-01"]}
+    )
+
+    assert [i.id for i in ranking.classement] == [
+        "nordlys",
+        "nordlys-01",
+        "batiflux",
+        "batiflux-01",
+    ]
+    proposal = proposal_at(ranking, 3, PROFILE)
+    assert [i.id for i in proposal.experiences] == ["nordlys", "batiflux"]
+    assert [d.id for d in proposal.beyond_page] == ["batiflux-01"]
+
+
+@pytest.mark.parametrize(
+    ("original", "rewrite", "expected"),
+    [
+        ("Refonte du module.", "Refonte du module", "Refonte du module."),
+        ("Refonte du module", "Refonte du module.", "Refonte du module"),
+        ("Refonte du module.", "Refonte du module ?", "Refonte du module ?"),
+        ("Refonte (Django)", "Refonte de l'outil.", "Refonte de l'outil"),
+        ("Gain de 20 %", "Gain de 20 %.", "Gain de 20 %"),
+        ("Outils : Git, Docker, etc.", "Git, Docker, etc.", "Git, Docker, etc."),
+    ],
+)
+def test_a_rewrite_keeps_the_final_period_of_its_original(
+    original: str, rewrite: str, expected: str
+):
+    assert with_final_period_of(original, rewrite) == expected
+
+
+def test_accepted_rewrites_follow_the_cv_punctuation():
+    """The diff screen and the PDF show bullets that agree within one list."""
+    tailored = review_proposal(
+        _proposal(
+            experiences=["nordlys"],
+            bullets=["nordlys-01"],
+            rewrites=[{"id": "nordlys-01", "text": "Migration de 120 tâches vers Airflow."}],
+        ),
+        PROFILE,
+        MANIFEST,
+        StyleGuide(),
+    )
+    [bullet] = tailored.experiences[0].bullets
+    # The CV's bullet has no final period: neither has its rewrite.
+    assert bullet.text == bullet.proposed_rewrite == "Migration de 120 tâches vers Airflow"

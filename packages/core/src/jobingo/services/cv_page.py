@@ -22,7 +22,7 @@ from jobingo.domain.cv_selection import (
 from jobingo.domain.identity import Identity
 from jobingo.domain.profile import Profile, parse_cv_markdown
 from jobingo.domain.text import fold
-from jobingo.render.cv import RenderedCv, load_manifest, render_cv
+from jobingo.render.cv import RenderedCv, load_manifest, render_cv, standalone_cv_html
 from jobingo.render.pdf import PdfEngineUnavailable
 from jobingo.render.verify import verify_cv_pdf
 from jobingo.services.cv import load_cv
@@ -44,6 +44,12 @@ class CvPdf:
     rendered: RenderedCv
     filename: str
     missing_items: int  # selected but not in the PDF: a side panel longer than its page
+
+
+@dataclass(frozen=True)
+class CvHtml:
+    html: str
+    filename: str
 
 
 def _load_profile(conn: Conn, user_id: int, lang: CvLang) -> Profile:
@@ -157,3 +163,12 @@ def render_selection(conn: Conn, user_id: int, selection: CvSelection) -> CvPdf:
         raise CvRenderError("Le PDF n'a pas pu être produit.") from None
     missing = sum(problem.kind == "item_missing" for problem in problems)
     return CvPdf(rendered=rendered, filename=_filename(identity), missing_items=missing)
+
+
+def html_of_selection(conn: Conn, user_id: int, selection: CvSelection) -> CvHtml:
+    """`selection` as one self-contained HTML file, the identity put back, for the user to
+    adjust before printing. Nothing from it goes in a log."""
+    identity = load_identity(conn, user_id)
+    photo = load_photo(conn, user_id) if selection.options.photo else None
+    html = standalone_cv_html(selection, identity, photo=photo)
+    return CvHtml(html=html, filename=_filename(identity).removesuffix(".pdf") + ".html")

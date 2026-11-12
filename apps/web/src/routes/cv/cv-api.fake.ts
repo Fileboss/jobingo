@@ -11,6 +11,7 @@ const emptyFields = (): Fields => ({
 	experiences: [],
 	formation: [],
 	skills: [],
+	languages: [],
 	hobbies: [],
 	projects: [],
 	before: '',

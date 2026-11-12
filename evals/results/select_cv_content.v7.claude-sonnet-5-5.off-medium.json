@@ -1,0 +1,171 @@
+{
+  "summary": {
+    "suite": "select_cv_content",
+    "metric": "cas où toute la sélection attendue est retenue, et rien d'exclu ; au-delà de la page, le CV rendu tient ensuite sur une page",
+    "prompt_version": 7,
+    "setup": "claude-sonnet-5-5.off-medium",
+    "model": "claude-sonnet-5-5",
+    "thinking": "off",
+    "effort": "medium",
+    "score": 1.0,
+    "threshold": null,
+    "passed": null,
+    "detail": {
+      "cases": "11/11",
+      "refused_rewrites": 0,
+      "accepted_rewrites": 26,
+      "fitted": "3/3",
+      "shortened": 20
+    },
+    "cases": 11,
+    "spend": {
+      "live_calls": 11,
+      "cached_calls": 0,
+      "input_tokens": 8933,
+      "output_tokens": 4926,
+      "cache_read_tokens": 41419,
+      "cache_write_tokens": 10012,
+      "cost_usd": "0.100442",
+      "latency_p50_ms": 3992,
+      "latency_p95_ms": 4675
+    },
+    "stopped": null,
+    "run_at": "2026-11-12T11:14:37+00:00"
+  },
+  "rows": [
+    {
+      "id": "cv-01",
+      "offer": "Ingénieur data plateforme",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-02",
+      "offer": "Développeur backend Django",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-03",
+      "offer": "Senior Backend Engineer, billing",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-04",
+      "offer": "Tech Lead backend",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-05",
+      "offer": "Ingénieur DevOps / SRE",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-06",
+      "offer": "Ingénieur backend paiement",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-07",
+      "offer": "Développeur Java",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 0,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "cv-08",
+      "offer": "Data engineer",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 1,
+      "warnings": [],
+      "passed": true
+    },
+    {
+      "id": "fit-01",
+      "offer": "Data engineer",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 5,
+      "warnings": [],
+      "over_by": {
+        "pages": 2,
+        "missing_items": 0
+      },
+      "fits": true,
+      "length_ratio": 0.208,
+      "shortened": 5,
+      "unmentioned": [],
+      "passed": true
+    },
+    {
+      "id": "fit-02",
+      "offer": "Développeur backend Django",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 9,
+      "warnings": [],
+      "over_by": {
+        "pages": 2,
+        "missing_items": 0
+      },
+      "fits": true,
+      "length_ratio": 0.345,
+      "shortened": 9,
+      "unmentioned": [],
+      "passed": true
+    },
+    {
+      "id": "fit-03",
+      "offer": "Ingénieur fiabilité (SRE)",
+      "missing": [],
+      "unwanted": [],
+      "refused_rewrites": [],
+      "accepted_rewrites": 6,
+      "warnings": [],
+      "over_by": {
+        "pages": 2,
+        "missing_items": 0
+      },
+      "fits": true,
+      "length_ratio": 0.396,
+      "shortened": 6,
+      "unmentioned": [],
+      "passed": true
+    }
+  ]
+}

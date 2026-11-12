@@ -50,5 +50,46 @@ services:
       - '127.0.0.1:3025:3025'
       - '127.0.0.1:3143:3143'
 
+  # The ATS check (docs/ats-check.md), off by default: `make ats-up`. Two parsers on a
+  # network with no route out, so a CV sent to them stays on this machine, reached
+  # through one gateway bound to 127.0.0.1. Pinned by digest: Tika 4.2.0 and Affinda's
+  # resume parser, both from late October 2026, and nginx 1.29.
+
+  # Text extraction, as a parsing pipeline's first step reads it.
+  tika:
+    profiles: [ats]
+    image: apache/tika@sha256:b99f19c4fd76237dafe7d22f719b9bddfa9a449da687c597a41e2f6d9a595418
+    networks: [ats-isolated]
+
+  # A commercial resume parser run locally: the structured fields an ATS would see.
+  # Proprietary, in evaluation mode without a licence (1 000 parses, counted in its
+  # volume); a free trial licence goes in .env as AFFINDA_LICENSE_TOKEN. Built for x86
+  # only: emulated on Apple Silicon, so slow.
+  affinda:
+    profiles: [ats]
+    image: affinda/resume-parser@sha256:630b8475b40bbed50e061dadd92f3b35c891615b8f9d4b1637a6114d1d826543
+    platform: linux/amd64
+    environment:
+      AFFINDA_LICENSE_TOKEN: ${AFFINDA_LICENSE_TOKEN:-}
+    volumes:
+      - affinda-data:/var/lib/affinda
+    networks: [ats-isolated]
+
+  ats-gateway:
+    profiles: [ats]
+    image: nginx@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    volumes:
+      - ./docker/ats/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '127.0.0.1:9998:9998'
+      - '127.0.0.1:8090:8080'
+    networks: [default, ats-isolated]
+    depends_on: [tika, affinda]
+
+networks:
+  ats-isolated:
+    internal: true
+
 volumes:
   postgres-data:
+  affinda-data:

@@ -11,7 +11,7 @@ from tests.images import jpeg_bytes
 from jobingo.domain.cv_selection import DEFAULT_OPTIONS, CvOptions, CvSelection, build_selection
 from jobingo.domain.identity import Identity
 from jobingo.domain.profile import Profile, parse_cv_markdown
-from jobingo.render.cv import TEMPLATE_DIR, load_manifest, render_cv
+from jobingo.render.cv import TEMPLATE_DIR, load_manifest, render_cv, title_and_dates
 from jobingo.render.pdf import engine_available
 from jobingo.render.verify import PdfProblem, compact, extract_pdf_text, verify_cv_pdf
 
@@ -218,6 +218,19 @@ def test_a_long_cv_runs_over_one_page_and_is_counted(panel: bool):
     assert verify_cv_pdf(rendered.pdf, selection) == []
 
 
+def test_the_fill_says_how_far_down_its_last_page_the_text_goes():
+    short = render_cv(
+        _selection(parse_cv_markdown("## Expériences\n\n### Solo — Dev — 2020 <!-- id=s -->\n")),
+        ALEX,
+    )
+    full = render_cv(_selection(parse_cv_markdown(FIXTURE)), ALEX)
+    long = render_cv(_selection(parse_cv_markdown(_long_cv())), ALEX)
+
+    assert short.fill is not None and full.fill is not None and long.fill is not None
+    assert 0 < short.fill < full.fill <= 1
+    assert 0 < long.fill <= 1  # on its last page
+
+
 def test_a_panel_longer_than_its_page_is_cut_and_verify_says_so():
     """The panel is absolutely positioned: what runs past the page is lost, and the page
     count stays at 1. This pins the behaviour the screen's warning relies on."""
@@ -284,3 +297,51 @@ def test_a_summary_left_out_is_not_in_the_pdf():
 
     assert selection.resume is None
     assert compact(summary.text) not in text
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Nordlys — Ingénieur backend senior — 01/2022 – 08/2026",
+            ("Nordlys — Ingénieur backend senior", "01/2022 – 08/2026"),
+        ),
+        (
+            "Hélianthe Énergie — Ingénieur data — 08/2026 – aujourd'hui",
+            ("Hélianthe Énergie — Ingénieur data", "08/2026 – aujourd'hui"),
+        ),
+        ("Diplôme d'ingénieur, INSA Lyon, 2016", ("Diplôme d'ingénieur, INSA Lyon, 2016", "")),
+        ("Nordlys — Ingénieur backend", ("Nordlys — Ingénieur backend", "")),
+    ],
+)
+def test_a_title_is_split_before_its_dates(text: str, expected: tuple[str, str]):
+    assert title_and_dates(text) == expected
+
+
+@pytest.mark.parametrize("panel", [True, False])
+def test_what_a_recruiting_tool_reads(panel: bool):
+    """The extracted text reads in order, each bullet at the head of its line rather
+    than all bullets apart, titles whole with their dates, under standard headings."""
+    projects = (
+        "\n## Projets personnels\n\n- Station météo connectée <!-- id=project-01 -->\n"
+        "\n## Langues\n\n- Anglais : C1 <!-- id=lang-01 -->\n"
+    )
+    profile = parse_cv_markdown(FIXTURE + projects)
+    selection = _selection(profile, options=_options(panneau_competences=panel))
+    text = extract_pdf_text(render_cv(selection, ALEX).pdf)
+    lines = [line.strip() for line in text.splitlines()]
+
+    assert "•" not in lines  # no bullet alone on its line
+    assert any(line.startswith("• Migration de 120 tâches ETL") for line in lines)
+    assert "Nordlys — Ingénieur backend senior — 01/2022 – 08/2026" in text
+    assert "Expérience professionnelle" in text
+    assert text.index("Formation") < text.index("Projets personnels")
+    assert text.index("Compétences") < text.index("Langues") < text.index("Anglais : C1")
+    assert "ﬁ" not in text and "ﬂ" not in text  # no ligature glyph
+
+
+def test_no_text_is_justified():
+    """Tika, the extraction many recruiting tools run, reads the stretched spaces of a
+    justified line as doubled ones (found with `make ats`)."""
+    css = (TEMPLATE_DIR / "style.css").read_text(encoding="utf-8")
+    assert "justify" not in css

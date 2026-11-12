@@ -1,13 +1,17 @@
 <!doctype html>
-{#- What a profile link shows before its username, on a 24-unit square. The GitHub and
-    LinkedIn marks come from Simple Icons (CC0); the globe is ours. Each place sets its
-    colour here, the same as its text in style.css: the PDF engine does not hand the
-    text's colour down to an inline SVG reliably. -#}
+{#- The icon before each contact line, on a 24-unit square. The GitHub and LinkedIn marks
+    come from Simple Icons (CC0); the globe, the envelope, the phone and the pin are
+    ours. Each place sets its colour here, the same as its text in style.css: the PDF
+    engine does not hand the text's colour down to an inline SVG reliably. Icons are
+    drawn, not text, so a recruiting tool reading the PDF sees the contact lines alone. -#}
 {%- set icon_colours = {"panel": "#f2f2f2", "header": "#111111"} -%}
 {%- macro icon(kind, colour) -%}
 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
 {%- if kind == "github" %}<path fill="{{ colour }}" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
 {%- elif kind == "linkedin" %}<path fill="{{ colour }}" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+{%- elif kind == "email" %}<g fill="none" stroke="{{ colour }}" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></g>
+{%- elif kind == "phone" %}<path fill="none" stroke="{{ colour }}" stroke-width="2" stroke-linejoin="round" d="M6.5 3h3l1.5 4.5-2.2 1.4a11 11 0 0 0 6.3 6.3l1.4-2.2L21 14.5v3A2.5 2.5 0 0 1 18.5 20 15.5 15.5 0 0 1 4 5.5 2.5 2.5 0 0 1 6.5 3z"/>
+{%- elif kind == "address" %}<g fill="none" stroke="{{ colour }}" stroke-width="2" stroke-linejoin="round"><path d="M12 21.5s-7-6.6-7-12a7 7 0 0 1 14 0c0 5.4-7 12-7 12z"/><circle cx="12" cy="9.5" r="2.5"/></g>
 {%- else %}<g fill="none" stroke="{{ colour }}" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3.2 3.6 3.2 15.4 0 19M12 2.5c-3.2 3.6-3.2 15.4 0 19"/></g>
 {%- endif %}</svg>
 {%- endmacro %}
@@ -18,7 +22,7 @@
     {% if identity.name %}<meta name="author" content="{{ identity.name }}">{% endif %}
 </head>
 {#- Reading order, which is also the order of the extracted text: header, summary,
-    experience, personal projects, education, then the side panel, or the linear skills and hobbies
+    experience, education, personal projects, then the side panel, or the linear skills and hobbies
     sections. The panel comes *first* in the document so that it is laid out on the
     first page whatever the length of the main column. It is absolutely positioned,
     and WeasyPrint paints positioned boxes after the page's other content: on a
@@ -30,7 +34,7 @@
     {% if contact %}
     <ul class="contact">
         {% for entry in contact %}<li class="{{ entry.kind }}">
-            {%- if entry.kind in ("website", "linkedin", "github") %}{{ icon(entry.kind, icon_colours.panel) }}{% endif -%}
+            {{- icon(entry.kind, icon_colours.panel) -}}
             {%- if entry.href %}<a href="{{ entry.href }}">{{ entry.text }}</a>{% else %}{{ entry.text }}{% endif -%}
         </li>{% endfor %}
     </ul>
@@ -40,6 +44,14 @@
         <h2>{{ labels.competences }}</h2>
         <ul>
             {% for item in selection.competences %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% if selection.langues %}
+    <section>
+        <h2>{{ labels.langues }}</h2>
+        <ul>
+            {% for item in selection.langues %}<li>{{ item.text }}</li>{% endfor %}
         </ul>
     </section>
     {% endif %}
@@ -65,7 +77,7 @@
         {% if not options.panneau_competences and contact %}
         <ul class="contact">
             {% for entry in contact %}<li class="{{ entry.kind }}">
-            {%- if entry.kind in ("website", "linkedin", "github") %}{{ icon(entry.kind, icon_colours.header) }}{% endif -%}
+            {{- icon(entry.kind, icon_colours.header) -}}
             {%- if entry.href %}<a href="{{ entry.href }}">{{ entry.text }}</a>{% else %}{{ entry.text }}{% endif -%}
         </li>{% endfor %}
         </ul>
@@ -77,13 +89,24 @@
         <h2>{{ labels.experiences }}</h2>
         {% for experience in selection.experiences %}
         <article>
-            <h3>{{ experience.text }}</h3>
+            {% set title, dates = title_and_dates(experience.text) %}
+            <h3>{{ title }}{% if dates %}<span class="dates"> — {{ dates }}</span>{% endif %}</h3>
             {% if experience.bullets %}
             <ul>
                 {% for bullet in experience.bullets %}<li>{{ bullet.text }}</li>{% endfor %}
             </ul>
             {% endif %}
         </article>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if selection.formation %}
+    <section class="timeline">
+        <h2>{{ labels.formation }}</h2>
+        {% for item in selection.formation %}
+        {% set title, dates = title_and_dates(item.text) %}
+        <article><h3{% if not item.heading %} class="plain-title"{% endif %}>{{ title }}{% if dates %}<span class="dates"> — {{ dates }}</span>{% endif %}</h3></article>
         {% endfor %}
     </section>
     {% endif %}
@@ -97,21 +120,20 @@
     </section>
     {% endif %}
 
-    {% if selection.formation %}
-    <section class="timeline">
-        <h2>{{ labels.formation }}</h2>
-        {% for item in selection.formation %}
-        <article><h3{% if not item.heading %} class="plain-title"{% endif %}>{{ item.text }}</h3></article>
-        {% endfor %}
-    </section>
-    {% endif %}
-
     {% if not options.panneau_competences %}
     {% if selection.competences %}
     <section>
         <h2>{{ labels.competences }}</h2>
         <ul class="tags">
             {% for item in selection.competences %}<li>{{ item.text }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% if selection.langues %}
+    <section>
+        <h2>{{ labels.langues }}</h2>
+        <ul class="tags">
+            {% for item in selection.langues %}<li>{{ item.text }}</li>{% endfor %}
         </ul>
     </section>
     {% endif %}

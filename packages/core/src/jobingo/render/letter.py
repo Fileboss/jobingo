@@ -86,5 +86,5 @@ def render_letter(
         slots={spec.name: paragraphs(texts.get(spec.name, "")) for spec in manifest.slots},
     )
     css = (letter_dir / "style.css").read_text(encoding="utf-8")
-    pdf, pages = render_pdf(html, css, letter_dir)
-    return RenderedLetter(pdf=pdf, pages=pages)
+    rendered = render_pdf(html, css, letter_dir)
+    return RenderedLetter(pdf=rendered.pdf, pages=rendered.pages)

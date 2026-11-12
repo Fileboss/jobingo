@@ -42,6 +42,7 @@ _ID_PREFIX = {
     "formation": "edu",
     "skill": "skill",
     "hobby": "hobby",
+    "language": "lang",
     "project": "project",
     "resume": "resume",
 }
@@ -50,7 +51,7 @@ _ID_PREFIX = {
 @dataclass(eq=False)
 class _Entry:
     line: int
-    kind: str  # resume | experience | formation | bullet | skill | hobby | project
+    kind: str  # resume | experience | formation | bullet | skill | language | hobby | project
     prefix: str
     text: str
     tags: list[str]

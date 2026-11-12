@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from jobingo.domain.cv_proposal import CvProposal, CvProposalSchema
+from jobingo.domain.cv_proposal import CvRanking, CvRankingSchema
 from jobingo.llm.client import Task, UntrustedText
 
 
@@ -34,14 +34,14 @@ class SelectCvContentInput(BaseModel):
     style_forbidden: list[str] = []
 
 
-SELECT_CV_CONTENT_TASK: Task[SelectCvContentInput, CvProposal] = Task(
+SELECT_CV_CONTENT_TASK: Task[SelectCvContentInput, CvRanking] = Task(
     name="select_cv_content",
     tier="writing",
     input_model=SelectCvContentInput,
-    output_model=CvProposal,
-    user_template="select_cv_content.v6.md",
-    system_template="select_cv_content.v6.system.md",
-    prompt_version=6,
-    schema_model=CvProposalSchema,
+    output_model=CvRanking,
+    user_template="select_cv_content.v14.md",
+    system_template="select_cv_content.v14.system.md",
+    prompt_version=14,
+    schema_model=CvRankingSchema,
     max_tokens=8000,
 )
