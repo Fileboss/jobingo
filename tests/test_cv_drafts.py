@@ -411,3 +411,16 @@ def test_every_experience_ranked_goes_on_a_page_with_room(client: TestClient, fa
 
     assert all(experience["kept"] for experience in draft["experiences"])
     assert len(draft["experiences"]) == 6
+
+
+def test_an_adapted_cv_is_deleted_for_good(client: TestClient, fake: FakeLLMClient):
+    draft = _create(client, fake)
+    app_id = draft["application_id"]
+
+    assert client.delete(f"/api/cv/drafts/{draft['id']}").status_code == 204
+
+    assert client.get(f"/api/cv/drafts/{draft['id']}").status_code == 404
+    assert client.get(f"/api/applications/{app_id}/cv-drafts").json() == []
+    assert client.delete(f"/api/cv/drafts/{draft['id']}").status_code == 404
+    # The model call stays in the journal, with what it cost.
+    assert client.get(f"/api/observability/calls/{draft['llm_call_id']}").status_code == 200

@@ -207,15 +207,83 @@
 	}
 
 	let confirming = $state(false);
+
+	/** The document waiting for a second click, as `cv-12` or `letter-3`. */
+	let doomed = $state<string | null>(null);
+	let documentFailure = $state<string | null>(null);
+
+	async function removeDocument(kind: 'cv' | 'letter', documentId: number) {
+		documentFailure = null;
+		try {
+			const { response } =
+				kind === 'cv'
+					? await api.DELETE('/api/cv/drafts/{draft_id}', {
+							params: { path: { draft_id: documentId } }
+						})
+					: await api.DELETE('/api/letters/{letter_id}', {
+							params: { path: { letter_id: documentId } }
+						});
+			if (!response.ok && response.status !== 404) {
+				documentFailure = 'La suppression a échoué.';
+				return;
+			}
+			if (kind === 'cv') drafts = drafts.filter((draft) => draft.id !== documentId);
+			else letters = letters.filter((letter) => letter.id !== documentId);
+			doomed = null;
+		} catch {
+			documentFailure = 'Le serveur ne répond pas. Réessayez.';
+		}
+	}
 	let late = $derived(application?.follow_up_on != null && application.follow_up_on <= today());
 </script>
 
-{#snippet documentLabel(label: string, at: string)}
-	<span class="min-w-0">
-		<span class="block font-bold">{label}</span>
-		<span class="block text-sm text-ink-soft">{formatDateTime(at)}</span>
-	</span>
-	<span class="shrink-0 text-sm font-bold underline underline-offset-4">Ouvrir</span>
+{#snippet documentRow(kind: 'cv' | 'letter', documentId: number, label: string, at: string)}
+	{@const key = `${kind}-${documentId}`}
+	<li class="flex items-stretch gap-1">
+		{#if doomed === key}
+			<div
+				class="flex flex-1 flex-wrap items-center justify-between gap-2 rounded-sm bg-paper px-3 py-2 shadow-sm"
+			>
+				<span class="text-sm font-bold">Supprimer ce document ? C’est définitif.</span>
+				<span class="flex gap-1">
+					<Button variant="quiet" onclick={() => removeDocument(kind, documentId)}>Supprimer</Button
+					>
+					<Button variant="quiet" onclick={() => (doomed = null)}>Annuler</Button>
+				</span>
+			</div>
+		{:else}
+			<a
+				href={kind === 'cv'
+					? resolve('/adapter/[id]', { id: String(documentId) })
+					: resolve('/lettres/[id]', { id: String(documentId) })}
+				class="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-sm bg-paper px-3 py-2 text-ink no-underline shadow-sm hover:bg-white"
+			>
+				<span class="min-w-0">
+					<span class="block font-bold">{label}</span>
+					<span class="block text-sm text-ink-soft">{formatDateTime(at)}</span>
+				</span>
+				<span class="shrink-0 text-sm font-bold underline underline-offset-4">Ouvrir</span>
+			</a>
+			<button
+				type="button"
+				onclick={() => (doomed = key)}
+				aria-label="Supprimer : {label}, {formatDateTime(at)}"
+				title="Supprimer"
+				class="grid w-9 shrink-0 cursor-pointer place-items-center rounded-sm text-ink-soft hover:bg-paper hover:text-alert"
+			>
+				<svg viewBox="0 0 16 16" class="size-4" aria-hidden="true">
+					<path
+						d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.7 9.5h6.6L12 4M6.8 6.5v4.5M9.2 6.5v4.5"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			</button>
+		{/if}
+	</li>
 {/snippet}
 
 <svelte:head>
@@ -355,6 +423,11 @@
 
 			<aside class="grid content-start gap-6">
 				<BristolCard title="Documents" colour="green">
+					{#if documentFailure}
+						<p role="alert" class="mb-3 bg-alert px-3 py-2 text-sm font-bold text-white">
+							{documentFailure}
+						</p>
+					{/if}
 					<h3 class="mb-2 font-extrabold text-ink">
 						CV adaptés{#if drafts.length}<span class="ml-1.5 text-ink-soft">{drafts.length}</span
 							>{/if}
@@ -362,16 +435,12 @@
 					{#if drafts.length}
 						<ul class="mb-3 grid gap-2">
 							{#each drafts as draft, index (draft.id)}
-								<li>
-									<a
-										href={resolve('/adapter/[id]', { id: String(draft.id) })}
-										class="flex items-center justify-between gap-3 rounded-sm bg-paper px-3 py-2 text-ink no-underline shadow-sm hover:bg-white"
-										>{@render documentLabel(
-											index === 0 ? 'CV adapté, le plus récent' : 'CV adapté',
-											draft.created_at
-										)}</a
-									>
-								</li>
+								{@render documentRow(
+									'cv',
+									draft.id,
+									index === 0 ? 'CV adapté, le plus récent' : 'CV adapté',
+									draft.created_at
+								)}
 							{/each}
 						</ul>
 					{:else}
@@ -404,16 +473,12 @@
 					{#if letters.length}
 						<ul class="mb-3 grid gap-2">
 							{#each letters as letter, index (letter.id)}
-								<li>
-									<a
-										href={resolve('/lettres/[id]', { id: String(letter.id) })}
-										class="flex items-center justify-between gap-3 rounded-sm bg-paper px-3 py-2 text-ink no-underline shadow-sm hover:bg-white"
-										>{@render documentLabel(
-											index === 0 ? 'Lettre, la plus récente' : 'Lettre',
-											letter.created_at
-										)}</a
-									>
-								</li>
+								{@render documentRow(
+									'letter',
+									letter.id,
+									index === 0 ? 'Lettre, la plus récente' : 'Lettre',
+									letter.created_at
+								)}
 							{/each}
 						</ul>
 					{:else}

@@ -70,6 +70,15 @@ def get_draft(draft_id: int, user: CurrentUser, conn: DbConn) -> DraftView:
     return draft
 
 
+@router.delete(
+    "/cv/drafts/{draft_id}", status_code=204, responses={404: {"description": "No such draft"}}
+)
+def delete_draft(draft_id: int, user: CurrentUser, conn: DbConn) -> Response:
+    if not cv_drafts.delete_draft(conn, user.id, draft_id):
+        raise HTTPException(status_code=404, detail=_NOT_FOUND)
+    return Response(status_code=204)
+
+
 @router.put(
     "/cv/drafts/{draft_id}/choices",
     response_model=DraftView,

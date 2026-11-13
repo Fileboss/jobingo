@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FakeOffersApi } from './offers-api.fake.ts';
+import { FakeOffersApi, offer, score } from './offers-api.fake.ts';
 
 async function open(page: Page, path: string, api = new FakeOffersApi()) {
 	await api.install(page);
@@ -134,4 +134,60 @@ test('a filtered offer says which filter, with no call', async ({ page }) => {
 	await open(page, '/offres/4');
 	await expect(page.getByText('Écartée par vos filtres, sans appel au modèle.')).toBeVisible();
 	await expect(page.getByText('contrat non retenu : CDD')).toBeVisible();
+});
+
+test('the table sorts by a header, searches and filters, and keeps it in the address', async ({
+	page
+}) => {
+	const api = new FakeOffersApi();
+	api.offers = [
+		offer(1, 'Ingénieur backend senior', { company_name: 'Stratus' }),
+		offer(2, 'Data engineer', {
+			company_name: 'Plume Énergie',
+			contract: 'CDD',
+			current_score: score(2, 78, { salary_score: 80 })
+		}),
+		offer(3, 'Développeur Python', {
+			company_name: 'Agrimetrics',
+			current_score: score(3, 91)
+		})
+	];
+	await open(page, '/offres', api);
+	const titles = page.locator('tbody tr td:nth-child(3) a');
+	// Fit, then salary, then the company: Plume's salary breaks the tie at 78.
+	await expect(titles).toHaveText([
+		'Développeur Python',
+		'Data engineer',
+		'Ingénieur backend senior'
+	]);
+
+	const header = page.getByRole('columnheader', { name: 'Entreprise' });
+	await header.getByRole('button').click();
+	await expect(header).toHaveAttribute('aria-sort', 'ascending');
+	await expect(titles).toHaveText([
+		'Développeur Python',
+		'Data engineer',
+		'Ingénieur backend senior'
+	]);
+	await header.getByRole('button').click();
+	await expect(titles).toHaveText([
+		'Ingénieur backend senior',
+		'Data engineer',
+		'Développeur Python'
+	]);
+	await expect(page).toHaveURL(/tri=entreprise&sens=desc/);
+	await header.getByRole('button').click();
+	await expect(header).toHaveAttribute('aria-sort', 'none');
+
+	await page.getByLabel('Rechercher').fill('energie');
+	await expect(titles).toHaveText(['Data engineer']);
+	await expect(page.getByText('1 offre sur 3')).toBeVisible();
+	await page.getByLabel('Rechercher').fill('');
+
+	await page.getByLabel('Contrat').selectOption('CDI');
+	await expect(titles).toHaveText(['Développeur Python', 'Ingénieur backend senior']);
+	await page.reload();
+	await expect(titles).toHaveText(['Développeur Python', 'Ingénieur backend senior']);
+	await page.getByRole('button', { name: 'Retirer le filtre : Contrat' }).click();
+	await expect(titles).toHaveCount(3);
 });

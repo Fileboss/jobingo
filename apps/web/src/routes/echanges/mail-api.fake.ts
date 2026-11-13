@@ -94,7 +94,11 @@ const application: Schemas['ApplicationSummary'] = {
 	tone: 'active',
 	last_event: null,
 	follow_up_on: null,
-	created_at: '2026-11-01T09:00:00Z'
+	created_at: '2026-11-01T09:00:00Z',
+	fit_score: null,
+	salary_score: null,
+	salary_min: null,
+	salary_max: null
 };
 
 /** The mail API in memory, for Playwright, with a fictional mailbox. */

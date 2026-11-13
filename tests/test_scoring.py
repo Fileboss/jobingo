@@ -155,3 +155,19 @@ def test_scoring_needs_a_key_and_an_existing_offer(client: TestClient, fake: Fak
     assert client.post("/api/offers/999/score").status_code == 404
     client.app.state.llm_client = None  # type: ignore[attr-defined]
     assert client.post("/api/offers/rescore").status_code == 503
+
+
+def test_an_application_carries_its_offers_scores_for_the_tables_order(
+    client: TestClient, fake: FakeLLMClient
+):
+    fake.queue("score_offer", RATINGS)
+    [offer] = _intake(client, fake, DATA)["offers"]
+    applied = client.post(f"/api/offers/{offer['id']}/application").json()
+    client.post("/api/applications", json={"title": "Spontanée", "company_name": ""})
+
+    listed = {row["title"]: row for row in client.get("/api/applications").json()}
+    data, spontaneous = listed["Data engineer"], listed["Spontanée"]
+    assert (data["fit_score"], data["salary_score"]) == (80, 60)
+    assert (data["salary_min"], data["salary_max"]) == (55000, 62000)
+    assert client.get(f"/api/applications/{applied['id']}").json()["fit_score"] == 80
+    assert [spontaneous[key] for key in ("fit_score", "salary_score", "salary_max")] == [None] * 3

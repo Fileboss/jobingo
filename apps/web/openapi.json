@@ -231,6 +231,42 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "cv-drafts"
+        ],
+        "summary": "Delete Draft",
+        "operationId": "delete_draft",
+        "parameters": [
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Draft Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No such draft"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/cv/drafts/{draft_id}/choices": {
@@ -2298,6 +2334,42 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Delete Letter",
+        "operationId": "delete_letter",
+        "parameters": [
+          {
+            "name": "letter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Letter Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No such letter"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/letters/{letter_id}/texts": {
@@ -3747,6 +3819,50 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
+          "salary_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Score"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
           }
         },
         "type": "object",
@@ -3760,7 +3876,11 @@
           "tone",
           "last_event",
           "follow_up_on",
-          "created_at"
+          "created_at",
+          "fit_score",
+          "salary_score",
+          "salary_min",
+          "salary_max"
         ],
         "title": "ApplicationSummary"
       },
@@ -3833,6 +3953,50 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
+          "salary_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Score"
+          },
+          "salary_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Min"
+          },
+          "salary_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Max"
+          },
           "contact": {
             "$ref": "#/components/schemas/Contact"
           },
@@ -3867,6 +4031,10 @@
           "last_event",
           "follow_up_on",
           "created_at",
+          "fit_score",
+          "salary_score",
+          "salary_min",
+          "salary_max",
           "contact",
           "company_notes",
           "events",

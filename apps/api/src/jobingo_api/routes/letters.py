@@ -81,6 +81,13 @@ def get_letter(letter_id: int, user: CurrentUser, conn: DbConn) -> LetterView:
     return letter
 
 
+@router.delete("/letters/{letter_id}", status_code=204, responses=_LETTER_404)
+def delete_letter(letter_id: int, user: CurrentUser, conn: DbConn) -> Response:
+    if not letters.delete_letter(conn, user.id, letter_id):
+        raise HTTPException(status_code=404, detail=_NO_LETTER)
+    return Response(status_code=204)
+
+
 @router.put("/letters/{letter_id}/texts", responses=_LETTER_404)
 def save_letter_texts(
     letter_id: int, body: Annotated[LetterTexts, Body()], user: CurrentUser, conn: DbConn

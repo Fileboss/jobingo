@@ -134,6 +134,12 @@ class ApplicationSummary(BaseModel):
     last_event: ApplicationEvent | None
     follow_up_on: date | None
     created_at: datetime
+    # The offer's current scores and stated salary, for the tables' order: none for a
+    # spontaneous application or an offer not scored.
+    fit_score: int | None
+    salary_score: int | None
+    salary_min: int | None
+    salary_max: int | None
 
 
 class LinkedMessage(BaseModel):

@@ -1,10 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { api } from '#lib/api/client.ts';
 	import { formatDateTime } from '#lib/observability/format.ts';
-	import { remoteLabels, salaryLabel, standing, type ScoredOffer } from '#lib/offers/format.ts';
+	import {
+		remoteLabels,
+		salaryLabel,
+		salarySortValue,
+		standing,
+		type ScoredOffer
+	} from '#lib/offers/format.ts';
 	import ScoreBadge from '#lib/offers/ScoreBadge.svelte';
+	import SortHeader from '#lib/tables/SortHeader.svelte';
+	import TableControls from '#lib/tables/TableControls.svelte';
+	import { changeParams } from '#lib/tables/navigate.ts';
+	import {
+		matches,
+		nextSort,
+		orderRows,
+		readFilters,
+		readSort,
+		sortParams,
+		type Filter,
+		type Level
+	} from '#lib/tables/table.ts';
 	import BristolCard from '#lib/ui/BristolCard.svelte';
 	import Button from '#lib/ui/Button.svelte';
 
@@ -18,7 +38,6 @@
 	};
 
 	let offers = $state.raw<ScoredOffer[] | null>(null);
-	let byScore = $state(true);
 	let stale = $state(0);
 	let rescoring = $state(false);
 	let unavailable = $state(false);
@@ -61,12 +80,76 @@
 		}
 	}
 
-	let shown = $derived.by(() => {
-		const all = offers ?? [];
-		if (!byScore) return all;
-		const value = (offer: ScoredOffer) => offer.current_score?.fit_score ?? -1;
-		return [...all].sort((a, b) => value(b) - value(a));
-	});
+	// What asks for a look first: to examine, kept, applied, then set aside.
+	const STANDING_ORDER: Record<Standing, number> = {
+		open: 1,
+		shortlisted: 2,
+		applied: 3,
+		dismissed: 4,
+		filtered: 5
+	};
+	const COLUMNS = {
+		fit: (o: ScoredOffer) => o.current_score?.fit_score,
+		statut: (o: ScoredOffer) => STANDING_ORDER[standing(o)],
+		poste: (o: ScoredOffer) => o.title,
+		entreprise: (o: ScoredOffer) => o.company_name,
+		lieu: (o: ScoredOffer) => o.locations.join(', '),
+		contrat: (o: ScoredOffer) => o.contract,
+		teletravail: (o: ScoredOffer) => (remoteLabels[o.remote] === '—' ? '' : remoteLabels[o.remote]),
+		salaire: (o: ScoredOffer) => salarySortValue(o),
+		recue: (o: ScoredOffer) => o.created_at
+	};
+	/** Fit, then salary, then company and title: the POC's default order, without stars. */
+	const DEFAULT_ORDER: Level<ScoredOffer>[] = [
+		{ value: (o) => o.current_score?.fit_score, descending: true },
+		{ value: (o) => o.current_score?.salary_score, descending: true },
+		{ value: (o) => o.company_name },
+		{ value: (o) => o.title }
+	];
+	const CONTRACTS = ['CDI', 'CDD', 'freelance', 'stage', 'alternance', 'interim'];
+	const FILTERS: Filter[] = [
+		{
+			name: 'statut',
+			label: 'Statut',
+			choices: Object.fromEntries(Object.entries(STATUS).map(([key, { label }]) => [key, label]))
+		},
+		{
+			name: 'contrat',
+			label: 'Contrat',
+			choices: Object.fromEntries(CONTRACTS.map((contract) => [contract, contract]))
+		},
+		{
+			name: 'teletravail',
+			label: 'Télétravail',
+			choices: Object.fromEntries(Object.entries(remoteLabels).filter(([key]) => key))
+		}
+	];
+
+	let params = $derived(page.url.searchParams);
+	let sort = $derived(readSort(params, COLUMNS));
+	let query = $derived(params.get('q') ?? '');
+	let active = $derived(readFilters(params, FILTERS));
+	let shown = $derived(
+		orderRows(
+			(offers ?? []).filter(
+				(o) =>
+					(!active.statut || standing(o) === active.statut) &&
+					(!active.contrat || o.contract === active.contrat) &&
+					(!active.teletravail || o.remote === active.teletravail) &&
+					matches(query, [o.title, o.company_name, ...o.locations, o.contract])
+			),
+			DEFAULT_ORDER,
+			COLUMNS,
+			sort
+		)
+	);
+
+	function navigate(changes: Record<string, string | null>, replace = false) {
+		changeParams(resolve('/offres'), changes, replace);
+	}
+	const onsort = (column: string) => navigate(sortParams(nextSort(sort, column)));
+	const reset = () =>
+		navigate({ q: null, ...Object.fromEntries(FILTERS.map((filter) => [filter.name, null])) });
 
 	onMount(load);
 
@@ -161,19 +244,6 @@
 			{/if}
 		</div>
 
-		{#if offers && offers.length}
-			<div class="mb-3 flex flex-wrap items-center justify-end gap-3">
-				<label class="flex items-center gap-2 text-sm">
-					<input
-						type="checkbox"
-						bind:checked={byScore}
-						class="rounded-sm border-ink text-ink focus:ring-ink"
-					/>
-					Trier par score
-				</label>
-			</div>
-		{/if}
-
 		{#if unavailable}
 			<div role="alert">
 				<p class="font-extrabold text-ink">Le serveur ne répond pas.</p>
@@ -184,69 +254,85 @@
 		{:else if offers.length === 0}
 			<p class="text-ink-soft">Aucune offre pour l’instant.</p>
 		{:else}
-			<div class="overflow-x-auto bg-paper">
-				<table class="w-full min-w-[52rem] text-left">
-					<thead>
-						<tr class="border-b-2 border-ink text-sm text-ink-soft">
-							<th class="py-2 pr-2 pl-4 font-bold">Adéquation</th>
-							<th class="py-2 pr-4 font-bold">Statut</th>
-							<th class="py-2 pr-4 font-bold">Poste</th>
-							<th class="py-2 pr-4 font-bold">Lieu</th>
-							<th class="py-2 pr-4 font-bold">Contrat</th>
-							<th class="py-2 pr-4 font-bold">Télétravail</th>
-							<th class="py-2 pr-4 font-bold">Salaire</th>
-							<th class="py-2 pr-4 font-bold">Reçue</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each shown as offer (offer.id)}
-							{@const status = STATUS[standing(offer)]}
-							{@const aside = standing(offer) === 'dismissed' || standing(offer) === 'filtered'}
-							<tr
-								class={[
-									'border-b border-ink/10',
-									fresh.has(offer.id) && 'bg-bristol-green/40',
-									aside && 'text-ink-soft'
-								]}
-							>
-								<td class="py-2 pr-2 pl-4"><ScoreBadge {offer} /></td>
-								<td class="py-2 pr-4">
-									{#if offer.application_id}
-										<a
-											href={resolve('/candidatures/[id]', { id: String(offer.application_id) })}
-											title="Voir la candidature"
-											class={[
-												'px-2 py-0.5 text-sm font-bold whitespace-nowrap text-ink underline-offset-4 hover:underline',
-												status.colour
-											]}>{status.label} →</a
-										>
-									{:else}
-										<span class={['px-2 py-0.5 text-sm font-bold whitespace-nowrap', status.colour]}
-											>{status.label}</span
-										>
-									{/if}
-								</td>
-								<td class="py-2 pr-4">
-									<a
-										href={resolve('/offres/[id]', { id: String(offer.id) })}
-										class="font-extrabold text-ink">{offer.title}</a
-									>
-									<span class="block text-sm text-ink-soft">
-										{offer.company_name || 'Entreprise non nommée'}
-									</span>
-								</td>
-								<td class="py-2 pr-4">{offer.locations.join(', ') || '—'}</td>
-								<td class="py-2 pr-4">{offer.contract || '—'}</td>
-								<td class="py-2 pr-4">{remoteLabels[offer.remote]}</td>
-								<td class="py-2 pr-4 whitespace-nowrap tabular-nums">{salaryLabel(offer)}</td>
-								<td class="py-2 pr-4 text-sm whitespace-nowrap text-ink-soft">
-									{formatDateTime(offer.created_at)}
-								</td>
+			<TableControls
+				searchIn="Poste, entreprise, lieu, contrat"
+				{query}
+				onsearch={(q) => navigate({ q: q.trim() ? q : null }, true)}
+				filters={FILTERS}
+				{active}
+				onfilter={(name, value) => navigate({ [name]: value })}
+				onreset={reset}
+				shown={shown.length}
+				total={offers.length}
+				noun={['offre', 'offres']}
+			/>
+			{#if shown.length === 0}
+				<p class="text-ink-soft">Aucune offre ne correspond.</p>
+			{:else}
+				<div class="overflow-x-auto bg-paper">
+					<table class="w-full min-w-[60rem] text-left">
+						<thead>
+							<tr class="border-b-2 border-ink text-sm text-ink-soft">
+								<SortHeader column="fit" label="Adéquation" {sort} {onsort} class="pr-2 pl-4" />
+								<SortHeader column="statut" label="Statut" {sort} {onsort} class="pr-4" />
+								<SortHeader column="poste" label="Poste" {sort} {onsort} class="pr-4" />
+								<SortHeader column="entreprise" label="Entreprise" {sort} {onsort} class="pr-4" />
+								<SortHeader column="lieu" label="Lieu" {sort} {onsort} class="pr-4" />
+								<SortHeader column="contrat" label="Contrat" {sort} {onsort} class="pr-4" />
+								<SortHeader column="teletravail" label="Télétravail" {sort} {onsort} class="pr-4" />
+								<SortHeader column="salaire" label="Salaire" {sort} {onsort} class="pr-4" />
+								<SortHeader column="recue" label="Reçue" {sort} {onsort} class="pr-4" />
 							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+						</thead>
+						<tbody>
+							{#each shown as offer (offer.id)}
+								{@const status = STATUS[standing(offer)]}
+								{@const aside = standing(offer) === 'dismissed' || standing(offer) === 'filtered'}
+								<tr
+									class={[
+										'border-b border-ink/10',
+										fresh.has(offer.id) && 'bg-bristol-green/40',
+										aside && 'text-ink-soft'
+									]}
+								>
+									<td class="py-2 pr-2 pl-4"><ScoreBadge {offer} /></td>
+									<td class="py-2 pr-4">
+										{#if offer.application_id}
+											<a
+												href={resolve('/candidatures/[id]', { id: String(offer.application_id) })}
+												title="Voir la candidature"
+												class={[
+													'px-2 py-0.5 text-sm font-bold whitespace-nowrap text-ink underline-offset-4 hover:underline',
+													status.colour
+												]}>{status.label} →</a
+											>
+										{:else}
+											<span
+												class={['px-2 py-0.5 text-sm font-bold whitespace-nowrap', status.colour]}
+												>{status.label}</span
+											>
+										{/if}
+									</td>
+									<td class="py-2 pr-4">
+										<a
+											href={resolve('/offres/[id]', { id: String(offer.id) })}
+											class="font-extrabold text-ink">{offer.title}</a
+										>
+									</td>
+									<td class="py-2 pr-4">{offer.company_name || '—'}</td>
+									<td class="py-2 pr-4">{offer.locations.join(', ') || '—'}</td>
+									<td class="py-2 pr-4">{offer.contract || '—'}</td>
+									<td class="py-2 pr-4">{remoteLabels[offer.remote]}</td>
+									<td class="py-2 pr-4 whitespace-nowrap tabular-nums">{salaryLabel(offer)}</td>
+									<td class="py-2 pr-4 text-sm whitespace-nowrap text-ink-soft">
+										{formatDateTime(offer.created_at)}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
 		{/if}
 	</section>
 </div>

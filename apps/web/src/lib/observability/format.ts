@@ -83,6 +83,17 @@ const localDate = (iso: string) => {
 export const formatDay = (iso: string) => day.format(localDate(iso));
 export const formatLongDay = (iso: string) => longDay.format(localDate(iso));
 
+/** A figure of an eval run's detail: a list or a tally reads as text, not `[object Object]`. */
+export function formatDetail(value: unknown): string {
+	if (Array.isArray(value)) return value.length ? value.map(formatDetail).join(', ') : 'aucun';
+	if (value !== null && typeof value === 'object') {
+		const entries = Object.entries(value);
+		if (!entries.length) return 'aucune';
+		return entries.map(([key, count]) => `${key} : ${formatDetail(count)}`).join(', ');
+	}
+	return String(value);
+}
+
 /** Share of the prompt read from the cache, at a fraction of the input price. */
 export function cacheHitRate(figures: UsageFigures): string {
 	const prompt = figures.input_tokens + figures.cache_read_tokens + figures.cache_write_tokens;

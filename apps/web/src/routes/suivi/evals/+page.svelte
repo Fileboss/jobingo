@@ -4,6 +4,7 @@
 	import {
 		formatCount,
 		formatDate,
+		formatDetail,
 		formatMs,
 		formatScore,
 		formatUsd,
@@ -120,7 +121,7 @@
 								{#each Object.entries(current.detail) as [key, value] (key)}
 									<div>
 										<dt class="text-sm font-bold text-ink-soft">{detailLabels[key] ?? key}</dt>
-										<dd class="font-extrabold text-ink">{String(value)}</dd>
+										<dd class="font-extrabold text-ink">{formatDetail(value)}</dd>
 									</div>
 								{/each}
 							</dl>

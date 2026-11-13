@@ -212,3 +212,13 @@ def test_no_letter_without_a_key_or_an_application(client: TestClient, applicati
     client.app.state.llm_client = None  # type: ignore[attr-defined]
     assert client.post(f"/api/applications/{application}/letters").status_code == 503
     assert client.get("/api/letters/999").status_code == 404
+
+
+def test_a_letter_is_deleted_for_good(client: TestClient, application: int):
+    letter = _propose(client, application)
+
+    assert client.delete(f"/api/letters/{letter['id']}").status_code == 204
+
+    assert client.get(f"/api/letters/{letter['id']}").status_code == 404
+    assert client.get(f"/api/applications/{application}/letters").json() == []
+    assert client.delete(f"/api/letters/{letter['id']}").status_code == 404

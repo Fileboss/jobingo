@@ -31,3 +31,8 @@ export function standing(
 	if (offer.state === 'filtered') return 'filtered';
 	return 'open';
 }
+
+/** What the « Salaire » column sorts on: the top of the range, as the objectives read it. */
+export function salarySortValue(offer: Pick<Offer, 'salary_min' | 'salary_max'>): number | null {
+	return offer.salary_max ?? offer.salary_min ?? null;
+}

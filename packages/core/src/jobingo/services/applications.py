@@ -26,8 +26,18 @@ from jobingo.services.offers import get_offer
 log = logging.getLogger(__name__)
 
 _COLUMNS = """
-    id, offer_id, title, company_name, rating, contact_name, contact_email, contact_phone,
-    company_notes, created_at
+    a.id, a.offer_id, a.title, a.company_name, a.rating, a.contact_name, a.contact_email,
+    a.contact_phone, a.company_notes, a.created_at, o.salary_min, o.salary_max,
+    s.fit_score, s.salary_score
+"""
+# The offer and its latest score, when there are.
+_FROM = """
+    applications a
+    LEFT JOIN offers o ON o.user_id = a.user_id AND o.id = a.offer_id
+    LEFT JOIN LATERAL (
+        SELECT fit_score, salary_score FROM offer_scores
+        WHERE user_id = a.user_id AND offer_id = a.offer_id ORDER BY id DESC LIMIT 1
+    ) s ON true
 """
 
 
@@ -56,25 +66,35 @@ def _summary(row: dict[str, Any], events: list[ApplicationEvent]) -> dict[str, A
         "last_event": events[0] if events else None,
         "follow_up_on": next_follow_up(events),
         "created_at": row["created_at"],
+        **{key: row[key] for key in ("fit_score", "salary_score", "salary_min", "salary_max")},
     }
 
 
 def list_applications(conn: Conn, user_id: int) -> list[ApplicationSummary]:
     rows = conn.execute(
-        f"SELECT {_COLUMNS} FROM applications WHERE user_id = %s AND deleted_at IS NULL"  # nosec B608
-        " ORDER BY created_at DESC, id DESC",
+        f"SELECT {_COLUMNS} FROM {_FROM} WHERE a.user_id = %s AND a.deleted_at IS NULL"  # nosec B608
+        " ORDER BY a.created_at DESC, a.id DESC",
         (user_id,),
     ).fetchall()
-    return [
-        ApplicationSummary.model_validate(_summary(row, _events(conn, user_id, row["id"])))
-        for row in rows
-    ]
+    # Every timeline in one query, not one per application.
+    events: dict[int, list[ApplicationEvent]] = {row["id"]: [] for row in rows}
+    for found in conn.execute(
+        """
+        SELECT application_id, id, type, occurred_at, note, created_at, message_id, action_id
+        FROM application_events
+        WHERE user_id = %s ORDER BY occurred_at DESC, id DESC
+        """,
+        (user_id,),
+    ):
+        if found["application_id"] in events:
+            events[found["application_id"]].append(ApplicationEvent.model_validate(found))
+    return [ApplicationSummary.model_validate(_summary(row, events[row["id"]])) for row in rows]
 
 
 def get_application(conn: Conn, user_id: int, application_id: int) -> ApplicationView | None:
     row = conn.execute(
-        f"SELECT {_COLUMNS} FROM applications"  # nosec B608
-        " WHERE user_id = %s AND id = %s AND deleted_at IS NULL",
+        f"SELECT {_COLUMNS} FROM {_FROM}"  # nosec B608
+        " WHERE a.user_id = %s AND a.id = %s AND a.deleted_at IS NULL",
         (user_id, application_id),
     ).fetchone()
     if row is None:

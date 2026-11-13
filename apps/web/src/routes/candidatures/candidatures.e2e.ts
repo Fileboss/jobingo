@@ -20,6 +20,10 @@ class FakeApplicationsApi {
 		follow_up_on: null,
 		created_at: '2026-11-01T09:00:00Z',
 		rating: null,
+		fit_score: null,
+		salary_score: null,
+		salary_min: null,
+		salary_max: null,
 		contact: { name: '', email: '', phone: '' },
 		company_notes: '',
 		events: [],
@@ -195,4 +199,73 @@ test('a letter is written from the application, or says why not', async ({ page 
 	await page.goto('/candidatures/5');
 	await page.getByRole('button', { name: 'Rédiger une lettre' }).click();
 	await expect(page.getByRole('alert')).toContainText('Votre CV est vide');
+});
+
+test('an adapted CV and a letter are deleted after a second click', async ({ page }) => {
+	const api = new FakeApplicationsApi();
+	await api.install(page);
+	const document = { id: 7, created_at: '2026-11-07T09:00:00Z' };
+	await page.route(/\/api\/applications\/\d+\/cv-drafts$/, (route) =>
+		route.fulfill({ json: [{ ...document, application_id: 5 }] })
+	);
+	await page.route(/\/api\/applications\/\d+\/letters$/, (route) =>
+		route.fulfill({ json: [{ ...document, id: 9, application_id: 5 }] })
+	);
+	const deleted: string[] = [];
+	await page.route(/\/api\/(cv\/drafts|letters)\/\d+$/, (route) => {
+		deleted.push(new URL(route.request().url()).pathname);
+		return route.fulfill({ status: 204 });
+	});
+	await page.goto('/candidatures/5');
+
+	await page.getByRole('button', { name: /Supprimer : CV adapté/ }).click();
+	await page.getByRole('button', { name: 'Annuler' }).click();
+	expect(deleted).toEqual([]);
+
+	await page.getByRole('button', { name: /Supprimer : CV adapté/ }).click();
+	await page.getByRole('button', { name: 'Supprimer', exact: true }).click();
+	await expect(page.getByText('Aucun CV adapté pour l’instant.')).toBeVisible();
+
+	await page.getByRole('button', { name: /Supprimer : Lettre/ }).click();
+	await page.getByRole('button', { name: 'Supprimer', exact: true }).click();
+	await expect(page.getByText('Aucune lettre pour l’instant.')).toBeVisible();
+	expect(deleted).toEqual(['/api/cv/drafts/7', '/api/letters/9']);
+});
+
+test('the applications follow the stars first, hide the closed ones, and filter', async ({
+	page
+}) => {
+	const api = new FakeApplicationsApi();
+	const base = api.application;
+	const rows = [
+		{ ...base, id: 1, title: 'Sans note', company_name: 'Agrimetrics', fit_score: 95 },
+		{ ...base, id: 2, title: 'Quatre étoiles', company_name: 'Stratus', rating: 4, fit_score: 50 },
+		{ ...base, id: 3, title: 'Deux étoiles', company_name: 'Voltéo', rating: 2, fit_score: 90 },
+		{
+			...base,
+			id: 4,
+			title: 'Refusée',
+			company_name: 'Banque Rhône',
+			rating: 5,
+			status: 'cloture' as const,
+			tone: 'lost' as const
+		}
+	];
+	await api.install(page);
+	await page.route('**/api/applications', (route) => route.fulfill({ json: rows }));
+	await page.goto('/candidatures');
+	const titles = page.locator('tbody tr td:nth-child(2) a');
+
+	await expect(titles).toHaveText(['Quatre étoiles', 'Deux étoiles', 'Sans note']);
+	await expect(page.getByText('3 candidatures', { exact: true })).toBeVisible();
+
+	await page.getByLabel('Afficher les clôturées').check();
+	await expect(titles).toHaveText(['Refusée', 'Quatre étoiles', 'Deux étoiles', 'Sans note']);
+
+	await page.getByLabel('Étoiles').selectOption('3');
+	await expect(titles).toHaveText(['Refusée', 'Quatre étoiles']);
+
+	await page.getByRole('button', { name: 'Tout réinitialiser' }).click();
+	await page.getByRole('columnheader', { name: 'Adéquation' }).getByRole('button').click();
+	await expect(titles).toHaveText(['Quatre étoiles', 'Deux étoiles', 'Sans note']);
 });

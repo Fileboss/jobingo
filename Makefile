@@ -5,7 +5,7 @@ API_PORT ?= 8000
 export
 
 .PHONY: db-up db-down mail-up ats-up ats-down ats api web api-types test lint typecheck check check-guardrails \
-	e2e eval agent agent-front agent-back pair worktree worktree-rm
+	e2e screenshots eval agent agent-front agent-back pair worktree worktree-rm
 
 db-up:
 	docker compose up -d --wait postgres
@@ -65,6 +65,12 @@ check: lint typecheck test check-guardrails
 
 e2e:
 	pnpm --filter @jobingo/web exec playwright test
+
+# The README's screenshots in docs/images, on fictional data, with no database or model.
+# Needs Google Chrome, whose PDF viewer shows the CV and the letter.
+screenshots:
+	uv run python scripts/screenshot_data.py
+	pnpm --filter @jobingo/web exec playwright test -c playwright.screenshots.config.ts
 
 # Paid: runs the eval suites against the API with the eval-only key in evals/.env,
 # capped at 1 $ unless ARGS says otherwise. ARGS=--task select_cv_content, --max-usd 2,

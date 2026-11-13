@@ -305,6 +305,17 @@ def list_drafts(conn: Conn, user_id: int, application_id: int) -> list[DraftSumm
     return [DraftSummary.model_validate(row) for row in rows]
 
 
+def delete_draft(conn: Conn, user_id: int, draft_id: int) -> bool:
+    """Erased: a send that attached it froze its PDF in `documents`, and the model call
+    stays in the journal."""
+    deleted = conn.execute(
+        "DELETE FROM cv_drafts WHERE user_id = %s AND id = %s", (user_id, draft_id)
+    ).rowcount
+    if deleted:
+        event(log, "cv.draft_deleted", user_id=user_id, draft_id=draft_id)
+    return bool(deleted)
+
+
 def _row(conn: Conn, user_id: int, draft_id: int) -> dict[str, Any] | None:
     return conn.execute(
         f"SELECT {_COLUMNS} FROM cv_drafts WHERE user_id = %s AND id = %s",  # nosec B608

@@ -230,6 +230,17 @@ def list_letters(conn: Conn, user_id: int, application_id: int) -> list[LetterSu
     return [LetterSummary.model_validate(row) for row in rows]
 
 
+def delete_letter(conn: Conn, user_id: int, letter_id: int) -> bool:
+    """Erased: a send that attached it froze its PDF in `documents`, and the model call
+    stays in the journal."""
+    deleted = conn.execute(
+        "DELETE FROM letters WHERE user_id = %s AND id = %s", (user_id, letter_id)
+    ).rowcount
+    if deleted:
+        event(log, "letter.deleted", user_id=user_id, letter_id=letter_id)
+    return bool(deleted)
+
+
 def get_letter(conn: Conn, user_id: int, letter_id: int) -> LetterView | None:
     row = conn.execute(
         f"""

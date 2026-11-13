@@ -74,7 +74,8 @@ export interface paths {
         get: operations["get_draft"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Draft */
+        delete: operations["delete_draft"];
         options?: never;
         head?: never;
         patch?: never;
@@ -714,7 +715,8 @@ export interface paths {
         get: operations["get_letter"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Letter */
+        delete: operations["delete_letter"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1229,6 +1231,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Fit Score */
+            fit_score: number | null;
+            /** Salary Score */
+            salary_score: number | null;
+            /** Salary Min */
+            salary_min: number | null;
+            /** Salary Max */
+            salary_max: number | null;
         };
         /** ApplicationView */
         ApplicationView: {
@@ -1252,6 +1262,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Fit Score */
+            fit_score: number | null;
+            /** Salary Score */
+            salary_score: number | null;
+            /** Salary Min */
+            salary_min: number | null;
+            /** Salary Max */
+            salary_max: number | null;
             contact: components["schemas"]["Contact"];
             /** Company Notes */
             company_notes: string;
@@ -3090,6 +3108,42 @@ export interface operations {
             };
         };
     };
+    delete_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such draft */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_draft_choices: {
         parameters: {
             query?: never;
@@ -4608,6 +4662,42 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LetterView"];
                 };
+            };
+            /** @description No such letter */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_letter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                letter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description No such letter */
             404: {

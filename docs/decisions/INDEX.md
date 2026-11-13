@@ -39,3 +39,4 @@ Settled by the user. Follow them instead of asking again. Format and rules: `doc
 - [A local ATS check: Tika and Affinda in Docker, with no route out](2026-11-12-local-ats-check.md): when checking how recruiting tools read a rendered CV, or adding a parser or service for it
 - [A « Langues » section, always on the page](2026-11-12-languages-section-always-on.md): when working on the CV sections, what the model selects, what the side panel keeps, or how languages appear on a CV
 - [Keep select_cv_content v14 with no cap on experiences, at 13/14](2026-11-12-keep-v14-without-experience-cap.md): when weighing select_cv_content against 14/14, or tempted to bring back a cap on experiences
+- [The Offres and Candidatures tables sort, search and filter as in the POC](2026-11-13-sortable-filterable-tables.md): when changing the order, sort, search or filters of the Offres or Candidatures tables, or what they show by default
