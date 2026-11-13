@@ -307,7 +307,7 @@ def list_drafts(conn: Conn, user_id: int, application_id: int) -> list[DraftSumm
 
 def _row(conn: Conn, user_id: int, draft_id: int) -> dict[str, Any] | None:
     return conn.execute(
-        f"SELECT {_COLUMNS} FROM cv_drafts WHERE user_id = %s AND id = %s",
+        f"SELECT {_COLUMNS} FROM cv_drafts WHERE user_id = %s AND id = %s",  # nosec B608
         (user_id, draft_id),
     ).fetchone()
 

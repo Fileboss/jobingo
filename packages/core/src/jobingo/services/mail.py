@@ -566,7 +566,7 @@ def list_messages(
 ) -> list[MessageSummary]:
     """Newest first: the messages shown, or those hidden."""
     rows = conn.execute(
-        f"SELECT {_SUMMARY} FROM {_FROM} WHERE m.user_id = %s"
+        f"SELECT {_SUMMARY} FROM {_FROM} WHERE m.user_id = %s"  # nosec B608
         " AND (%s::text IS NULL OR m.kind = %s) AND (m.hidden_reason IS NOT NULL) = %s"
         " ORDER BY m.received_at DESC, m.id DESC",
         (user_id, kind, kind, hidden),
@@ -576,7 +576,7 @@ def list_messages(
 
 def get_message(conn: Conn, user_id: int, message_id: int) -> Message | None:
     row = conn.execute(
-        f"SELECT {_SUMMARY}, m.to_addrs, m.processed_at, m.company_hint, m.linked_by,"
+        f"SELECT {_SUMMARY}, m.to_addrs, m.processed_at, m.company_hint, m.linked_by,"  # nosec B608
         f" m.llm_call_id FROM {_FROM} WHERE m.user_id = %s AND m.id = %s",
         (user_id, message_id),
     ).fetchone()
@@ -616,7 +616,7 @@ def status(conn: Conn, settings: Settings, user_id: int) -> MailboxStatus:
 
 def _pending_suggestions(conn: Conn, user_id: int) -> int:
     row = conn.execute(
-        f"SELECT count(*) AS n FROM {_FROM} WHERE m.user_id = %s"
+        f"SELECT count(*) AS n FROM {_FROM} WHERE m.user_id = %s"  # nosec B608
         " AND m.suggestion_status = 'pending' AND a.id IS NOT NULL AND m.hidden_reason IS NULL",
         (user_id,),
     ).fetchone()

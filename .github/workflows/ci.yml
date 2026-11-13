@@ -46,6 +46,15 @@ jobs:
         ports:
           - 3025:3025
           - 3143:3143
+      # The approval queue's tests send through a real SMTP server and read it back.
+      mailpit:
+        image: axllent/mailpit@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+        env:
+          MP_SMTP_AUTH_ACCEPT_ANY: 1
+          MP_SMTP_AUTH_ALLOW_INSECURE: 1
+        ports:
+          - 1025:1025
+          - 8025:8025
     steps:
       - uses: actions/checkout@v5
       - name: Install Pango (WeasyPrint)
@@ -111,6 +120,8 @@ jobs:
         run: |
           uv export --all-groups --no-emit-workspace -o requirements.txt
           uvx pip-audit -r requirements.txt --disable-pip --strict
+      # `# nosec B608` marks queries whose f-string inserts only module constants
+      # (column lists, joins); every value goes through a placeholder.
       - name: Static analysis (bandit, medium severity and above)
         run: uvx bandit -r packages/core/src apps/api/src -ll
       - name: Secrets (gitleaks)

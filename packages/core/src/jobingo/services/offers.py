@@ -46,7 +46,8 @@ class NoOfferFoundError(Exception):
 
 def get_offer(conn: Conn, user_id: int, offer_id: int) -> Offer | None:
     row = conn.execute(
-        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s AND id = %s", (user_id, offer_id)
+        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s AND id = %s",  # nosec B608
+        (user_id, offer_id),
     ).fetchone()
     return Offer.model_validate(row) if row else None
 
@@ -54,7 +55,7 @@ def get_offer(conn: Conn, user_id: int, offer_id: int) -> Offer | None:
 def list_offers(conn: Conn, user_id: int) -> list[Offer]:
     """Newest first."""
     rows = conn.execute(
-        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s ORDER BY created_at DESC, id DESC",
+        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s ORDER BY created_at DESC, id DESC",  # nosec B608
         (user_id,),
     )
     return [Offer.model_validate(row) for row in rows]
@@ -71,7 +72,7 @@ def _store(
     value says whether it was merged."""
     key = dedup_key(extracted.company_name, extracted.title, extracted.locations)
     row = conn.execute(
-        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s AND dedup_key = %s",
+        f"SELECT {_COLUMNS} FROM offers WHERE user_id = %s AND dedup_key = %s",  # nosec B608
         (user_id, key),
     ).fetchone()
     if row is not None:

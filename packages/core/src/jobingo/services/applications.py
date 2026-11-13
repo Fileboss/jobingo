@@ -61,7 +61,7 @@ def _summary(row: dict[str, Any], events: list[ApplicationEvent]) -> dict[str, A
 
 def list_applications(conn: Conn, user_id: int) -> list[ApplicationSummary]:
     rows = conn.execute(
-        f"SELECT {_COLUMNS} FROM applications WHERE user_id = %s AND deleted_at IS NULL"
+        f"SELECT {_COLUMNS} FROM applications WHERE user_id = %s AND deleted_at IS NULL"  # nosec B608
         " ORDER BY created_at DESC, id DESC",
         (user_id,),
     ).fetchall()
@@ -73,7 +73,7 @@ def list_applications(conn: Conn, user_id: int) -> list[ApplicationSummary]:
 
 def get_application(conn: Conn, user_id: int, application_id: int) -> ApplicationView | None:
     row = conn.execute(
-        f"SELECT {_COLUMNS} FROM applications"
+        f"SELECT {_COLUMNS} FROM applications"  # nosec B608
         " WHERE user_id = %s AND id = %s AND deleted_at IS NULL",
         (user_id, application_id),
     ).fetchone()

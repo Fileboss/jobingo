@@ -235,7 +235,7 @@ def get_letter(conn: Conn, user_id: int, letter_id: int) -> LetterView | None:
         f"""
         SELECT {_COLUMNS} FROM letters l JOIN applications a ON a.id = l.application_id
         WHERE l.user_id = %s AND l.id = %s AND a.deleted_at IS NULL
-        """,
+        """,  # nosec B608
         (user_id, letter_id),
     ).fetchone()
     if row is None:

@@ -61,7 +61,7 @@ def _view(row: dict[str, Any]) -> ActionView:
 
 def get_action(conn: Conn, user_id: int, action_id: int) -> ActionView | None:
     row = conn.execute(
-        f"SELECT {_COLUMNS} FROM {_FROM} WHERE p.user_id = %s AND p.id = %s",
+        f"SELECT {_COLUMNS} FROM {_FROM} WHERE p.user_id = %s AND p.id = %s",  # nosec B608
         (user_id, action_id),
     ).fetchone()
     return _view(row) if row else None
@@ -70,7 +70,7 @@ def get_action(conn: Conn, user_id: int, action_id: int) -> ActionView | None:
 def list_actions(conn: Conn, user_id: int) -> list[ActionSummary]:
     """Waiting for a decision first, then newest first."""
     rows = conn.execute(
-        f"SELECT {_COLUMNS} FROM {_FROM} WHERE p.user_id = %s"
+        f"SELECT {_COLUMNS} FROM {_FROM} WHERE p.user_id = %s"  # nosec B608
         " ORDER BY p.status = 'proposed' DESC, p.created_at DESC, p.id DESC",
         (user_id,),
     ).fetchall()

@@ -6,7 +6,10 @@ from jinja2 import BaseLoader, Environment, PackageLoader, StrictUndefined
 def prompt_environment(loader: BaseLoader) -> Environment:
     # StrictUndefined: renaming a payload field must fail loudly. With the default, the
     # prompt would render that section empty and the call would quietly degrade.
-    env = Environment(loader=loader, undefined=StrictUndefined, keep_trailing_newline=True)
+    # No HTML autoescape: prompts are text, and untrusted text goes through `xml`.
+    env = Environment(  # nosec B701
+        loader=loader, autoescape=False, undefined=StrictUndefined, keep_trailing_newline=True
+    )
     env.filters["xml"] = escape_tags
     return env
 

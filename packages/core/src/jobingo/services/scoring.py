@@ -60,7 +60,7 @@ def latest_scores(conn: Conn, user_id: int) -> dict[int, OfferScore]:
         f"""
         SELECT DISTINCT ON (offer_id) {_COLUMNS} FROM offer_scores
         WHERE user_id = %s ORDER BY offer_id, id DESC
-        """,
+        """,  # nosec B608
         (user_id,),
     )
     return {row["offer_id"]: _score_of(row, context) for row in rows}
@@ -71,7 +71,7 @@ def latest_score(conn: Conn, user_id: int, offer_id: int) -> OfferScore | None:
         f"""
         SELECT {_COLUMNS} FROM offer_scores
         WHERE user_id = %s AND offer_id = %s ORDER BY id DESC LIMIT 1
-        """,
+        """,  # nosec B608
         (user_id, offer_id),
     ).fetchone()
     return _score_of(row, _context(conn, user_id)) if row else None
@@ -134,7 +134,7 @@ def score_offer(
                 objectives_hash, cv_version, llm_call_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING {_COLUMNS}
-            """,
+            """,  # nosec B608
             (
                 user_id,
                 offer.id,

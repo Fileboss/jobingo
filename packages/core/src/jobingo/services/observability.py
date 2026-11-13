@@ -65,10 +65,10 @@ def usage_report(conn: Conn, user_id: int, settings: Settings, days: int) -> Usa
     params = {"user_id": user_id, "since": since}
     where = "WHERE user_id = %(user_id)s AND created_at >= %(since)s"
 
-    total = conn.execute(f"SELECT {_FIGURES} FROM llm_calls {where}", params).fetchone()
+    total = conn.execute(f"SELECT {_FIGURES} FROM llm_calls {where}", params).fetchone()  # nosec B608
     assert total is not None
     tasks = conn.execute(
-        f"SELECT task, {_FIGURES} FROM llm_calls {where} GROUP BY task"
+        f"SELECT task, {_FIGURES} FROM llm_calls {where} GROUP BY task"  # nosec B608
         " ORDER BY sum(cost_usd) DESC, task",
         params,
     ).fetchall()
@@ -79,7 +79,7 @@ def usage_report(conn: Conn, user_id: int, settings: Settings, days: int) -> Usa
         )
         for n in range(days)
     }
-    for row in conn.execute(f"SELECT created_at, cost_usd FROM llm_calls {where}", params):
+    for row in conn.execute(f"SELECT created_at, cost_usd FROM llm_calls {where}", params):  # nosec B608
         day = per_day.get(row["created_at"].astimezone().date())
         if day is not None:
             day.calls += 1
@@ -135,7 +135,7 @@ def list_calls(
           AND (%(before)s::bigint IS NULL OR id < %(before)s)
         ORDER BY id DESC
         LIMIT %(limit)s
-        """,
+        """,  # nosec B608
         {
             "user_id": user_id,
             "task": task,
@@ -201,7 +201,7 @@ def _answer(response: dict[str, Any] | None) -> Any:
 
 def get_call(conn: Conn, user_id: int, call_id: int) -> CallDetail | None:
     row = conn.execute(
-        f"SELECT {_SUMMARY_COLUMNS}, request, response, purged_at FROM llm_calls"
+        f"SELECT {_SUMMARY_COLUMNS}, request, response, purged_at FROM llm_calls"  # nosec B608
         " WHERE user_id = %s AND id = %s",
         (user_id, call_id),
     ).fetchone()

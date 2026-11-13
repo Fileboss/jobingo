@@ -11,3 +11,4 @@ Bugs the user reported and corrections of how Claude worked. Don't repeat them. 
 - [Give an eval case to every way a loop can start](2026-11-12-eval-every-direction-of-a-loop.md): when writing or changing a feedback loop around a model, or the eval cases that measure it
 - [The CV page has two areas: fit each with its own content](2026-11-12-the-page-has-two-areas.md): when measuring, fitting or filling the CV page, or reading page counts or missing items
 - [A new rule on what goes on the page retires the caps that contradict it](2026-11-12-a-new-rule-retires-old-caps.md): when changing how much of the CV goes on the page, or settling a rule about what a CV must show, while older limits still apply
+- [CI runs every server the tests reach, and a red CI is fixed](2026-11-13-ci-runs-what-the-tests-reach.md): when adding a server the tests reach or a CI check, or before reporting work as done while CI is red
